@@ -5,7 +5,7 @@ import asyncio
 import sys
 
 from uavert import db
-from uavert.ingest import crime, reference
+from uavert.ingest import crime, live, reference
 from uavert.ingest.runs import ensure_reference_rows
 from uavert.sources.http import make_client
 
@@ -13,6 +13,10 @@ from uavert.sources.http import make_client
 TARGETS = {
     "reference": ["reference"],
     "crime": ["crime"],
+    "aqhi": ["aqhi"],
+    "alerts": ["alerts"],
+    "live": ["aqhi", "alerts"],
+    "all": ["reference", "crime", "aqhi", "alerts"],
 }
 
 
@@ -27,7 +31,7 @@ async def _migrate() -> int:
 
 
 async def _ingest(target: str) -> int:
-    steps = {"reference": reference.run, "crime": crime.run}
+    steps = {"reference": reference.run, "crime": crime.run, "aqhi": live.run_aqhi, "alerts": live.run_alerts}
     conn = await db.connect()
     failures = []
     try:
