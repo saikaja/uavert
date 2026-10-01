@@ -85,3 +85,13 @@ async def test_no_response_labels_anything_safe(client, seeded):
                  "/api/v1/cells?bbox=-79.395,43.645,-79.355,43.665", "/api/v1/scoring-rules"]:
         text = (await client.get(path)).text
         assert not re.search(r'"(band|label)"\s*:\s*"[^"]*safe', text, re.I), path
+
+
+async def test_scoring_rules_include_latest_fairness_check(client, seeded, test_pool):
+    # Criterion 34
+    await test_pool.execute(
+        "INSERT INTO fairness_checks (rho_income, rho_low_income, n, label, census_year) VALUES (-0.28, 0.24, 158, $1, 2021)",
+        "Scores don't mostly follow income")
+    f = (await client.get("/api/v1/scoring-rules")).json()["data"]["fairness"]
+    assert f["rho_median_household_income"] == -0.28 and f["neighbourhoods"] == 158 and f["census_year"] == 2021
+    assert f["label"] == "Scores don't mostly follow income" and f["review_threshold"] == 0.5 and f["computed_at"]

@@ -1,0 +1,163 @@
+# Income by Toronto neighbourhood, 2021 Census (income year 2020).
+# Source: City of Toronto Neighbourhood Profiles, 158-neighbourhood model,
+#   nbhd_2021_census_profile_full_158model.xlsx (https://open.toronto.ca/dataset/neighbourhood-profiles/).
+# Retrieved: 2026-10-01. Regenerate with scripts/build_neighbourhood_income.py.
+external_id,name,median_household_income,low_income_pct
+1,West Humber-Clairville,92000,8.7
+2,Mount Olive-Silverstone-Jamestown,76500,15.6
+3,Thistletown-Beaumond Heights,86000,11.8
+4,Rexdale-Kipling,77000,13.5
+5,Elms-Old Rexdale,82000,12.4
+6,Kingsview Village-The Westway,79000,14.7
+7,Willowridge-Martingrove-Richview,92000,9.5
+8,Humber Heights-Westmount,85000,10.2
+9,Edenbridge-Humber Valley,100000,8.2
+10,Princess-Rosethorn,162000,5.6
+11,Eringate-Centennial-West Deane,108000,5.6
+12,Markland Wood,105000,6
+13,Etobicoke West Mall,84000,11
+15,Kingsway South,184000,4.3
+16,Stonegate-Queensway,104000,8.5
+18,New Toronto,68500,15.8
+19,Long Branch,83000,11.2
+20,Alderwood,106000,6.2
+21,Humber Summit,80000,12.2
+22,Humbermede,77500,13.3
+23,Pelmo Park-Humberlea,100000,7.7
+24,Black Creek,65000,19.4
+25,Glenfield-Jane Heights,70500,14.9
+27,York University Heights,76000,13.8
+28,Rustic,64000,19.1
+29,Maple Leaf,82000,9
+30,Brookhaven-Amesbury,73000,13.8
+31,Yorkdale-Glen Park,79000,12.2
+32,Englemount-Lawrence,78000,13.4
+33,Clanton Park,88000,10.6
+34,Bathurst Manor,92000,11.4
+35,Westminster-Branson,76000,13.7
+36,Newtonbrook West,79000,15.3
+37,Willowdale West,76500,19.2
+38,Lansing-Westgate,98000,11.8
+39,Bedford Park-Nortown,135000,7.2
+40,St.Andrew-Windfields,118000,13
+41,Bridle Path-Sunnybrook-York Mills,222000,9.1
+42,Banbury-Don Mills,91000,11.1
+43,Victoria Village,68000,17.6
+44,Flemingdon Park,70000,19.9
+46,Pleasant View,89000,10.1
+47,Don Valley Village,83000,13.5
+48,Hillcrest Village,86000,15.6
+49,Bayview Woods-Steeles,93000,11.9
+50,Newtonbrook East,80000,17.7
+52,Bayview Village,83000,16.4
+53,Henry Farm,79500,17.2
+54,O`Connor Parkview,77000,13.6
+55,Thorncliffe Park,67000,24.2
+56,Leaside-Bennington,148000,5.8
+57,Broadview North,68500,14.6
+58,Old East York,96000,8.3
+59,Danforth-East York,101000,9.3
+60,Woodbine-Lumsden,96000,10
+61,Taylor Massey,68500,17.8
+62,East End Danforth,90000,11.9
+63,The Beaches,116000,7.9
+64,Woodbine Corridor,97000,11.1
+65,Greenwood-Coxwell,93000,12
+66,Danforth,98000,10.3
+67,Playter Estates-Danforth,87000,10.7
+68,North Riverdale,108000,8.3
+69,Blake-Jones,86000,15.2
+70,South Riverdale,100000,11.7
+71,Cabbagetown-South St. James Town,76500,15
+72,Regent Park,65500,22.9
+73,Moss Park,65000,23.3
+74,North St. James Town,59200,21.9
+78,Kensington-Chinatown,62000,23
+79,University,80000,14.6
+80,Palmerston-Little Italy,88000,10.9
+81,Trinity-Bellwoods,92000,11
+83,Dufferin Grove,78000,11.7
+84,Little Portugal,86000,10.8
+85,South Parkdale,57200,20.2
+86,Roncesvalles,88000,12.5
+87,High Park-Swansea,101000,8.5
+88,High Park North,83000,11.9
+89,Runnymede-Bloor West Village,138000,5.1
+90,Junction Area,96000,8.8
+91,Weston-Pelham Park,81000,13.1
+92,Corso Italia-Davenport,94000,8.8
+94,Wychwood,86000,11.2
+95,Annex,85000,14.4
+96,Casa Loma,103000,10.7
+97,Yonge-St. Clair,94000,9.8
+98,Rosedale-Moore Park,122000,8.8
+99,Mount Pleasant East,110000,8.3
+100,Yonge-Eglinton,94000,10.5
+101,Forest Hill South,109000,9.8
+102,Forest Hill North,90000,10.8
+103,Lawrence Park South,162000,7.2
+105,Lawrence Park North,168000,5.6
+106,Humewood-Cedarvale,83000,11.2
+107,Oakwood Village,77000,12
+108,Briar Hill-Belgravia,81000,11.5
+109,Caledonia-Fairbank,87000,10.6
+110,Keelesdale-Eglinton West,77000,12.5
+111,Rockcliffe-Smythe,69000,15.8
+112,Beechborough-Greenbrook,62400,18
+113,Weston,64500,18.6
+114,Lambton Baby Point,103000,12
+115,Mount Dennis,70500,14.9
+116,Steeles,80000,14.8
+118,Tam O'Shanter-Sullivan,76500,14.4
+119,Wexford/Maryvale,82000,11.6
+120,Clairlea-Birchmount,90000,11.5
+121,Oakridge,60000,22.5
+122,Birchcliffe-Cliffside,90000,9.7
+123,Cliffcrest,92000,11.1
+124,Kennedy Park,69000,17
+125,Ionview,74500,13.8
+126,Dorset Park,79000,13
+128,Agincourt South-Malvern West,79500,13
+129,Agincourt North,84000,12.4
+130,Milliken,81000,14.6
+133,Centennial Scarborough,134000,4.4
+134,Highland Creek,120000,6.4
+135,Morningside,85000,12.4
+136,West Hill,76000,15.2
+138,Eglinton East,73500,13.9
+139,Scarborough Village,71500,17.1
+140,Guildwood,102000,5.8
+141,Golfdale-Cedarbrae-Woburn,77000,16
+142,Woburn North,74500,15.5
+143,West Rouge,108000,6.2
+144,Morningside Heights,117000,5.7
+145,Malvern West,88000,9.7
+146,Malvern East,85000,11.7
+147,L'Amoreaux West,72500,15.8
+148,East L'Amoreaux,85000,13.5
+149,Parkwoods-O'Connor Hills,98000,10.7
+150,Fenside-Parkwoods,78000,13.2
+151,Yonge-Doris,73000,22.5
+152,East Willowdale,95000,16.9
+153,Avondale,84000,18.6
+154,Oakdale-Beverley Heights,71500,14.4
+155,Downsview,82000,9.6
+156,Bendale-Glen Andrew,74500,17
+157,Bendale South,90000,9.7
+158,Islington,102000,8.5
+159,Etobicoke City Centre,83000,13.6
+160,Mimico-Queensway,84000,12.4
+161,Humber Bay Shores,85000,13.5
+162,West Queen West,101000,10.9
+163,Fort York-Liberty Village,94000,10.3
+164,Wellington Place,90000,14
+165,Harbourfront-CityPlace,90000,14.4
+166,St Lawrence-East Bayfront-The Islands,87000,15.3
+167,Church-Wellesley,60400,23.3
+168,Downtown Yonge East,69500,22.4
+169,Bay-Cloverhill,58400,29
+170,Yonge-Bay Corridor,68500,24.3
+171,Junction-Wallace Emerson,84000,11.2
+172,Dovercourt Village,87000,10
+173,North Toronto,70000,18.5
+174,South Eglinton-Davisville,80000,15.3

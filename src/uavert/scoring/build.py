@@ -13,7 +13,7 @@ import h3
 from uavert.config import get_settings
 from uavert.freshness import source_dates
 from uavert.ingest.reference import load_offence_map
-from uavert.scoring import crime
+from uavert.scoring import crime, fairness
 from uavert.scoring.combine import Reason
 from uavert.scoring.events import count_once
 
@@ -270,6 +270,9 @@ async def build(conn: asyncpg.Connection) -> dict:
     ncr_extra = {m.ucr_code: (m.csi_offence_key, m.group_label)
                  for m in load_offence_map().rows() if m.source_key == "tps_ncr"}
     hood_rows = neighbourhood_scores(events, hoods, weights, ncr_extra, used)
+    census = {r["external_id"]: r for r in await conn.fetch(
+        "SELECT external_id, median_household_income, low_income_pct, census_year FROM neighbourhood_census")}
+    paired = [(hood_rows[h["id"]]["crime_score"], census[h["external_id"]]) for h in hoods if h["external_id"] in census]
 
     cells = {r["h3"]: r["neighbourhood_id"] for r in await conn.fetch("SELECT h3::text AS h3, neighbourhood_id FROM cells")}
     traffic = [(r["h3"], float(r["per_hour"]), r["count_date"]) for r in await conn.fetch(
@@ -280,6 +283,13 @@ async def build(conn: asyncpg.Connection) -> dict:
                             activity if len(activity) == 24 else None)
 
     async with conn.transaction():
+        if paired:
+            scores = [s for s, _ in paired]
+            rho_income = fairness.spearman(scores, [float(c["median_household_income"]) for _, c in paired])
+            rho_low = fairness.spearman(scores, [float(c["low_income_pct"]) for _, c in paired])
+            await conn.execute(
+                "INSERT INTO fairness_checks (rho_income, rho_low_income, n, label, census_year) VALUES ($1, $2, $3, $4, $5)",
+                rho_income, rho_low, len(paired), fairness.label(rho_income, rho_low), paired[0][1]["census_year"])
         await conn.executemany(
             "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used, computed_at)"
             " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, now()) ON CONFLICT (neighbourhood_id) DO UPDATE SET"

@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from uavert.api import live
 from uavert.config import get_settings
 from uavert.freshness import iso
-from uavert.scoring import alerts, crime, environment
+from uavert.scoring import alerts, crime, environment, fairness
 from uavert.scoring.bands import BAND_LABELS, BANDS
 
 router = APIRouter(tags=["data sources"])
@@ -40,6 +40,8 @@ async def scoring_rules(request: Request):
         edition,
     )
     ctx = await live.load(pool)
+    check = await pool.fetchrow(
+        "SELECT computed_at, rho_income, rho_low_income, n, label, census_year FROM fairness_checks ORDER BY id DESC LIMIT 1")
     bands = [{"band": b, "label": BAND_LABELS[b], "min_score": lo,
               "max_score": (BANDS[i + 1][1] - 1) if i + 1 < len(BANDS) else 100} for i, (b, lo) in enumerate(BANDS)]
     return live.envelope({
@@ -48,6 +50,13 @@ async def scoring_rules(request: Request):
         "csi_edition": edition,
         "csi_weights": [dict(w) | {"weight": float(w["weight"]), "retrieved_on": w["retrieved_on"].isoformat()} for w in weights],
         "offence_map": [dict(m) | {"weight": float(m["weight"])} for m in mapping],
+        "fairness": None if check is None else {
+            "computed_at": check["computed_at"].isoformat(), "neighbourhoods": check["n"], "census_year": check["census_year"],
+            "rho_median_household_income": round(check["rho_income"], 2) if check["rho_income"] is not None else None,
+            "rho_low_income_share": round(check["rho_low_income"], 2) if check["rho_low_income"] is not None else None,
+            "label": check["label"], "review_threshold": fairness.REVIEW_THRESHOLD,
+            "method": "Spearman rank correlation between neighbourhood crime scores and 2021 Census income",
+        },
         "activity_by_hour": [{"hour": h, "factor": round(factor, 3), "basis": basis}
                              for h, (factor, basis) in enumerate(ctx.activity)],
         "parameters": {

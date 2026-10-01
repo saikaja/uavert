@@ -151,6 +151,21 @@ async def load_activity_profile(conn: asyncpg.Connection) -> int:
     return len(rows)
 
 
+async def load_census_income(conn: asyncpg.Connection, region_id: int) -> int:
+    rows = read_csv(DATA_DIR / "neighbourhood_income_2021.csv")
+    if len(rows) != 158:
+        raise ValueError(f"data/neighbourhood_income_2021.csv should have 158 neighbourhoods, has {len(rows)}")
+    async with conn.transaction():
+        for r in rows:
+            await conn.execute(
+                "INSERT INTO neighbourhood_census (region_id, external_id, median_household_income, low_income_pct, census_year)"
+                " VALUES ($1, $2, $3, $4, 2021) ON CONFLICT (region_id, external_id) DO UPDATE SET"
+                " median_household_income = $3, low_income_pct = $4, census_year = 2021",
+                region_id, str(int(r["external_id"])), float(r["median_household_income"]), float(r["low_income_pct"]),
+            )
+    return len(rows)
+
+
 async def run(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> None:
     async with ingest_run(conn, "statcan_csi") as r:
         r.rows_written = await load_csi_and_offence_map(conn)
@@ -158,6 +173,9 @@ async def run(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: in
     async with ingest_run(conn, "activity_profile") as r:
         r.rows_written = await load_activity_profile(conn)
         r.data_as_of = datetime(2025, 12, 31, tzinfo=UTC)  # the Bike Share year used for night hours
+    async with ingest_run(conn, "toronto_census_2021") as r:
+        r.rows_written = await load_census_income(conn, region_id)
+        r.data_as_of = datetime(2021, 5, 11, tzinfo=UTC)  # Census Day 2021
     async with ingest_run(conn, "tps_ncr") as r:
         r.rows_written = await load_neighbourhoods(conn, client, region_id)
         r.rows_written += await build_cells(conn, region_id)

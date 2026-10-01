@@ -47,6 +47,10 @@
     <p>"Closest" means Statistics Canada doesn't publish a separate weight for that exact offence, so the nearest one is used.</p>
     <div class="table-wrap"><table id="mapping"><thead><tr><th>Toronto Police offence</th><th>Index offence</th><th>Weight</th><th>Match</th></tr></thead><tbody></tbody></table></div>
 
+    <h2>Fairness check</h2>
+    <p>Crime scores can end up flagging poorer areas simply because they are poorer. Every time scores are rebuilt, Uavert checks how closely neighbourhood crime scores follow household income and the share of low-income households (2021 Census). If either relationship is strong (0.5 or more on a scale where 0 means none and 1 means scores rank exactly with income), the weights are flagged for review.</p>
+    <p id="fairness" class="muted">Loading...</p>
+
     <h2>Limitations</h2>
     <ul>
       <li>Crime data is what was <em>reported</em> to police. Toronto Police describes it as preliminary, and locations are moved to the nearest intersection for privacy.</li>
@@ -95,6 +99,10 @@
       ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#time-params").append(li); });
       const hl = (h) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
       (d.activity_by_hour || []).forEach((a) => document.querySelector("#activity tbody").append(row([hl(a.hour), `${Math.round(a.factor * 100)}%`, a.basis === "measured" ? "measured (City counts)" : "estimated (Bike Share)"])));
+      const f = d.fairness;
+      document.querySelector("#fairness").textContent = f
+        ? `${f.label}. Across ${f.neighbourhoods} neighbourhoods, scores vs median household income: ${f.rho_median_household_income}; vs share of low-income households: ${f.rho_low_income_share}. Checked ${fmt(f.computed_at)} against the ${f.census_year} Census.`
+        : "Not computed yet.";
       document.querySelector("#csi-note").textContent = `Statistics Canada, ${d.csi_edition} published table. Every event is counted once, at its most serious offence.`;
       d.csi_weights.forEach((w) => document.querySelector("#weights tbody").append(row([w.label, w.weight.toLocaleString("en-CA")])));
       d.offence_map.forEach((m) => document.querySelector("#mapping tbody").append(row([m.offence_label, m.csi_label, m.weight.toLocaleString("en-CA"), m.match])));
