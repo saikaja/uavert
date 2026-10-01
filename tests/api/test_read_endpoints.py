@@ -95,3 +95,30 @@ async def test_scoring_rules_include_latest_fairness_check(client, seeded, test_
     f = (await client.get("/api/v1/scoring-rules")).json()["data"]["fairness"]
     assert f["rho_median_household_income"] == -0.28 and f["neighbourhoods"] == 158 and f["census_year"] == 2021
     assert f["label"] == "Scores don't mostly follow income" and f["review_threshold"] == 0.5 and f["computed_at"]
+
+
+async def test_search_engines_are_told_not_to_index(client, seeded):
+    # Criterion 39
+    r = await client.get("/api/v1/health")
+    assert r.headers["X-Robots-Tag"] == "noindex, nofollow"
+    robots = await client.get("/robots.txt")
+    assert robots.status_code == 200 and "Disallow: /" in robots.text and robots.headers["X-Robots-Tag"]
+
+
+async def test_pool_opens_on_first_request_when_startup_did_not_run(test_db_url, monkeypatch):
+    import httpx
+
+    from uavert.api.app import app
+    from uavert.config import get_settings
+
+    monkeypatch.setenv("DATABASE_URL", test_db_url)
+    get_settings.cache_clear()
+    saved, app.state.pool = app.state.pool, None  # as on a host that skips startup
+    try:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
+            assert (await c.get("/api/v1/health")).status_code == 200
+        assert app.state.pool is not None
+        await app.state.pool.close()
+    finally:
+        app.state.pool = saved
+        get_settings.cache_clear()
