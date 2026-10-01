@@ -58,19 +58,28 @@ def alert(alert_type, colour="yellow", status="issued", expires=NOW + timedelta(
     return alert_rules.Alert("test " + alert_type, alert_type, colour, status, NOW - timedelta(hours=1), expires)
 
 
-# Criterion 8: warnings put the area in the top band; advisories don't override.
-def test_warning_puts_area_in_high_band_and_names_alert():
-    score, reasons = alert_rules.alert_score([alert("warning")], NOW)
+# Criteria 8 and 46: Environment Canada's colour sets the level; a red warning puts the area in the top band.
+def test_red_warning_puts_area_in_high_band_and_names_alert():
+    score, reasons = alert_rules.alert_score([alert("warning", colour="red")], NOW)
     combined = combine({"crime": 10, "alert": score}, reasons)
     assert combined.band == "high" and "test warning" in combined.reasons[0].text
 
 
-def test_orange_advisory_counts_as_top_band():
-    assert alert_rules.alert_score([alert("advisory", colour="orange")], NOW)[0] == 90
+@pytest.mark.parametrize("alert_type,colour,score", [
+    ("warning", "yellow", 40), ("warning", "orange", 65), ("warning", "red", 90),
+    ("advisory", "orange", 65), ("advisory", "yellow", 40),
+    ("warning", None, 65), ("advisory", None, 25), ("watch", None, 25), ("statement", "yellow", 0),
+])
+def test_alert_level_follows_environment_canada_colours(alert_type, colour, score):
+    assert alert_rules.alert_score([alert(alert_type, colour=colour)], NOW)[0] == score
 
 
-def test_advisory_sets_moderate_floor_and_statement_informs_only():
-    assert alert_rules.alert_score([alert("advisory")], NOW)[0] == 25
+def test_routine_yellow_heat_warning_is_moderate_not_high():
+    score, _ = alert_rules.alert_score([alert("warning", colour="yellow")], NOW)
+    assert combine({"crime": 10, "alert": score}, []).band == "moderate"
+
+
+def test_statement_informs_only():
     score, reasons = alert_rules.alert_score([alert("statement")], NOW)
     assert score == 0 and len(reasons) == 1
 

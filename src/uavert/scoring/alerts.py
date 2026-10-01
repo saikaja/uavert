@@ -1,5 +1,5 @@
-"""Official alert score. Warnings (and any orange or red alert) put an area in the top band;
-watches and advisories set a moderate floor; statements are listed for information only."""
+"""Official alert score from Environment Canada's risk colour: yellow moderate, orange elevated, red high;
+without a colour, warnings are elevated and watches and advisories moderate; statements are information only."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -25,9 +25,17 @@ def is_active(a: Alert, now: datetime) -> bool:
     return a.status != "ended" and (a.expires_at is None or a.expires_at > now)
 
 
+COLOUR_SCORES = {"yellow": 40, "orange": 65, "red": TOP_BAND_SCORE}  # Environment Canada's own risk colours
+WARNING_WITHOUT_COLOUR = 65
+
+
 def alert_level(a: Alert) -> int:
-    if a.alert_type == "warning" or (a.risk_colour or "").lower() in ("orange", "red"):
-        return TOP_BAND_SCORE
+    """Use Environment Canada's colour when it gives one; otherwise fall back on the alert type."""
+    colour = (a.risk_colour or "").lower()
+    if colour in COLOUR_SCORES and a.alert_type != "statement":
+        return COLOUR_SCORES[colour]
+    if a.alert_type == "warning":
+        return WARNING_WITHOUT_COLOUR
     if a.alert_type in ("watch", "advisory"):
         return ADVISORY_SCORE
     return 0

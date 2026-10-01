@@ -75,7 +75,7 @@ async def seeded(test_pool):
         await c.execute(
             "INSERT INTO official_alerts (region_id, source_key, external_id, alert_type, name, risk_colour, status,"
             " issued_at, expires_at, geom) VALUES ($1, 'eccc_alerts', 'TEST-WARN', 'warning', 'test heat warning',"
-            " 'yellow', 'issued', $2, $3, ST_Multi(ST_GeomFromText($4, 4326)))",
+            " 'red', 'issued', $2, $3, ST_Multi(ST_GeomFromText($4, 4326)))",
             region_id, now - timedelta(hours=1), now + timedelta(hours=6), square(lon - 0.0001, lat - 0.0001, SIZE + 0.0002))
     return ids
 
