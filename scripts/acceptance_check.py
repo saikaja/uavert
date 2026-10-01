@@ -102,7 +102,17 @@ def main(base: str) -> int:
         check("27", bool(sources["activity_profile"]["as_of"] and sources["activity_profile"]["collected_at"]),
               f"activity_profile as_of {sources['activity_profile']['as_of']}, collected {sources['activity_profile']['collected_at']}")
 
+        r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "125 Blue Jays Way, Toronto"})
+        w = r.json()["data"]
+        check("41", r.status_code == 200 and 45 <= w["score"] <= 60 and w["band"] != "high",
+              f"Union Station -> 125 Blue Jays Way: score {w['score']} {w['band']} (was 80-84 high), "
+              f"typical {w.get('typical_score')} {w.get('typical_band')}, {dt:.2f}s")
+        check("44", w.get("typical_score") is not None and w.get("typical_band"), "walk has typical_score and typical_band")
+        check("51", "crowds" in w["categories"], f"categories: {sorted(w['categories'])}")
+
         rules = c.get("/api/v1/scoring-rules").json()["data"]
+        check("40", rules["parameters"].get("points_per_doubling") == 20,
+              f"scale: {rules['parameters'].get('score_scale')}; alert colours {rules['parameters'].get('alert_colour_scores')}")
         check("2", rules["csi_edition"] == "2009" and len(rules["csi_weights"]) == 26 and len(rules["offence_map"]) == 24,
               f"CSI edition {rules['csi_edition']}, {len(rules['csi_weights'])} weights, {len(rules['offence_map'])} mappings")
 
