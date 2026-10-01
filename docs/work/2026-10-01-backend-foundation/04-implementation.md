@@ -5,9 +5,15 @@
 ## What this step is
 This step builds the approved plan ([03-plan.md](03-plan.md)) step by step, with tests written alongside the code. It then runs a clean-up pass. This document records what was built and where it differs from the plan.
 
+**Updated 2026-10-01:** when this document first went to the user for approval, they asked for the downtown issue (follow-up 1) to be tackled first. This led to two approved design revisions, built on the same branch:
+- [02-design.r2.md](02-design.r2.md): compare each block with its surroundings
+- [02-design.r3.md](02-design.r3.md): allow for foot traffic
+
+They are recorded under "Additions from design revisions 2 and 3" below.
+
 ## What was done
 - **All 14 plan steps** were built in order on the branch `feature/backend-foundation`. After each step the tests passed and the step was committed. A final clean-up commit followed.
-- **Test suite:** `python -m pytest` reports **116 passed**.
+- **Test suite:** `python -m pytest` reports **127 passed**: 116 before the revisions, 11 added with them.
   - Unit tests cover the scoring rules, data parsers, news labels and route stretches.
   - API tests run against the Neon `test` branch with a small made-up dataset.
   - Outside services are faked in tests.
@@ -48,6 +54,40 @@ This step builds the approved plan ([03-plan.md](03-plan.md)) step by step, with
 | 13 | Web map and "How scores work" page | Done | `c1f698f` |
 | 14 | README, demo warm-up script, secrets scan | Done | `c2a432c` |
 | | Clean-up (code-simplifier) | Done | `4b39181` |
+| r2+r3 | Foot traffic counts; street scores per person on foot; "compared with surroundings"; busy-area note; stand-out route stretches | Done | `d5fb347` |
+
+## Additions from design revisions 2 and 3
+**What was built:**
+- **New source `toronto_tmc`:**
+  - the City of Toronto's most recent intersection count at 6,394 locations, loaded into `foot_traffic_counts`
+  - the newest count is from 2026-09-23
+  - the file is looked up by name through the City's CKAN API
+  - command: `python -m uavert ingest traffic`, also part of `ingest all`
+- **Foot traffic per street cell:**
+  - the median pedestrians per hour of 2015+ counts within 1 ring, else 2, else 3, else the city median
+  - 80 of 5,748 cells have no count within about 600 m and are marked "estimated"
+- **Street crime score per person:** the percentile of `smoothed_value ÷ max(foot traffic, 100)`.
+- **`vs_surroundings`:** per-person value ÷ the median of the other cells within 6 rings.
+- **`busy_area`:** foot traffic at or above the 90th percentile of counted locations (128 cells).
+- **Reasons:** each street cell gains a foot traffic reason with the count dates used. In busy areas it reads "Busy area: ... the score allows for crowds".
+- **Route stretches:** at least 1.5× their surroundings, the ones that stand out most first, at most 3. `segments_note` explains when none qualifies.
+- **API additions:**
+  - `foot_traffic_per_hour`, `vs_surroundings` and `busy_area` on cells, destinations and stretches
+  - `foot_traffic_counts_used` and `foot_traffic_dates` on destinations
+  - new parameters on `/scoring-rules`
+- **Web map:** tooltips and panels show foot traffic and "× its surroundings". The route panel lists "Stretches that stand out". The rules page has a new section, "Allowing for crowds".
+
+**Live results** (live server, 2026-10-01):
+
+| Check | Before | After |
+|---|---|---|
+| City Hall street score | 100 | 84 (about 1,378 people an hour, 36 counts 2018–2025, busy area) |
+| Union Station street score | 100 | 53 |
+| Union Station → Kensington walk | all 8 blocks 97–100, one 2.8 km "stretch" | overall 95 (the highest block); one stretch stands out: 833 m near Kensington at 2.7× its surroundings |
+| City Hall → Yonge-Dundas walk | all 100 | the Yonge-Dundas end stands out at 2.9×, plus a short stretch at 1.5× |
+| Jane and Finch → York University walk | | one block at 14× its quiet surroundings (shown as "more than 10×"), and a second at 3.6× |
+
+The overall 0–100 score of a downtown walk is still "high", as designed: it is the highest block on the route, and downtown blocks still rank high per person.
 
 ## Files changed
 
@@ -65,6 +105,12 @@ This step builds the approved plan ([03-plan.md](03-plan.md)) step by step, with
 | `scripts/compare_rankings.py`, `live_check.py`, `warm_demo.py` | New | Ranking report; in-process live checks; demo warm-up |
 | `tests/**` | New | 116 tests, with fixtures saved from the real Toronto Police, ECCC and CBC responses of 2026-10-01 |
 | `docs/work/.../csi-vs-demo-ranking.md`, `screenshots/*` | New | Checkpoint report; map and rules page screenshots |
+| `db/migrations/003_foot_traffic.sql` | New (r3) | `foot_traffic_counts`; seven new `cell_scores` columns |
+| `src/uavert/sources/toronto_open_data.py`, `src/uavert/ingest/traffic.py` | New (r3) | CKAN lookup, CSV parsing (8- and 14-hour counts → per hour), bulk load |
+| `src/uavert/scoring/crime.py`, `scoring/build.py`, `scoring/route.py` | Changed (r2, r3) | Foot traffic estimate, per person, surroundings ratio, busy threshold, stand-out stretches |
+| `src/uavert/api/locate.py`, `api/routes/cells.py`, `api/routes/route_risks.py`, `api/routes/sources.py` | Changed (r2, r3) | New response fields and parameters |
+| `src/uavert/web/app.js`, `rules.html`, `README.md` | Changed (r2, r3) | Foot traffic and stand-out stretches in the UI; rules page section; README |
+| `tests/test_foot_traffic.py`, `tests/test_route_rules.py`, `tests/fixtures/traffic/tmc_sample.csv`, other tests | New / changed (r2, r3) | 17 real rows from the City file; foot traffic, ratio, threshold and stretch tests; API field tests; a failed traffic download keeps the stored counts |
 
 ## Deviations from the plan
 
@@ -84,7 +130,10 @@ None of these changes a contract or an acceptance criterion unless marked.
 7. **Duplicate victims collapsed.** Major Crime Indicators can list the same offence once per victim. These are stored once per (event, offence): 62,227 records became 57,633 rows. Each event is then counted once at its most serious offence, as designed.
 8. **Personal email removed from outgoing requests.** My first version put your email address in the app's identification header (User-Agent). That sent it to Nominatim, OSRM, CBC, GDELT, Environment Canada and Toronto Police on every request. It now sends only `uavert-demo/0.1`. This change also fixed CBC, whose servers were stalling on the longer header.
 9. **GDELT returns "too many requests" (HTTP 429) from this network**, even when called once every 6 seconds. The failure is recorded (the "Data collected" panel shows it) and the other sources carry on. **In practice the news feature runs on CBC Toronto only for now.**
-10. **Small extras needed to finish the steps:**
+10. **Revisions 2 and 3: two small points.**
+    - **Order of crime reasons:** the API shows at most 2 crime reasons per score. So each street score shows the top incident reason first, then the foot traffic reason. A second incident group or the "leans on the neighbourhood" note follows when there is room.
+    - **Display cap:** ratios above 10 are shown on the map as "more than 10×". The API keeps the exact number.
+11. **Small extras needed to finish the steps:**
     - `scripts/live_check.py`, a development check tool
     - the ArcGIS paging order is optional, because the neighbourhood layer has no `OBJECTID` field
     - the street data date is shown in Toronto time (June 30), not UTC
@@ -104,9 +153,9 @@ The `code-simplifier` pass (commit `4b39181`) made no behaviour changes. All 116
 ## Follow-up ideas
 These were not done in this task. The first three affect how the demo reads and are worth deciding on before or soon after Tuesday.
 
-1. **The "busy street" effect.** Street scores rank each block against the rest of the city.
-   - **The problem:** downtown blocks have far more reported incidents because far more people are there. The whole Union Station → Kensington Market walk is "high", so the riskiest-stretch feature can't separate one downtown block from another.
-   - **Options:** compare each block with its surroundings; rank within the neighbourhood; or show counts beside the score. The build plan lists these.
+1. **The "busy street" effect: addressed by revisions 2 and 3.** What remains:
+   - **Night-time:** foot traffic counts are weekday daytime snapshots, so night-time risk per person isn't measured.
+   - **Neighbourhood scores** are still per resident, not per visitor.
 2. **A quarter of the city is always "high".** Percentile ranking puts about 25% of street cells in each band by construction. Fixed thresholds on the weighted value would let the bands mean the same thing month to month.
 3. **A single homicide in a small neighbourhood.** One homicide moves a small neighbourhood a long way (for example Bayview Woods-Steeles rises 74 places). Options: a three-year average for homicides, or wording that points out the small-number effect.
 4. **Current CSI weights.** Ask Statistics Canada for the current weight table. Switching to it is a data change (`CSI_EDITION`).
@@ -118,7 +167,7 @@ These were not done in this task. The first three affect how the demo reads and 
 8. **Production setup.** Scheduled refresh, hosting at a public address in a Canadian region, user accounts, CI/CD and monitoring. These are all outside this task's scope.
 
 ## What happens next
-Once this is approved, phase 5 (test the work):
+Once this is approved, phase 5 (test the work) covers revisions 2 and 3 as well. It:
 - runs the full test suite and the README steps from a clean setup
 - loads data into an **empty** database copy, to check acceptance criterion 1 as worded
 - maps each of the 20 acceptance criteria to its evidence
