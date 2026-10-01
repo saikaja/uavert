@@ -8,6 +8,6 @@ Build the first real Uavert backend (Neon Postgres + PostGIS/H3, Python ingestio
 | 2. Review the design | [02-design.md](02-design.md); revision [02-design.r2.md](02-design.r2.md) (downtown fix) | Approved; r2 approved 2026-10-01 12:57; r3 [02-design.r3.md](02-design.r3.md) (foot traffic) approved 2026-10-01 13:00 | 2026-10-01 |
 | 3. Start the work | [03-plan.md](03-plan.md) | Approved | 2026-10-01 12:18 |
 | 4. Do the work | [04-implementation.md](04-implementation.md) | Approved (includes r2 + r3) | 2026-10-01 13:15 |
-| 1–3 (addition). Time of day | [01-03-time-of-day.md](01-03-time-of-day.md) | Pending approval | |
+| 1–3 (addition). Time of day | [01-03-time-of-day.md](01-03-time-of-day.md) | Approved; building | 2026-10-01 13:21 |
 | 5. Test the work | | Not started | |
 | 6. End-to-end testing | | Not started | |

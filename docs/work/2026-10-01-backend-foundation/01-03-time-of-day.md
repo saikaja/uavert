@@ -1,6 +1,6 @@
 # 1–3. Define, design and plan: time of day
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 **Adds to:** [01-definition.md](01-definition.md) (scope and acceptance criteria), [02-design.md](02-design.md) with revisions [r2](02-design.r2.md) and [r3](02-design.r3.md), and [03-plan.md](03-plan.md). It covers phases 1–3 in one document, as the workflow allows for a contained addition.
 
 ## What this step is
@@ -151,8 +151,8 @@ These steps run on the same branch, each with tests and a commit.
 Once this is approved, I build T1–T5 and add them to `04-implementation.md` as an addendum. Then phase 5 (test the work) covers everything, including criteria 21–28.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 13:21
+- **User's response:** "YES"
 - **Revisions before approval:** none
