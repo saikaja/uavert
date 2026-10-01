@@ -6,10 +6,11 @@ Location risk scores for Toronto from public data: an ingestion pipeline, a scor
 - **Foot traffic:** street scores count incidents per person on foot, using City of Toronto pedestrian counts at intersections. Walking routes highlight the stretches that stand out from their surroundings.
 - **Time of day:** pick an hour and street-level scores change with it. They allow for when incidents happen nearby and how many people are out at that hour: City pedestrian counts by day, estimated from Bike Share trips at night.
 - **Air quality:** live Air Quality Health Index from Environment Canada.
-- **Official alerts:** Environment Canada weather alerts.
+- **Official alerts:** Environment Canada weather alerts, scored by their own risk colour (yellow moderate, orange elevated, red high). During a heat alert, the nearest City cool space open at that time is named.
+- **Crowds:** on the dates of large City events (Nuit Blanche, Pride, parades and others), nearby places are at least moderate. Major venues are mentioned as context.
 - **News:** CBC Toronto and GDELT headlines about protests and violent incidents, labelled unverified.
 
-Scores run from 0 to 100; higher means more reported risk. The combined score is the highest category, never an average. No place is ever labelled "safe".
+Scores run from 0 to 100; higher means more reported risk. Crime scores compare a place with a **typical Toronto block or neighbourhood** (the median): typical = 25, and each doubling adds 20. The combined score is the highest category, never an average. No place is ever labelled "safe".
 
 Homicides are averaged over 3 years, so a single event doesn't swing a small area. Every score rebuild also runs a **fairness check**: how closely neighbourhood scores follow household income (2021 Census). The result is shown on the "How scores work" page.
 
@@ -51,7 +52,7 @@ Two reference files are built by scripts and only need re-running when you want 
 
 **Keeping data fresh:**
 - **Locally:** `serve` refreshes air quality, alerts and news every 30 minutes (`--refresh-minutes 0` turns this off). You can also refresh by hand with `python -m uavert ingest live`.
-- **Hosted:** the GitHub Actions workflow `.github/workflows/refresh.yml` refreshes the live sources hourly. Daily at 10:00 UTC it also reloads crime and traffic data and rebuilds the scores. It uses the repository secret `DATABASE_URL`. Until the app is merged into `main`, the repository variable `DATA_BRANCH` names the branch whose code it runs.
+- **Hosted:** the GitHub Actions workflow `.github/workflows/refresh.yml` refreshes the live sources hourly. Daily at 10:00 UTC it runs `ingest daily` (crime, traffic, cool spaces, large City events) and rebuilds the scores. It uses the repository secret `DATABASE_URL`. Until the app is merged into `main`, the repository variable `DATA_BRANCH` names the branch whose code it runs.
 
 Address and route lookups are saved in the database (addresses for 30 days, routes for 7), so restarts and new hosted instances reuse them.
 
@@ -62,7 +63,7 @@ Each source is collected separately. If one fails, the others still run, earlier
 Vercel runs the FastAPI app from `index.py`, as one function in region `cle1`, next to the Neon database in Ohio.
 - **Production settings:** `DATABASE_URL` (direct Neon host) and `DB_POOL_MAX=2`.
 - **Deploy by hand:** `vercel deploy --prod`.
-- **Deploy from Git:** the project is connected to the GitHub repository, so pushes to `main` deploy to production. **Don't push to `main` until the app is merged there**, or production will deploy `main` as it is.
+- **Deploy from Git:** the project is connected to the GitHub repository. `main` carries a `vercel.json` that turns off Git deploys from `main` until the app is merged there. At the merge, keep the branch's `vercel.json`, and pushes to `main` will then deploy to production.
 - **Refresh:** Vercel's free plan only allows scheduled jobs once a day, so the hosted data refresh runs on GitHub Actions instead (see above).
 
 ### Before a demo
@@ -133,5 +134,8 @@ tests/                    unit tests; tests/api are API tests against the Neon t
 | CBC News Toronto RSS | Personal, non-commercial use. Headlines and links only; needs permission or a licensed feed before public launch |
 | Bike Share Toronto ridership 2025 (hourly pattern at night) | Open Government Licence – Toronto |
 | City of Toronto Neighbourhood Profiles, 2021 Census (income, for the fairness check) | Open Government Licence – Toronto; source data Statistics Canada |
+| City of Toronto Heat Relief Network (cool spaces) | Open Government Licence – Toronto (confirm before public launch) |
+| City of Toronto Festivals & Events calendar (large events only) | Open Government Licence – Toronto (the dataset page says "not specified"; confirm before public launch) |
+| Venue capacities | Wikipedia (CC BY-SA), cited per venue in `data/major_venues.csv` |
 | The GDELT Project | Free with attribution |
 | OpenStreetMap (Nominatim geocoding, OSRM walking routes, map tiles) | ODbL; each service's fair-use policy applies |
