@@ -4,6 +4,7 @@ Location risk scores for Toronto from public data: an ingestion pipeline, a scor
 
 - **Crime:** Toronto Police incidents, weighted by Statistics Canada's Crime Severity Index (CSI), scored per neighbourhood and per street block (H3 hexagons, about 0.1 km²).
 - **Foot traffic:** street scores count incidents per person on foot, using City of Toronto pedestrian counts at intersections. Walking routes highlight the stretches that stand out from their surroundings.
+- **Time of day:** pick an hour and street-level scores change with it. They allow for when incidents happen nearby and how many people are out at that hour: City pedestrian counts by day, estimated from Bike Share trips at night.
 - **Air quality:** live Air Quality Health Index from Environment Canada.
 - **Official alerts:** Environment Canada weather alerts.
 - **News:** CBC Toronto and GDELT headlines about protests and violent incidents, labelled unverified.
@@ -39,6 +40,8 @@ python -m uavert ingest all           # reference data, crime incidents, foot tr
 python -m uavert build-scores         # compute neighbourhood and street crime scores (about 10 seconds)
 python -m uavert serve                # web map at http://localhost:8000, API docs at http://localhost:8000/api/docs
 ```
+
+`data/activity_by_hour.csv` (people out by hour) is built from about 315 MB of City files by `python scripts/build_activity_profile.py`. It only needs re-running when you want newer data.
 
 Refresh only the live parts (air quality, alerts, news) with `python -m uavert ingest live`. Crime data changes only when Toronto Police publishes an update; rerun `ingest crime` and then `build-scores`.
 
@@ -81,13 +84,15 @@ All endpoints are read-only `GET`s and are public for now.
 | `/api/v1/sources` | Every source with licence, attribution, data date and collection time |
 | `/api/v1/scoring-rules` | Bands, CSI weights, offence mapping, parameters |
 
+`/cells`, `/risk-scores` and `/route-risks` also take an optional `hour` (0–23, Toronto time). Without it, scores are for the whole day.
+
 Address and route lookups are limited to 30 requests per minute per IP.
 
 ## Layout
 
 ```
 db/migrations/            numbered SQL files, applied in order by `uavert migrate`
-data/                     CSI weights and offence mapping (CSV, with source and retrieval date)
+data/                     CSI weights, offence mapping, people out by hour (CSV, each with source and retrieval date)
 src/uavert/sources/       clients for outside services (Toronto Police, ECCC, news, geocoding, routing)
 src/uavert/ingest/        collection runs and the command line
 src/uavert/scoring/       scoring rules as pure functions, plus the score build
@@ -106,5 +111,6 @@ tests/                    unit tests; tests/api are API tests against the Neon t
 | City of Toronto intersection traffic counts | Open Government Licence – Toronto (the dataset page says "not specified"; confirm before public launch) |
 | Environment and Climate Change Canada (MSC GeoMet) | ECCC Data Servers End-use Licence |
 | CBC News Toronto RSS | Personal, non-commercial use. Headlines and links only; needs permission or a licensed feed before public launch |
+| Bike Share Toronto ridership 2025 (hourly pattern at night) | Open Government Licence – Toronto |
 | The GDELT Project | Free with attribution |
 | OpenStreetMap (Nominatim geocoding, OSRM walking routes, map tiles) | ODbL; each service's fair-use policy applies |
