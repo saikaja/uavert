@@ -3,8 +3,10 @@
 from dataclasses import dataclass
 
 TPS_PORTAL = "https://data.tps.ca/"
-TPS_LICENCE = "Toronto Police Service open data terms of use (data.tps.ca); data is preliminary and locations are offset to the nearest intersection"
-TPS_ATTRIBUTION = "Source: Toronto Police Service Public Safety Data Portal"
+TPS_LICENCE = ("Open Government Licence - Ontario (commercial use allowed with attribution), as stated on each Toronto "
+               "Police dataset; data is preliminary and locations are offset to the nearest intersection")
+TPS_ATTRIBUTION = ("Contains information licensed under the Open Government Licence - Ontario. "
+                   "Source: Toronto Police Service Public Safety Data Portal")
 
 
 @dataclass(frozen=True)
