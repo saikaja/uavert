@@ -79,3 +79,20 @@ def test_bands():
         "lower", "lower", "moderate", "moderate", "elevated", "elevated", "high", "high"]
     words = " ".join(list(bands.BAND_LABELS) + list(bands.BAND_LABELS.values())).lower()
     assert "safe" not in words
+
+
+# Criterion 40: scores compare a place with a typical one, 20 points per doubling.
+@pytest.mark.parametrize("ratio,score", [(1, 25), (2, 45), (4, 65), (8, 85), (0.25, 0), (64, 100), (0.5, 5)])
+def test_relative_score_formula(ratio, score):
+    assert crime.relative_score(ratio * 3.0, 3.0) == score
+
+
+def test_relative_score_handles_zero():
+    assert crime.relative_score(0, 3.0) == 0 and crime.relative_score(5, 0) == 0
+
+
+# Criterion 42: the new scale never reorders places.
+def test_scores_keep_the_order_of_places():
+    values = [0.01, 0.2, 0.9, 1.0, 1.7, 2.7, 3.9, 12.0, 250.0]
+    scores = [crime.relative_score(v, 1.7) for v in values]
+    assert scores == sorted(scores)

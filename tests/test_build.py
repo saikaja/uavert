@@ -23,9 +23,11 @@ def test_neighbourhood_scores_rank_csi_weighted_rates_and_explain_them():
     out = neighbourhood_scores(events, hoods, W, {"THEFTFROMMV": ("theft_under_5000", "thefts from vehicles")}, {})
     # hood 1: (583 + 10 x 37) / 10,000 x 100,000 = 9,530; hood 2: 23 x 10 = 230
     assert round(out[1]["weighted_rate"]) == 9530 and round(out[2]["weighted_rate"]) == 230
-    assert (out[1]["crime_score"], out[2]["crime_score"]) == (100, 0)
+    # typical = median(9,530, 230) = 4,880 -> hood 1 is 1.95x typical: 25 + 20 x log2(1.95) = 44; hood 2 is 0.05x -> 0
+    assert (out[1]["crime_score"], out[2]["crime_score"]) == (44, 0)
     texts = [r["text"] for r in out[1]["reasons"]]
-    assert texts[0].startswith("1 robbery reported in 2025") and "Toronto median" in texts[0]
+    assert texts[0].startswith("About 2.0× the reported crime per resident of a typical Toronto neighbourhood")
+    assert texts[1].startswith("1 robbery reported in 2025") and "Toronto median" in texts[1]
     assert all(r["as_of"] == "2025" for r in out[1]["reasons"])
 
 
@@ -43,7 +45,7 @@ def test_cell_scores_count_street_incidents_nearby_and_lean_when_sparse():
     out = cell_scores(events, cells, {1: "Downtown"}, {})
     assert out[centre]["incident_count"] == 6
     assert out[centre]["own_value"] == 6 * 583
-    assert out[centre]["crime_score"] == 100
+    assert out[centre]["crime_score"] >= 75  # far above the typical block
     assert out[centre]["reasons"][0]["text"].startswith("6 robberies within about 250 m")
     # far cell: no incidents nearby, so it takes the neighbourhood average and says so
     assert out[far]["incident_count"] == 0
@@ -63,9 +65,10 @@ def test_cell_scores_allow_for_foot_traffic():
     assert out[a]["per_person_value"] < out[b]["per_person_value"]
     assert out[a]["crime_score"] < out[b]["crime_score"]
     assert out[a]["foot_traffic"].per_hour == 2000 and out[a]["busy_area"]
-    texts = [r["text"] for r in out[a]["reasons"]]
-    assert texts[1].startswith("Busy area: about 2,000 people an hour on foot nearby (1 City of Toronto count, 2025)")
-    assert out[a]["reasons"][1]["source_key"] == "toronto_tmc" and out[a]["reasons"][1]["as_of"] == "2025-05-01"
+    reason = out[a]["reasons"][1]
+    assert reason["text"].startswith("About ") and "the reported street crime per person of a typical Toronto block" in reason["text"]
+    assert "busy area with about 2,000 people an hour on foot (1 City of Toronto count, 2025)" in reason["text"]
+    assert reason["source_key"] == "tps_mci"
 
 
 def test_counted_uses_singular_for_one():
@@ -82,8 +85,8 @@ def test_neighbourhood_homicides_use_a_three_year_average():
              {"id": 2, "external_id": "2", "population": 10_000, "counts": {}}]
     one_2025 = neighbourhood_scores([hom(1, T)], hoods, {"murder": 7042}, {}, {})
     assert one_2025[1]["weighted_rate"] == pytest.approx(7042 / 3 / 10_000 * 100_000)
-    text = one_2025[1]["reasons"][0]["text"]
-    assert text.startswith("1 homicide in 2023-2025 (3-year average;") and one_2025[1]["reasons"][0]["as_of"] == "2023-2025"
+    text = one_2025[1]["reasons"][1]["text"]
+    assert text.startswith("1 homicide in 2023-2025 (3-year average;") and one_2025[1]["reasons"][1]["as_of"] == "2023-2025"
     # homicides in 2023 and 2024 count too; 2022 doesn't
     spread = neighbourhood_scores([hom(1, datetime(2023, 3, 1, tzinfo=UTC)), hom(2, datetime(2024, 3, 1, tzinfo=UTC)),
                                    hom(3, datetime(2022, 3, 1, tzinfo=UTC))], hoods, {"murder": 7042}, {}, {})
@@ -100,3 +103,14 @@ def test_street_homicides_count_a_third_for_three_years():
     assert two_years_ago[a]["own_value"] == pytest.approx(583 + 7042 / 3)
     assert four_years_ago[a]["own_value"] == pytest.approx(583)
     assert any("1 homicide within about 250 m in the last 3 years" in r["text"] for r in two_years_ago[a]["reasons"])
+
+
+def test_first_street_reason_is_the_most_frequent_offence():
+    # Criterion 45: lead with what happens most, not the rarest serious event; the serious one still shows.
+    a = h3.latlng_to_cell(43.6536, -79.3840, 9)
+    newest = datetime(2026, 6, 30, tzinfo=UTC)
+    events = [ev(i, "assault_1", "assaults", cell=a, when=newest) for i in range(5)] + [hom(9, newest - timedelta(days=30), cell=a)]
+    reasons = [r["text"] for r in cell_scores(events, {a: 1}, {1: "Test"}, {})[a]["reasons"]]
+    assert reasons[0].startswith("5 assaults within about 250 m")
+    assert reasons[1].startswith("About ")  # how the block compares with a typical one
+    assert any(t.startswith("1 homicide within about 250 m") for t in reasons)

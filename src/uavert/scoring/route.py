@@ -48,6 +48,20 @@ def cells_in_order(points: list[tuple[float, float]]) -> list[tuple[str, list[tu
     return groups
 
 
+def typical_score(points: list[tuple[float, float]], scores: dict[str, int]) -> int | None:
+    """The median block score along the walk, weighted by how much of the walk is in each block."""
+    weighted = sorted((scores[cell], len(pts)) for cell, pts in cells_in_order(points) if cell in scores)
+    total = sum(w for _, w in weighted)
+    if not total:
+        return None
+    running = 0
+    for score, w in weighted:
+        running += w
+        if running * 2 >= total:
+            return score
+    return weighted[-1][0]
+
+
 @dataclass
 class Stretch:
     ratio: float

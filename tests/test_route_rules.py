@@ -40,3 +40,12 @@ def test_at_most_three_stretches():
 def test_nothing_stands_out():
     pts, cells = walk()
     assert route.standout_stretches(pts, {c: 1.2 for c in cells}) == []
+
+
+def test_typical_score_is_the_length_weighted_median():
+    # Criterion 44: most of the walk is moderate, one short block is elevated.
+    pts, cells = walk()
+    scores = {c: 40 for c in cells}
+    scores[cells[3]] = 70
+    assert route.typical_score(pts, scores) == 40
+    assert route.typical_score(pts, {}) is None

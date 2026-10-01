@@ -6,6 +6,7 @@ from uavert.api.locate import neighbourhood_at, resolve, score_place, walking_ro
 from uavert.api.ratelimit import limit_outside_calls
 from uavert.api.timeofday import crime_at, time_info
 from uavert.scoring import route as route_rules
+from uavert.scoring.bands import band_for
 from uavert.sources.http import SourceUnavailable
 from uavert.sources.routing import NoRoute
 
@@ -68,6 +69,7 @@ async def route_risks(
     if not scored:
         raise ApiError(422, "outside_coverage", "That route doesn't pass through the area we cover.")
     worst = max(scored.values(), key=lambda s: s.score)
+    typical = route_rules.typical_score(points, {c: sc.score for c, sc in scored.items()})
     stretches = route_rules.standout_stretches(points, {c: r["vs_surroundings"] for c, r in by_cell.items()})
     segments = [{"geometry": _line(s.points), "length_m": round(s.length_m),
                  "vs_surroundings": round(s.ratio, 1),
@@ -79,6 +81,8 @@ async def route_risks(
         "distance_m": round(walk.distance_m), "duration_s": round(walk.duration_s),
         "geometry": _line(walk.coordinates),
         **worst.to_dict(),
+        "typical_score": typical,
+        "typical_band": band_for(typical) if typical is not None else None,
         "cells_scored": len(scored),
         "riskiest_segments": segments,
         "segments_note": None if segments else "No stretch of this walk stands out from its surroundings.",

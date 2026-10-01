@@ -21,6 +21,7 @@ async def test_route_score_is_highest_along_route_with_riskiest_stretches(client
     d = r.json()["data"]
     assert d["distance_m"] == 1000 and d["geometry"]["type"] == "LineString"
     assert d["score"] == 80 and d["band"] == "high"  # Test Centre's crime 80 is the highest along the way
+    assert d["typical_score"] is not None and d["typical_band"] in ("lower", "moderate", "elevated", "high")
     segs = d["riskiest_segments"]
     assert len(segs) == 1 and d["segments_note"] is None  # only Test Centre cells stand out (2.5x)
     assert segs[0]["vs_surroundings"] == 2.5 and segs[0]["score"] == 80 and segs[0]["foot_traffic_per_hour"] == 500

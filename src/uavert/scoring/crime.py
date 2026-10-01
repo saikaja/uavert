@@ -4,6 +4,7 @@ from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Hashable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
+from math import log2
 from statistics import median
 from typing import TypeVar
 
@@ -29,6 +30,20 @@ def percentile_scores(values: Mapping[K, float]) -> dict[K, int]:
         rank = less + (equal - 1) / 2
         out[k] = round(100 * rank / (n - 1))
     return out
+
+
+POINTS_PER_DOUBLING = 20  # a typical place scores 25; twice typical 45, four times 65, eight times 85
+
+
+def relative_score(value: float, typical: float) -> int:
+    """Score a place against a typical one (the median): 25 at typical, +20 per doubling, capped to 0-100."""
+    if value <= 0 or typical <= 0:
+        return 0
+    return max(0, min(100, round(25 + POINTS_PER_DOUBLING * log2(value / typical))))
+
+
+def times_typical(value: float, typical: float) -> float:
+    return value / typical if typical > 0 else 0.0
 
 
 def weighted_rate(counts: Mapping[str, float], weights: Mapping[str, float], population: int) -> float:

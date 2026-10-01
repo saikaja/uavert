@@ -104,12 +104,17 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
 
     medians = {g: median(d.get(g, {"rate_per_100k": 0.0})["rate_per_100k"] for d in details.values())
                for g in {g for d in details.values() for g in d}}
-    scores = crime.percentile_scores(rates)
+    typical = median(rates.values())
+    scores = {k: crime.relative_score(v, typical) for k, v in rates.items()}
     out = {}
     for h in hoods:
         d = details[h["id"]]
         top = sorted(d.items(), key=lambda kv: -kv[1]["weighted"])[:2]
-        reasons = []
+        ratio = crime.times_typical(rates[h["id"]], typical)
+        reasons = [Reason("crime", f"About {ratio:.1f}× the reported crime per resident of a typical Toronto neighbourhood "
+                                   f"({NEIGHBOURHOOD_YEAR}, weighted by seriousness)",
+                          source_key="tps_mci", value=round(ratio, 2), as_of=str(NEIGHBOURHOOD_YEAR),
+                          collected_at=used.get("tps_mci", {}).get("collected_at")).to_dict()]
         for g, v in top:
             if not v["count"]:
                 continue
@@ -130,19 +135,20 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
     return out
 
 
-def foot_traffic_reason(f: crime.FootTraffic, busy: bool, city_median: float, collected_at: str | None) -> dict:
+def typical_block_reason(ratio: float, f: crime.FootTraffic, busy: bool, city_median: float, as_of: str,
+                         collected_at: str | None) -> dict:
+    """How the block compares with a typical Toronto block, and the foot traffic the comparison allows for."""
+    compared = f"About {ratio:.1f}× the reported street crime per person of a typical Toronto block"
     if f.estimated:
-        text = f"No foot-traffic count nearby; using the Toronto median of about {city_median:,.0f} people an hour"
+        foot = f"; no foot-traffic count nearby, so the Toronto median of about {city_median:,.0f} people an hour is used"
     else:
         years = str(f.first_date.year) if f.first_date.year == f.last_date.year else f"{f.first_date.year}-{f.last_date.year}"
         plural = "s" if f.counts_used != 1 else ""
         counted = f"{f.counts_used} City of Toronto count{plural}, {years}"
-        if busy:
-            text = f"Busy area: about {f.per_hour:,.0f} people an hour on foot nearby ({counted}); the score allows for crowds"
-        else:
-            text = f"About {f.per_hour:,.0f} people an hour on foot nearby ({counted}); the score allows for this"
-    return Reason("crime", text, "toronto_tmc", value=round(f.per_hour),
-                  as_of=f.last_date.isoformat() if f.last_date else None, collected_at=collected_at).to_dict()
+        foot = (f"; busy area with about {f.per_hour:,.0f} people an hour on foot ({counted}), which the score allows for"
+                if busy else f", allowing for about {f.per_hour:,.0f} people an hour on foot nearby ({counted})")
+    return Reason("crime", compared + foot, "tps_mci", value=round(ratio, 2), as_of=as_of,
+                  collected_at=collected_at).to_dict()
 
 
 def local_hour(e: Event) -> int | None:
@@ -204,10 +210,11 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
     busy_from = crime.busy_area_threshold(rates)
     foot = {c: crime.foot_traffic_estimate(c, counts_by_cell, city_median, h3.grid_disk) for c in cells}
     per_person = {c: crime.per_person(smoothed[c], foot[c].per_hour) for c in cells}
-    scores = crime.percentile_scores(per_person)
+    typical = median(per_person.values())  # the typical Toronto block, all day
+    scores = {c: crime.relative_score(v, typical) for c, v in per_person.items()}
 
     # Time of day: each block's incidents by hour (leaning toward the city's pattern), per person out at that hour,
-    # ranked across every block and every hour together so emptier hours can score higher.
+    # compared with the same all-day typical block, so emptier hours score higher where incidents continue.
     weight_of = {e: contribution(e) for e in street}
     city_shares = crime.window_shares([local_hour(e) for e in street], [weight_of[e] for e in street])
     activity = activity or [1.0] * 24
@@ -220,7 +227,7 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
         for h in range(24):
             per_person_by_hour[(c, h)] = crime.per_person_at_hour(
                 smoothed[c], intensity_by_hour[c][h], foot[c].per_hour, activity[h])
-    scores_by_hour = crime.percentile_scores(per_person_by_hour)
+    scores_by_hour = {k: crime.relative_score(v, typical) for k, v in per_person_by_hour.items()}
     as_of = newest.astimezone(TORONTO_TZ).date().isoformat()
 
     out = {}
@@ -230,18 +237,25 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
         for e in near:
             groups[e.group][0] += 1
             groups[e.group][1] += e.weight
+        # Lead with the most frequent offence; the most serious one (if different) comes next.
+        by_count = sorted(groups, key=lambda g: (-groups[g][0], -groups[g][1]))
+        shown = by_count[:1]
+        if groups:
+            heaviest = max(groups, key=lambda g: groups[g][1])
+            shown += [heaviest] if heaviest not in shown else by_count[1:2]
         incident_reasons = [
-            Reason("crime", f"{counted(n, g)} within about 250 m in the last {crime.HOMICIDE_YEARS} years (each counted at one third)"
+            Reason("crime", f"{counted(groups[g][0], g)} within about 250 m in the last {crime.HOMICIDE_YEARS} years (each counted at one third)"
                    if g == "homicides" else
-                   f"{counted(n, g)} within about 250 m in the last 12 months (outdoors, transit or businesses)",
-                   source_key=(src := GROUP_SOURCE.get(g, "tps_mci")), value=n, as_of=as_of,
+                   f"{counted(groups[g][0], g)} within about 250 m in the last 12 months (outdoors, transit or businesses)",
+                   source_key=(src := GROUP_SOURCE.get(g, "tps_mci")), value=groups[g][0], as_of=as_of,
                    collected_at=used.get(src, {}).get("collected_at")).to_dict()
-            for g, (n, _) in sorted(groups.items(), key=lambda kv: -kv[1][1])[:2]
+            for g in shown
         ]
         busy = foot[c].per_hour >= busy_from and not foot[c].estimated
         # Order matters: the API shows the first two crime reasons.
-        reasons = incident_reasons[:1] + [
-            foot_traffic_reason(foot[c], busy, city_median, used.get("toronto_tmc", {}).get("collected_at"))]
+        reasons = incident_reasons[:1] + [typical_block_reason(
+            crime.times_typical(per_person[c], typical), foot[c], busy, city_median, as_of,
+            used.get("tps_mci", {}).get("collected_at"))]
         if len(near) < crime.MIN_INCIDENTS:
             reasons.append(Reason("crime", f"Few street incidents recorded nearby, so this score leans on the "
                                   f"{hood_names[hood]} average", source_key="tps_mci", value=len(near), as_of=as_of,
@@ -272,7 +286,8 @@ async def build(conn: asyncpg.Connection) -> dict:
     hood_rows = neighbourhood_scores(events, hoods, weights, ncr_extra, used)
     census = {r["external_id"]: r for r in await conn.fetch(
         "SELECT external_id, median_household_income, low_income_pct, census_year FROM neighbourhood_census")}
-    paired = [(hood_rows[h["id"]]["crime_score"], census[h["external_id"]]) for h in hoods if h["external_id"] in census]
+    # Fairness uses the underlying rates: the same order as the scores, unaffected by capping at 0 and 100.
+    paired = [(hood_rows[h["id"]]["weighted_rate"], census[h["external_id"]]) for h in hoods if h["external_id"] in census]
 
     cells = {r["h3"]: r["neighbourhood_id"] for r in await conn.fetch("SELECT h3::text AS h3, neighbourhood_id FROM cells")}
     traffic = [(r["h3"], float(r["per_hour"]), r["count_date"]) for r in await conn.fetch(
