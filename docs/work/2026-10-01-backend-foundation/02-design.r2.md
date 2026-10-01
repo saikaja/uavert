@@ -1,6 +1,6 @@
 # 2. Review the design (revision 2): the downtown "busy street" fix
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 **Revises:** [02-design.md](02-design.md) (approved 2026-10-01). Everything in that design stays as it is except the parts changed below.
 
 ## Why this revision
@@ -103,8 +103,8 @@ Fields are added; nothing is removed or renamed, so `/api/v1` stays compatible.
 Once this revision is approved, I build it on the same branch, with tests, as an addition to phase 4. I then update `04-implementation.md` to record it and ask you to approve phase 4.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
-- **Revisions before approval:** none
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 12:57
+- **User's response:** "yes approved it should consider the general traffic in the area like u said as well"
+- **Revisions before approval:** none. The request to also account for general foot traffic (alternative 2) is handled as a further revision, [02-design.r3.md](02-design.r3.md), after checking which traffic data exists.
