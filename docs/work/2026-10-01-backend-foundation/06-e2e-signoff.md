@@ -6,7 +6,11 @@
 You use the app yourself, the way your boss will, and record what happens. This is the final sign-off. Claude prepared the checklist but did not run it; only results you report are recorded here.
 
 ## What was done
-Prepared the commands to run the app, the checklist and a demo-day routine. The checklist is built from the 28 acceptance criteria in [01-definition.md](01-definition.md) and [01-03-time-of-day.md](01-03-time-of-day.md). The items phase 5 could not verify ([05-test-report.md](05-test-report.md), "Could not verify") come first.
+Prepared the commands to run the app, the checklist and a demo-day routine. The checklist is built from the acceptance criteria in [01-definition.md](01-definition.md), [01-03-time-of-day.md](01-03-time-of-day.md) and [01-03-solidify.md](01-03-solidify.md) (criteria 1–39). The items phase 5 could not verify come first ([05-test-report.md](05-test-report.md) and [05-test-report.solidify.md](05-test-report.solidify.md), "Could not verify").
+
+**Updated 2026-10-01**, after the solidify additions:
+- the hosted link
+- rows 23–29 (fairness check, homicide smoothing, saved lookups, automatic refresh, GitHub)
 
 ## What changed
 A working first version of Uavert for Toronto: a backend that collects public data and turns it into risk scores, a versioned API, and a web map on top.
@@ -24,12 +28,17 @@ A working first version of Uavert for Toronto: a backend that collects public da
   - for a walking route, with the stretches that stand out
   - all-day, or at any hour you choose
 - **Where it is:**
-  - Git repository `C:\Users\saika\uavert`, branch `feature/backend-foundation` (`main` has only the first planning documents)
-  - database: Neon project `uavert` (branches `main` and `test`)
+  - **hosted:** https://uavert.vercel.app (public, not indexed by search engines)
+  - **code:** https://github.com/saikaja/uavert (private), branch `feature/backend-foundation`. `main` has only the first planning documents and the refresh workflow.
+  - **local copy:** `C:\Users\saika\uavert`
+  - **database:** Neon project `uavert` (branches `main` and `test`), shared by the local app and the hosted site
+  - **data refresh:** GitHub Actions, hourly (air quality, alerts, news) and daily (crime, traffic, scores)
   - the full record of decisions is in this task folder
 
 ## How to run it
-In **PowerShell**:
+**Easiest:** open **https://uavert.vercel.app**. Nothing to install. The data is refreshed hourly by GitHub Actions.
+
+**Locally,** in **PowerShell** (the local app also refreshes live data every 30 minutes while it runs):
 
 ```powershell
 cd C:\Users\saika\uavert
@@ -85,14 +94,23 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 19 | Look at every score and label on the map, panels and rules page | The word "safe" never appears as a rating or band; the lowest band reads "Lower reported risk" | Not tested | |
 | 20 | Open http://localhost:8000/api/docs | The interactive API page lists the `/api/v1` endpoints: health, neighbourhoods, cells, risk-scores, route-risks, news-events, sources, scoring-rules | Not tested | |
 | 21 | In the second PowerShell window: `.\.venv\Scripts\python.exe scripts\acceptance_check.py` | Ends with "22 of 22 checks passed" | Not tested | |
-| 22 | Check the comparison report: open `docs\work\2026-10-01-backend-foundation\csi-vs-demo-ranking.md` | It reads sensibly to you. Is the ranking with StatCan weights acceptable to show? | Not tested | (your judgement) |
+| 22 | Check the comparison report: open `docs\work\2026-10-01-backend-foundation\csi-vs-demo-ranking.md` (regenerated with the 3-year homicide average; see its last section) | It reads sensibly to you. Is the ranking with StatCan weights acceptable to show? | Not tested | (your judgement) |
+| 23 | **Hosted site:** open https://uavert.vercel.app on your laptop **and on your phone** (mobile data is fine), and repeat rows 2, 5, 6 and 7 there | The same map and results as locally; searches answer within a couple of seconds. On the phone, the map sits above the panel | Not tested | |
+| 24 | On the hosted site, click **How scores work** and find **Fairness check** | It says "Scores don't mostly follow income. Across 158 neighbourhoods, scores vs median household income: -0.28; vs share of low-income households: 0.24. Checked … against the 2021 Census." | Not tested | |
+| 25 | Click **Bayview Woods-Steeles** on the map, then **Mount Dennis** | A homicide reason, if shown, reads "1 homicide in 2023-2025 (3-year average; …)". Neither is near the top of the city any more | Not tested | |
+| 26 | **Saved lookups:** stop and restart the local server, then search `100 Queen St W` | It answers about as fast as before the restart (the answer is saved in the database) | Not tested | |
+| 27 | **Automatic refresh:** after a few hours, open https://github.com/saikaja/uavert/actions | "Refresh data" has run on schedule about every hour, with green ticks. A yellow warning about GDELT is normal | Not tested | |
+| 28 | On the hosted site, look at **Data collected** later in the day | Air quality and news show a "collected" time within roughly the last hour | Not tested | |
+| 29 | Open https://github.com/saikaja/uavert in a private or incognito window (signed out) | GitHub shows "404 – not found", which confirms the repository is private | Not tested | |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".
 - **A real news report** of a Toronto shooting or protest: it should appear in Recent news as unverified and raise nearby blocks for 24 hours, at most to "elevated".
 
 ## Demo-day routine (Tuesday)
-1. 15–30 minutes before: run the two commands in "How to run it": `ingest live`, then `serve`. Then run `scripts\warm_demo.py` and wait for `Ready.`
+1. 15–30 minutes before, **either:**
+   - **present from https://uavert.vercel.app** (recommended; it works from any device). Open it and click one neighbourhood to wake the database. Or run `.\.venv\Scripts\python.exe scripts\warm_demo.py https://uavert.vercel.app` and wait for `Ready.`
+   - **or** run locally: the two commands in "How to run it" (`ingest live`, then `serve`), then `scripts\warm_demo.py`, and wait for `Ready.`
 2. Open http://localhost:8000 and click one neighbourhood, so the database is awake.
 3. **A suggested story for your boss:**
    1. the city map (neighbourhoods, with StatCan weights)
@@ -109,7 +127,9 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 - **Night-time foot traffic** is estimated from Bike Share trips; daytime counts are snapshots from 2015–2026.
 - **News** is keyword-matched and unverified. CBC's feed is for personal, non-commercial use (fine for an internal demo, not a public launch). GDELT often refuses requests.
 - **Free services:** address search and walking routes use free OpenStreetMap services with no uptime guarantee. The database is in Neon's US East (Ohio) region; it holds public data only, and a Canadian region is required before any user data is added.
-- **Runs on this laptop only:** there is no public web address yet, and it must be installed with the README's editable install.
+- **Public hosted link:** https://uavert.vercel.app is open to anyone with the link (your choice). It shows CBC headlines, whose feed is for personal, non-commercial use. Switch to a licensed news source, or hide news on the hosted site, before sharing widely.
+- **Don't push to `main` before merging:** Vercel deploys `main` to production. Until the app is merged there after your sign-off, a push to `main` would replace the working site with `main`'s current content.
+- **Local installs:** must use the README's editable install (`-e`).
 - **Licences:** the City of Toronto traffic dataset's licence says "not specified" on its page; confirm before a public launch.
 
 ## Approval
