@@ -33,7 +33,7 @@ async def scoring_rules(request: Request):
         edition,
     )
     mapping = await pool.fetch(
-        "SELECT m.source_key, m.ucr_code, m.ucr_ext, m.offence_label, m.csi_offence_key, m.match, m.group_label, w.weight"
+        "SELECT m.source_key, m.ucr_code, m.ucr_ext, m.offence_label, m.csi_offence_key, w.label AS csi_label, m.match, m.group_label, w.weight"
         " FROM offence_map m JOIN csi_weights w ON w.edition = $1 AND w.offence_key = m.csi_offence_key"
         " ORDER BY w.weight DESC, m.offence_label",
         edition,

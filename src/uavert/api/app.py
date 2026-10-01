@@ -1,8 +1,10 @@
 """FastAPI app: `/api/v1` endpoints and the web map."""
 
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import APIRouter, FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 
 from uavert import db
 from uavert.api import errors
@@ -45,3 +47,4 @@ async def health(request: Request):
 for module in (neighbourhoods, cells, risk_scores, route_risks, news, sources):
     v1.include_router(module.router)
 app.include_router(v1)
+app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "web", html=True), name="web")

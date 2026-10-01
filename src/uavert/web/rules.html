@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Uavert Scores Work</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Uavert <span>Toronto</span></div>
+    <nav><a href="/">Map</a><a href="/api/docs" target="_blank" rel="noopener">API</a></nav>
+  </header>
+  <main class="rules">
+    <h1>How scores work</h1>
+    <p>Every place gets a score from 0 to 100. <strong>Higher means more reported risk.</strong> Scores are guidance based on public data, not a prediction or a guarantee; no place is ever labelled "safe".</p>
+
+    <h2>Four parts, and the highest one counts</h2>
+    <ul>
+      <li><strong>Crime:</strong> reported crimes from the Toronto Police Service, each weighted by how seriously Canadian courts treat it (Statistics Canada's Crime Severity Index), then ranked against the rest of Toronto.</li>
+      <li><strong>Air quality:</strong> the current Air Quality Health Index from the nearest Environment Canada station.</li>
+      <li><strong>Official alerts:</strong> an Environment Canada warning (or any orange or red alert) puts the area in the top band. Watches and advisories set a moderate floor.</li>
+      <li><strong>News:</strong> recent news about a protest or violent incident nearby raises the score for 24 hours, at most to "elevated". News reports are unverified and labelled that way.</li>
+    </ul>
+    <p>The combined score is the <strong>highest</strong> of the four, never an average, so one serious risk is never hidden by several low ones.</p>
+
+    <h2>Bands</h2>
+    <div class="table-wrap"><table id="bands"><thead><tr><th>Band</th><th>Scores</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>Neighbourhood and street level</h2>
+    <ul id="params"></ul>
+
+    <h2>Crime Severity Index weights</h2>
+    <p id="csi-note"></p>
+    <div class="table-wrap"><table id="weights"><thead><tr><th>Offence</th><th>Weight</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>How Toronto Police offences map to the index</h2>
+    <p>"Closest" means Statistics Canada doesn't publish a separate weight for that exact offence, so the nearest one is used.</p>
+    <div class="table-wrap"><table id="mapping"><thead><tr><th>Toronto Police offence</th><th>Index offence</th><th>Weight</th><th>Match</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>Limitations</h2>
+    <ul>
+      <li>Crime data is what was <em>reported</em> to police. Toronto Police describes it as preliminary, and locations are moved to the nearest intersection for privacy.</li>
+      <li>Busy areas have more incidents partly because far more people are there; scores count incidents, not risk per visitor.</li>
+      <li>Neighbourhood rates use resident population, so areas with many visitors and few residents look higher.</li>
+      <li>A single serious incident (for example a homicide) can move a small neighbourhood a long way; it fades over the following months.</li>
+      <li>Toronto has only a few air quality stations, so air quality is similar across most of the city.</li>
+      <li>News is matched by keywords and is often missing a location; it is never treated as confirmed.</li>
+    </ul>
+
+    <h2>Sources and when they were collected</h2>
+    <div class="table-wrap"><table id="sources"><thead><tr><th>Source</th><th>Data up to</th><th>Collected</th><th>Licence</th></tr></thead><tbody></tbody></table></div>
+  </main>
+  <script>
+    "use strict";
+    const row = (cells) => { const tr = document.createElement("tr"); cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.append(td); }); return tr; };
+    const fmt = (iso) => iso ? new Date(iso).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: iso.length > 10 ? "short" : undefined }) : "unknown";
+    Promise.all([fetch("/api/v1/scoring-rules").then((r) => r.json()), fetch("/api/v1/sources").then((r) => r.json())]).then(([rules, sources]) => {
+      const d = rules.data, p = d.parameters;
+      d.bands.forEach((b) => document.querySelector("#bands tbody").append(row([b.label, `${b.min_score}–${b.max_score}`])));
+      [
+        `Neighbourhood crime: every ${p.neighbourhood_year} incident, weighted and divided by population, ranked across the 158 neighbourhoods.`,
+        `Street level: the city is split into hexagons about one city block across. Each counts the last ${p.street_window_days} days of incidents ${p.street_premises.join(", ").toLowerCase()} (not inside homes), plus half the average of the surrounding hexagons (about 250 m).`,
+        `Recent incidents count more: an incident ${p.half_life_days} days old counts half.`,
+        `A hexagon needs at least ${p.min_incidents_for_own_score} nearby incidents to stand on its own; with fewer, its score leans toward its neighbourhood's.`,
+        `Air quality readings older than ${p.aqhi_stale_after_hours} hours are still used but marked "not current".`,
+      ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#params").append(li); });
+      document.querySelector("#csi-note").textContent = `Statistics Canada, ${d.csi_edition} published table. Every event is counted once, at its most serious offence.`;
+      d.csi_weights.forEach((w) => document.querySelector("#weights tbody").append(row([w.label, w.weight.toLocaleString("en-CA")])));
+      d.offence_map.forEach((m) => document.querySelector("#mapping tbody").append(row([m.offence_label, m.csi_label, m.weight.toLocaleString("en-CA"), m.match])));
+      sources.data.forEach((s) => document.querySelector("#sources tbody").append(row([s.name, fmt(s.as_of), fmt(s.collected_at), s.licence])));
+    });
+  </script>
+</body>
+</html>
