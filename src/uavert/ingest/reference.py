@@ -3,7 +3,7 @@
 import csv
 import json
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 import asyncpg
@@ -128,10 +128,36 @@ async def build_cells(conn: asyncpg.Connection, region_id: int) -> int:
     return await conn.fetchval("SELECT count(*) FROM cells WHERE region_id = $1", region_id)
 
 
+def read_activity_profile() -> tuple[list[dict], date]:
+    path = DATA_DIR / "activity_by_hour.csv"
+    rows = read_csv(path)
+    if [int(r["hour"]) for r in rows] != list(range(24)):
+        raise ValueError("data/activity_by_hour.csv must have one row for each hour 0-23")
+    retrieved = next(l for l in path.read_text(encoding="utf-8").splitlines() if l.startswith("# Retrieved:"))
+    return rows, date.fromisoformat(retrieved.split()[2].rstrip("."))
+
+
+async def load_activity_profile(conn: asyncpg.Connection) -> int:
+    rows, retrieved = read_activity_profile()
+    async with conn.transaction():
+        for r in rows:
+            await conn.execute(
+                "INSERT INTO activity_by_hour (hour, pedestrian_factor, bikeshare_factor, factor_used, basis, retrieved_on)"
+                " VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (hour) DO UPDATE SET pedestrian_factor = $2,"
+                " bikeshare_factor = $3, factor_used = $4, basis = $5, retrieved_on = $6",
+                int(r["hour"]), float(r["pedestrian_factor"]) if r["pedestrian_factor"] else None,
+                float(r["bikeshare_factor"]), float(r["factor_used"]), r["basis"], retrieved,
+            )
+    return len(rows)
+
+
 async def run(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> None:
     async with ingest_run(conn, "statcan_csi") as r:
         r.rows_written = await load_csi_and_offence_map(conn)
         r.data_as_of = datetime(2009, 12, 31, tzinfo=UTC)  # edition year of the published table
+    async with ingest_run(conn, "activity_profile") as r:
+        r.rows_written = await load_activity_profile(conn)
+        r.data_as_of = datetime(2025, 12, 31, tzinfo=UTC)  # the Bike Share year used for night hours
     async with ingest_run(conn, "tps_ncr") as r:
         r.rows_written = await load_neighbourhoods(conn, client, region_id)
         r.rows_written += await build_cells(conn, region_id)

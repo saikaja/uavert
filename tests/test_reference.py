@@ -41,3 +41,20 @@ def test_all_offences_seen_in_last_12_months_are_mapped():
             "1470-100", "1455-100", "2120-230", "1610-190", "1610-170", "1610-160", "2130-220", "1462-100",
             "1410-110", "1440-100", "2121-200"]
     load_offence_map().check({("tps_mci", *s.split("-"), "seen") for s in seen})
+
+
+def test_activity_profile_has_24_hours_sources_and_dates():
+    from datetime import date
+
+    from uavert.ingest.reference import read_activity_profile
+
+    rows, retrieved = read_activity_profile()
+    assert retrieved == date(2026, 10, 1)
+    assert all(float(r["factor_used"]) > 0 for r in rows)
+    basis = {int(r["hour"]): r["basis"] for r in rows}
+    assert {h for h, b in basis.items() if b == "measured"} == set(range(6, 20))  # the City counts 6 am-8 pm only
+    head = (DATA_DIR / "activity_by_hour.csv").read_text(encoding="utf-8")
+    assert "traffic-volumes-at-intersections-for-all-modes" in head and "bike-share-toronto-ridership-data" in head
+    # fewer people out at 3 am than at 5 pm
+    factor = {int(r["hour"]): float(r["factor_used"]) for r in rows}
+    assert factor[3] < 0.1 < 1.5 < factor[17]
