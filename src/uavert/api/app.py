@@ -7,7 +7,7 @@ from fastapi import APIRouter, FastAPI, Request
 from uavert import db
 from uavert.api import errors
 from uavert.api.errors import error_response
-from uavert.api.routes import cells, neighbourhoods, sources
+from uavert.api.routes import cells, neighbourhoods, risk_scores, sources
 
 
 @asynccontextmanager
@@ -16,6 +16,8 @@ async def lifespan(app: FastAPI):
         app.state.pool = await db.create_pool()
     yield
     await app.state.pool.close()
+    if getattr(app.state, "http", None) is not None:
+        await app.state.http.aclose()
 
 
 app = FastAPI(
@@ -40,6 +42,6 @@ async def health(request: Request):
     return {"data": {"status": "ok", "database": "ok"}}
 
 
-for module in (neighbourhoods, cells, sources):
+for module in (neighbourhoods, cells, risk_scores, sources):
     v1.include_router(module.router)
 app.include_router(v1)

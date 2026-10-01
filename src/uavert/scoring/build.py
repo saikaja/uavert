@@ -150,7 +150,7 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
 
     smoothed = {c: crime.lean_toward_neighbourhood(local[c], len(nearby[c]), hood_avg[cells[c]]) for c in cells}
     scores = crime.percentile_scores(smoothed)
-    as_of = newest.date().isoformat()
+    as_of = newest.astimezone(TORONTO_TZ).date().isoformat()
 
     out = {}
     for c, hood in cells.items():

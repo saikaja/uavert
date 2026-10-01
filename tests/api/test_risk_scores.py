@@ -1,0 +1,79 @@
+import time
+
+import pytest
+
+from uavert.api.app import app
+from uavert.api.ratelimit import RateLimiter
+from uavert.sources.geocode import Place, parse_latlon
+from uavert.sources.http import SourceUnavailable
+
+pytestmark = pytest.mark.db
+
+
+class FakeGeocoder:
+    PLACES = {
+        "1 test centre st": Place("1 Test Centre St, Toronto", -79.385, 43.655),
+        "100 main st, mississauga": Place("100 Main St, Mississauga", -79.64, 43.59),
+    }
+
+    def __init__(self, down=False):
+        self.down = down
+
+    async def search(self, query):
+        if self.down:
+            raise SourceUnavailable("nominatim down")
+        return self.PLACES.get(query.lower())
+
+
+@pytest.fixture
+def geocoder():
+    app.state.geocoder = FakeGeocoder()
+    yield app.state.geocoder
+    app.state.geocoder = None
+
+
+async def test_address_returns_street_and_neighbourhood_scores(client, seeded, geocoder):
+    t = time.perf_counter()
+    r = await client.get("/api/v1/risk-scores", params={"address": "1 Test Centre St"})
+    assert time.perf_counter() - t < 2
+    assert r.status_code == 200
+    d = r.json()["data"]
+    assert d["location"]["display_name"] == "1 Test Centre St, Toronto"
+    assert d["neighbourhood"]["name"] == "Test Centre" and d["neighbourhood"]["score"] == 80
+    assert d["street"]["h3"] and d["street"]["score"] == 80 and d["street"]["band"] == "high"
+    assert d["street"]["reasons"][0]["text"] == "Test Centre street reason"
+
+
+async def test_lat_lon_instead_of_address(client, seeded):
+    r = await client.get("/api/v1/risk-scores", params={"lat": 43.655, "lon": -79.365})
+    assert r.status_code == 200 and r.json()["data"]["neighbourhood"]["name"] == "Test Warning"
+
+
+@pytest.mark.parametrize("params,status,code", [
+    ({"address": "nowhere at all"}, 404, "address_not_found"),
+    ({"address": "100 Main St, Mississauga"}, 422, "outside_coverage"),
+    ({}, 422, "validation_error"),
+    ({"address": "x"}, 422, "validation_error"),
+])
+async def test_destination_errors(client, seeded, geocoder, params, status, code):
+    r = await client.get("/api/v1/risk-scores", params=params)
+    assert r.status_code == status and r.json()["error"]["code"] == code
+    assert r.json()["error"]["message"]
+
+
+async def test_geocoder_down_is_502(client, seeded, geocoder):
+    geocoder.down = True
+    r = await client.get("/api/v1/risk-scores", params={"address": "1 Test Centre St"})
+    assert r.status_code == 502 and r.json()["error"]["code"] == "upstream_unavailable"
+
+
+def test_rate_limiter_window():
+    lim = RateLimiter(per_minute=2)
+    assert lim.allow("ip", 0) and lim.allow("ip", 1) and not lim.allow("ip", 2)
+    assert lim.allow("ip", 61)  # first hit has left the window
+    assert lim.allow("other", 2)
+
+
+def test_parse_latlon():
+    assert parse_latlon(" 43.65, -79.38 ") == Place("43.65000, -79.38000", -79.38, 43.65)
+    assert parse_latlon("Queen St W") is None and parse_latlon("95,-79") is None

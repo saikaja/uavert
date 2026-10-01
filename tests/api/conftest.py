@@ -22,6 +22,13 @@ def square(min_lon, min_lat, size=SIZE):
             f"{min_lon} {min_lat + size},{min_lon} {min_lat})))")
 
 
+@pytest.fixture(autouse=True)
+def reset_rate_limit():
+    from uavert.api.ratelimit import limiter
+
+    limiter._hits.clear()
+
+
 @pytest.fixture(scope="session")
 async def seeded(test_pool):
     now = datetime.now(UTC)
