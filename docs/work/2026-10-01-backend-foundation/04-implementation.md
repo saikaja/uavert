@@ -1,6 +1,6 @@
 # 4. Do the work: Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This step builds the approved plan ([03-plan.md](03-plan.md)) step by step, with tests written alongside the code. It then runs a clean-up pass. This document records what was built and where it differs from the plan.
@@ -177,8 +177,8 @@ Once this is approved, phase 5 (test the work) covers revisions 2 and 3 as well.
 The results go into `05-test-report.md`.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
-- **Revisions before approval:** none
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 13:15
+- **User's response:** "yes approved i also want to add a time feature where the later in the night someone would want to selevt the time and that would also affect the safety score"
+- **Revisions before approval:** 2026-10-01: added design revisions 2 and 3 (downtown fix, foot traffic) at the user's request before approval.
