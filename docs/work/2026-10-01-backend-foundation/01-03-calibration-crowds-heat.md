@@ -1,6 +1,6 @@
 # 1–3. Define, design and plan: fairer scores, crowds and extreme heat
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 **Adds to / revises:** the approved definition and design revisions in this folder. The scoring change revises how scores are **scaled** (design and revisions 2–3, time of day). It doesn't change what is counted or how places are ranked. Covers phases 1–3 in one document, like the earlier additions.
 
 ## What this step is
@@ -182,8 +182,8 @@ Make scores mean something fixed and fair. Add the two general-safety factors th
 Once this is approved, I build C1–C6 on `feature/backend-foundation`, deploy to Vercel, and give you the before-and-after numbers. Your phase 6 checklist then gets the new rows.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 18:39
+- **User's response:** "approve"
 - **Revisions before approval:** none
