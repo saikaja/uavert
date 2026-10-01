@@ -107,6 +107,21 @@ async def fetch_cool_spaces(client: httpx.AsyncClient) -> list[CoolSpaceRecord]:
     return parse_cool_spaces(r.text)
 
 
+EVENTS_PACKAGE = "festivals-events"
+EVENTS_JSON = "Festivals and events json feed"
+
+
+async def fetch_city_events(client: httpx.AsyncClient) -> list[dict]:
+    """The City's whole events calendar (about 220 MB); only names, dates and locations are used."""
+    r = await client.get(await resource_url(client, EVENTS_PACKAGE, EVENTS_JSON), timeout=httpx.Timeout(30, read=300))
+    if r.status_code != 200:
+        raise SourceUnavailable(f"City events feed: HTTP {r.status_code}")
+    try:
+        return r.json().get("value", [])
+    except ValueError as e:
+        raise SourceUnavailable("City events feed was not JSON") from e
+
+
 async def resource_url(client: httpx.AsyncClient, package: str, resource_name: str) -> str:
     """Look the file up by name, so the loader keeps working if the City moves it."""
     data = await get_json(client, f"{CKAN}/package_show", {"id": package})

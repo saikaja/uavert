@@ -1,0 +1,14 @@
+# Large City events that draw big crowds and road closures. Each pattern is matched (case-insensitive regular
+# expression) against event names in the City of Toronto Festivals & Events calendar to find their real dates.
+# default_location is used when the calendar entry has no usable address.
+# Reviewed: 2026-10-01. Add rows as needed.
+key,pattern,label,default_location
+nuit_blanche,\bnuit blanche\b,Nuit Blanche,"Nathan Phillips Square, Toronto"
+pride,\bpride (parade|toronto)\b|\bdyke march\b|\btrans march\b,Pride Toronto,"Church Street and Wellesley Street East, Toronto"
+carnival,\bcaribbean carnival\b|\bcaribana\b|\bgrand parade\b,Toronto Caribbean Carnival,"Exhibition Place, Toronto"
+santa_parade,\bsanta claus parade\b,Santa Claus Parade,"Queen's Park, Toronto"
+new_years_eve,\bnew year'?s eve\b,New Year's Eve,"Nathan Phillips Square, Toronto"
+canada_day,\bcanada day\b,Canada Day,"Nathan Phillips Square, Toronto"
+marathon,\bwaterfront marathon\b|\btoronto marathon\b,Toronto Waterfront Marathon,"Queen's Park, Toronto"
+cne,\bcanadian national exhibition\b|\bthe ex\b,Canadian National Exhibition,"Exhibition Place, Toronto"
+tiff_street,\bfestival street\b,TIFF Festival Street,"King Street West and John Street, Toronto"

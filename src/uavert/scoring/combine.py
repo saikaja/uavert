@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass, field
 
 from uavert.scoring.bands import band_for, clamp_score
 
-CATEGORIES = ("crime", "environment", "alert", "news")
+CATEGORIES = ("crime", "environment", "alert", "news", "crowds")
 MAX_REASONS = 3
 MAX_REASONS_PER_CATEGORY = 2
 

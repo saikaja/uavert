@@ -12,6 +12,7 @@ from shapely.geometry.base import BaseGeometry
 
 from uavert.freshness import iso, source_dates
 from uavert.scoring import alerts as alert_rules
+from uavert.scoring import crowds as crowd_rules
 from uavert.scoring import heat as heat_rules
 from uavert.scoring import news as news_rules
 from uavert.scoring.combine import Reason, Score, combine
@@ -40,6 +41,8 @@ class LiveContext:
     news: list[news_rules.NewsSignal] = field(default_factory=list)
     activity: list[tuple[float, str]] = field(default_factory=list)  # (people out vs daytime, basis) by hour
     cool_spaces: list[heat_rules.CoolSpace] = field(default_factory=list)  # loaded only while a heat alert is active
+    crowd_events: list[crowd_rules.CrowdEvent] = field(default_factory=list)
+    venues: list[crowd_rules.Venue] = field(default_factory=list)
 
     def nearest_station(self, lon: float, lat: float) -> Station | None:
         current = [s for s in self.stations if self.now - s.observed_at <= STALE_AFTER] or self.stations
@@ -63,8 +66,12 @@ class LiveContext:
                 heat.name, self.cool_spaces, lon, lat, when or self.now.astimezone(TORONTO_TZ),
                 self.sources.get("toronto_cool_spaces", {}).get("collected_at")))
         news, news_reasons = news_rules.news_score(self.news, self.now, cell, neighbourhood_id)
-        reasons = [Reason(**r) for r in crime_reasons] + env_reasons + alert_reasons + news_reasons
-        return combine({"crime": crime_score, "environment": env, "alert": alert, "news": news}, reasons)
+        local = when or self.now.astimezone(TORONTO_TZ)
+        crowds, crowd_reasons = crowd_rules.crowds_score(lon, lat, local.date(), self.crowd_events, self.venues,
+                                                         self.now.astimezone(TORONTO_TZ).date())
+        reasons = [Reason(**r) for r in crime_reasons] + env_reasons + alert_reasons + news_reasons + crowd_reasons
+        return combine({"crime": crime_score, "environment": env, "alert": alert, "news": news, "crowds": crowds},
+                       reasons)
 
 
 async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
@@ -91,6 +98,13 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
                                               r["published_at"], r["h3"], r["neighbourhood_id"], iso(r["collected_at"])))
     ctx.activity = [(float(r["factor_used"]), r["basis"])
                     for r in await pool.fetch("SELECT factor_used, basis FROM activity_by_hour ORDER BY hour")]
+    today = now.astimezone(TORONTO_TZ).date()
+    ctx.crowd_events = [crowd_rules.CrowdEvent(r["name"], r["event_date"], r["lon"], r["lat"], iso(r["collected_at"]))
+                        for r in await pool.fetch(
+                            "SELECT name, event_date, ST_X(geom) AS lon, ST_Y(geom) AS lat, collected_at FROM crowd_events"
+                            " WHERE event_date BETWEEN $1 AND $2", today - timedelta(days=1), today + timedelta(days=1))]
+    ctx.venues = [crowd_rules.Venue(r["name"], r["capacity"], r["lon"], r["lat"])
+                  for r in await pool.fetch("SELECT name, capacity, ST_X(geom) AS lon, ST_Y(geom) AS lat FROM venues")]
     if any(heat_rules.is_heat_alert(a.name) for a, _ in ctx.alerts):
         ctx.cool_spaces = [heat_rules.CoolSpace(r["name"], r["kind"], r["lon"], r["lat"], json.loads(r["hours"]))
                            for r in await pool.fetch("SELECT name, kind, ST_X(geom) AS lon, ST_Y(geom) AS lat, hours"

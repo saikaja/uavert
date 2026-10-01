@@ -3,6 +3,7 @@ their H3 cells, stored crime scores, one AQHI reading and one warning covering T
 
 import json
 from datetime import UTC, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import pytest
 
@@ -35,7 +36,7 @@ async def seeded(test_pool):
     now = datetime.now(UTC)
     async with test_pool.acquire() as c:
         for t in ("cell_scores", "neighbourhood_scores", "cells", "neighbourhoods", "aqhi_readings", "official_alerts",
-                  "news_events", "activity_by_hour", "cool_spaces"):
+                  "news_events", "activity_by_hour", "cool_spaces", "crowd_events", "venues"):
             await c.execute(f"DELETE FROM {t}")
         region_id = await ensure_reference_rows(c)
         await c.execute("UPDATE sources SET data_as_of = '2026-06-30', last_collected_at = $1, last_status = 'ok'", now)
@@ -85,6 +86,15 @@ async def seeded(test_pool):
                 "INSERT INTO cool_spaces (location_id, region_id, name, kind, hours, geom)"
                 " VALUES ($1, $2, $3, 'Cooling Location', $4::jsonb, ST_SetSRID(ST_MakePoint($5, $6), 4326))",
                 loc_id, region_id, name, hours, lon_, lat_)
+        toronto_today = now.astimezone(ZoneInfo("America/Toronto")).date()
+        await c.execute(
+            "INSERT INTO crowd_events (event_key, event_date, region_id, name, pattern, location, geom)"
+            " VALUES ('T-EVENT', $1, $2, 'Test Festival', 'test', 'Test Centre', ST_SetSRID(ST_MakePoint(-79.385, 43.655), 4326))",
+            toronto_today, region_id)
+        await c.execute(
+            "INSERT INTO venues (name, region_id, address, capacity, source_url, geom)"
+            " VALUES ('Test Stadium', $1, '1 Test Way', 40000, 'https://example.test', ST_SetSRID(ST_MakePoint(-79.375, 43.655), 4326))",
+            region_id)
     return ids
 
 

@@ -14,7 +14,7 @@ async def test_neighbourhoods_geojson_with_scores(client, seeded):
     assert set(feats) == {"Test Centre", "Test East", "Test Warning"}
     centre = feats["Test Centre"]
     assert centre["score"] == 80 and centre["band"] == "high"
-    assert set(centre["categories"]) == {"crime", "environment", "alert", "news"}
+    assert set(centre["categories"]) == {"crime", "environment", "alert", "news", "crowds"}
     assert body["data"]["features"][0]["geometry"]["type"] in ("Polygon", "MultiPolygon")
 
 
