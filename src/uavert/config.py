@@ -19,7 +19,8 @@ class Settings(BaseSettings):
 
     http_timeout_s: float = 10.0
     http_retries: int = 2
-    user_agent: str = "uavert-demo/0.1 (contact: saikaja99@gmail.com)"
+    # Identifies the app to outside services (Nominatim requires this). No personal contact details.
+    user_agent: str = "uavert-demo/0.1"
 
     nominatim_url: str = "https://nominatim.openstreetmap.org"
     osrm_url: str = "https://routing.openstreetmap.de/routed-foot"

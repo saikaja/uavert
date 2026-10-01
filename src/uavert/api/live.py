@@ -1,16 +1,17 @@
 """Live conditions loaded once per request and applied to any point: nearest AQHI station,
-active official alerts and (later) news, combined with a stored crime score."""
+active official alerts and located news reports, combined with a stored crime score."""
 
 import json
 import math
 from dataclasses import dataclass, field
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 
 import asyncpg
 from shapely.geometry import Point, shape
 from shapely.geometry.base import BaseGeometry
 
 from uavert.scoring import alerts as alert_rules
+from uavert.scoring import news as news_rules
 from uavert.scoring.combine import Reason, Score, combine
 from uavert.scoring.environment import STALE_AFTER, environment
 
@@ -30,20 +31,25 @@ class LiveContext:
     sources: dict[str, dict]
     stations: list[Station] = field(default_factory=list)
     alerts: list[tuple[alert_rules.Alert, BaseGeometry]] = field(default_factory=list)
+    news: list[news_rules.NewsSignal] = field(default_factory=list)
 
     def nearest_station(self, lon: float, lat: float) -> Station | None:
         current = [s for s in self.stations if self.now - s.observed_at <= STALE_AFTER] or self.stations
         return min(current, key=lambda s: _distance_km(lon, lat, s.lon, s.lat), default=None)
 
-    def score(self, lon: float, lat: float, crime_score: int, crime_reasons: list[dict]) -> Score:
+    def score(self, lon: float, lat: float, crime_score: int, crime_reasons: list[dict],
+              cell: str | None = None, neighbourhood_id: int | None = None) -> Score:
+        """Combine a stored crime score with live conditions at a point. News applies to a street
+        `cell` (reports within about 500 m) or a `neighbourhood_id` (reports inside it)."""
         station = self.nearest_station(lon, lat)
         env, env_reasons = environment(
             station.name if station else None, station.aqhi if station else None,
             station.observed_at if station else None, self.sources.get("eccc_aqhi", {}).get("collected_at"), self.now)
         point = Point(lon, lat)
         alert, alert_reasons = alert_rules.alert_score([a for a, g in self.alerts if g.covers(point)], self.now)
-        reasons = [Reason(**r) for r in crime_reasons] + env_reasons + alert_reasons
-        return combine({"crime": crime_score, "environment": env, "alert": alert}, reasons)
+        news, news_reasons = news_rules.news_score(self.news, self.now, cell, neighbourhood_id)
+        reasons = [Reason(**r) for r in crime_reasons] + env_reasons + alert_reasons + news_reasons
+        return combine({"crime": crime_score, "environment": env, "alert": alert, "news": news}, reasons)
 
 
 def _distance_km(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
@@ -72,6 +78,13 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
         a = alert_rules.Alert(r["name"], r["alert_type"], r["risk_colour"], r["status"], r["issued_at"],
                               r["expires_at"], _iso(r["collected_at"]))
         ctx.alerts.append((a, shape(json.loads(r["g"]))))
+    for r in await pool.fetch(
+        "SELECT e.headline, e.url, e.publisher, e.category, e.published_at, e.h3::text AS h3, e.collected_at,"
+        " c.neighbourhood_id FROM news_events e LEFT JOIN cells c ON c.h3 = e.h3"
+        " WHERE e.h3 IS NOT NULL AND e.published_at > $1", now - timedelta(hours=news_rules.WINDOW_HOURS)
+    ):
+        ctx.news.append(news_rules.NewsSignal(r["headline"], r["url"], r["publisher"], r["category"],
+                                              r["published_at"], r["h3"], r["neighbourhood_id"], _iso(r["collected_at"])))
     return ctx
 
 

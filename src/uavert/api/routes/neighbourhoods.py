@@ -24,7 +24,8 @@ async def list_neighbourhoods(request: Request):
     features = [
         {"type": "Feature", "geometry": json.loads(r["g"]),
          "properties": {"id": r["id"], "name": r["name"],
-                        **ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"])).to_dict(with_reasons=False)}}
+                        **ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]),
+                                    neighbourhood_id=r["id"]).to_dict(with_reasons=False)}}
         for r in rows
     ]
     return live.envelope({"type": "FeatureCollection", "features": features}, ctx)
@@ -37,7 +38,7 @@ async def get_neighbourhood(request: Request, neighbourhood_id: int = Path(ge=1)
     if r is None:
         raise ApiError(404, "not_found", f"No neighbourhood with id {neighbourhood_id}.")
     ctx = await live.load(pool)
-    score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]))
+    score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), neighbourhood_id=r["id"])
     return live.envelope({
         "id": r["id"], "name": r["name"], "population": r["population"], "population_year": r["valid_year"],
         "centre": {"lon": r["lon"], "lat": r["lat"]},

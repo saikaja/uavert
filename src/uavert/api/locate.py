@@ -54,13 +54,16 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place) -> dic
         " JOIN cells c ON c.h3 = s.h3 WHERE s.h3 = h3_lat_lng_to_cell(point($1, $2), 9)",
         place.lon, place.lat,
     )
-    hood_score = ctx.score(hood["lon"], hood["lat"], hood["crime_score"], json.loads(hood["reasons"]))
+    hood_score = ctx.score(hood["lon"], hood["lat"], hood["crime_score"], json.loads(hood["reasons"]),
+                           neighbourhood_id=hood["id"])
     if cell:  # the street cell; at the city edge a point can fall in a cell whose centre is outside Toronto
         street = {"h3": cell["h3"], "incident_count": cell["incident_count"],
-                  **ctx.score(place.lon, place.lat, cell["crime_score"], json.loads(cell["reasons"])).to_dict()}
+                  **ctx.score(place.lon, place.lat, cell["crime_score"], json.loads(cell["reasons"]),
+                              cell=cell["h3"]).to_dict()}
     else:
         street = {"h3": None, "incident_count": None,
-                  **ctx.score(place.lon, place.lat, hood["crime_score"], json.loads(hood["reasons"])).to_dict()}
+                  **ctx.score(place.lon, place.lat, hood["crime_score"], json.loads(hood["reasons"]),
+                              neighbourhood_id=hood["id"]).to_dict()}
     return {
         "location": {"display_name": place.display_name, "lon": place.lon, "lat": place.lat},
         "street": street,

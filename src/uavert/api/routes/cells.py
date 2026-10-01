@@ -37,7 +37,7 @@ async def list_cells(request: Request, bbox: str = Query(description="minLon,min
     )
     features = []
     for r in rows:
-        score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]))
+        score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), cell=r["h3"])
         features.append({
             "type": "Feature", "geometry": json.loads(r["g"]),
             "properties": {"h3": r["h3"], "incident_count": r["incident_count"],

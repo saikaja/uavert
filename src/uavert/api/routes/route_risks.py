@@ -69,7 +69,8 @@ async def route_risks(
         " FROM cells c JOIN cell_scores s ON s.h3 = c.h3 WHERE c.h3 = ANY($1::text[]::h3index[])",
         cells,
     )
-    scored = {r["h3"]: ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"])) for r in rows}
+    scored = {r["h3"]: ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), cell=r["h3"])
+              for r in rows}
     if not scored:
         raise ApiError(422, "outside_coverage", "That route doesn't pass through the area we cover.")
     worst = max(scored.values(), key=lambda s: s.score)
