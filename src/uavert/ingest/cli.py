@@ -5,6 +5,14 @@ import asyncio
 import sys
 
 from uavert import db
+from uavert.ingest import reference
+from uavert.ingest.runs import ensure_reference_rows
+from uavert.sources.http import make_client
+
+# Each ingest target runs its steps in order; a failed step is reported and the rest still run.
+TARGETS = {
+    "reference": ["reference"],
+}
 
 
 async def _migrate() -> int:
@@ -17,10 +25,35 @@ async def _migrate() -> int:
     return 0
 
 
+async def _ingest(target: str) -> int:
+    steps = {"reference": reference.run}
+    conn = await db.connect()
+    failures = []
+    try:
+        region_id = await ensure_reference_rows(conn)
+        async with make_client() as client:
+            for name in TARGETS[target]:
+                print(f"Ingesting {name} ...", flush=True)
+                try:
+                    await steps[name](conn, client, region_id)
+                    print(f"  {name}: ok")
+                except Exception as e:  # report and continue with the next source
+                    failures.append(name)
+                    print(f"  {name}: FAILED - {type(e).__name__}: {e}")
+    finally:
+        await conn.close()
+    if failures:
+        print(f"{len(failures)} step(s) failed: {', '.join(failures)}. Previously stored data was kept.")
+        return 1
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="uavert")
     sub = parser.add_subparsers(dest="command", required=True)
     sub.add_parser("migrate", help="apply database migrations")
+    ingest = sub.add_parser("ingest", help="collect data from outside sources")
+    ingest.add_argument("target", choices=sorted(TARGETS))
     serve = sub.add_parser("serve", help="run the API and web map")
     serve.add_argument("--port", type=int, default=8000)
     serve.add_argument("--reload", action="store_true")
@@ -28,6 +61,8 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.command == "migrate":
         return asyncio.run(_migrate())
+    if args.command == "ingest":
+        return asyncio.run(_ingest(args.target))
     if args.command == "serve":
         import uvicorn
 

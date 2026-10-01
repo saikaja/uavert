@@ -10,26 +10,34 @@ PAGE_SIZE = 2000  # the services' maxRecordCount
 
 
 async def query_pages(
-    client: httpx.AsyncClient, layer_url: str, where: str, out_fields: str = "*", fmt: str = "json"
+    client: httpx.AsyncClient,
+    layer_url: str,
+    where: str,
+    out_fields: str = "*",
+    fmt: str = "json",
+    order_by: str | None = "OBJECTID",
 ) -> AsyncIterator[list[dict]]:
-    """Yield pages of features until the service reports no more."""
+    """Yield pages of features until the service reports no more. Pass order_by=None for layers
+    without an OBJECTID field (paging order is then the service default)."""
     offset = 0
     while True:
         params = {
             "where": where,
             "outFields": out_fields,
-            "orderByFields": "OBJECTID",
             "resultOffset": offset,
             "resultRecordCount": PAGE_SIZE,
             "f": fmt,
         }
+        if order_by:
+            params["orderByFields"] = order_by
         if fmt == "json":
             params["returnGeometry"] = "false"
         else:
             params.update(outSR="4326", geometryPrecision="6")
         data = await get_json(client, f"{layer_url}/query", params)
         if "error" in data:
-            raise SourceUnavailable(f"{layer_url}: {data['error'].get('message', data['error'])}")
+            err = data["error"]
+            raise SourceUnavailable(f"{layer_url}: {err.get('message') or ''} {'; '.join(err.get('details') or [])}".strip())
         features = data.get("features", [])
         if features:
             yield features

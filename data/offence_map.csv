@@ -1,0 +1,28 @@
+# Maps each Toronto Police offence to the closest Statistics Canada CSI offence (see csi_weights.csv).
+# ucr_code / ucr_ext '*' matches any value. match: exact = same offence; closest = no separate CSI weight is published.
+# Offence codes observed in Toronto Police Major Crime Indicators, retrieved 2026-10-01.
+source_key,ucr_code,ucr_ext,offence_label,csi_offence_key,match,group_label,note
+tps_homicides,*,*,Homicide,murder,closest,homicides,"Data doesn't separate murder from manslaughter (1,822)"
+tps_shootings,*,*,Shooting or firearm discharge,discharge_firearm_intent,closest,shootings,Only counted when the event is not already in another dataset
+tps_mci,1450,120,Discharge Firearm With Intent,discharge_firearm_intent,exact,shootings,
+tps_mci,1450,*,Discharge Firearm - Recklessly,discharge_firearm_intent,closest,shootings,No separate weight published
+tps_mci,1455,*,Use Firearm / Imitation in Commission of Offence,use_firearm_offence,exact,firearm offences,
+tps_mci,1457,*,Pointing a Firearm,weapons_possession,closest,firearm offences,No separate weight published
+tps_mci,1610,*,Robbery (all kinds),robbery,exact,robberies,
+tps_mci,1410,*,Aggravated Assault,assault_3,exact,assaults,
+tps_mci,1462,*,Aggravated Assault Peace Officer,assault_3,exact,assaults,
+tps_mci,1420,*,Assault With Weapon / Bodily Harm,assault_2,exact,assaults,
+tps_mci,1461,*,Assault Peace Officer With Weapon / Bodily Harm,assault_2,closest,assaults,
+tps_mci,1440,*,Unlawfully Causing Bodily Harm,assault_2,closest,assaults,
+tps_mci,1470,*,Criminal Negligence Causing Bodily Harm,assault_2,closest,assaults,
+tps_mci,1430,*,Assault,assault_1,exact,assaults,
+tps_mci,1460,*,Assault Peace Officer / Disarming an Officer,assault_1,closest,assaults,
+tps_mci,1480,*,Other Assaults (Resist Seizure; Noxious Thing),assault_1,closest,assaults,
+tps_mci,2120,*,Break and Enter (all kinds),break_and_enter,exact,break-ins,
+tps_mci,2121,*,Break and Enter to Steal Firearm,break_and_enter,exact,break-ins,
+tps_mci,2130,*,Theft Over $5000 (all kinds),theft_over_5000,exact,"thefts over $5,000",
+tps_mci,2132,*,Theft From Motor Vehicle Over $5000,theft_over_5000,exact,"thefts over $5,000",
+tps_mci,2133,*,Theft Over $5000 - Shoplifting,theft_over_5000,exact,"thefts over $5,000",
+tps_mci,2135,*,Theft of Motor Vehicle,motor_vehicle_theft,exact,auto thefts,
+tps_ncr,THEFTFROMMV,*,Theft From Motor Vehicle (published neighbourhood count),theft_under_5000,exact,thefts from vehicles,Neighbourhood level only; not in the incident datasets
+tps_ncr,BIKETHEFT,*,Bicycle Theft (published neighbourhood count),theft_under_5000,exact,bicycle thefts,Neighbourhood level only; not in the incident datasets

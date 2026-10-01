@@ -1,0 +1,31 @@
+# Statistics Canada Crime Severity Index weights, "Examples of weights for the Crime Severity Index".
+# Source: Statistics Canada, Measuring Crime in Canada: Introducing the Crime Severity Index and Improvements to the Uniform Crime Reporting Survey (85-004-X, 2009), Table 1.
+# URL: https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm
+# Retrieved: 2026-10-01. This is the only per-offence table StatCan publishes openly; weights are updated every five years.
+edition,offence_key,label,weight,source_url,retrieved_on
+2009,murder,Murder 1st and 2nd degree,7042,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,manslaughter,Manslaughter,1822,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,attempted_murder,Attempted murder,1411,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,sexual_assault_3,Sexual assault - level 3,1047,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,discharge_firearm_intent,Discharging firearm with intent,988,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,sexual_assault_2,Sexual assault - level 2,678,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,robbery,Robbery,583,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,assault_3,Assault - level 3,405,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,use_firearm_offence,Using firearm in commission of an offence,267,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,sexual_assault_1,Sexual assault - level 1,211,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,break_and_enter,Breaking and entering,187,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,luring_minor_computer,Luring a person under 18 via computer,172,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,theft_over_5000,"Theft over $5,000",139,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,fraud,Fraud,109,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,weapons_possession,Weapons possession,88,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,motor_vehicle_theft,Theft of a motor vehicle,84,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,assault_2,Assault - level 2,77,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,counterfeiting,Counterfeiting currency,69,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,uttering_threats,Uttering threat to person,46,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,criminal_harassment,Criminal harassment,45,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,theft_under_5000,"Theft under $5,000",37,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,mischief,Mischief,30,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,assault_1,Assault - level 1,23,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,fail_to_appear,Fail to appear,16,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,disturb_peace,Disturb the peace,9,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
+2009,cannabis_possession,Cannabis - possession,7,https://www150.statcan.gc.ca/n1/pub/85-004-x/2009001/t001-eng.htm,2026-10-01
