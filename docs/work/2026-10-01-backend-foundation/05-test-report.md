@@ -1,6 +1,6 @@
 # 5. Test the work: Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This step checks every acceptance criterion with real evidence before you test it yourself (phase 6). It covers:
@@ -131,8 +131,8 @@ Once this is approved, phase 6 (hand-off) gives you:
 You run it yourself and record the results.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 13:52
+- **User's response:** "approved"
 - **Revisions before approval:** none
