@@ -39,9 +39,9 @@ Build a small web-app version of Uavert, a Toronto risk map, to show your boss o
 
 ## Pending tasks
 
-### 1. Your approvals (needed next)
-- [ ] Approve [04-implementation.calibration-crowds-heat.md](04-implementation.calibration-crowds-heat.md), the build record for fairer scores, crowds and heat.
-- [ ] Approve [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md), its test report (202 tests passing, 26 of 26 live checks local and hosted).
+### 1. Your approvals (done 2026-10-01 19:16)
+- [x] Approve [04-implementation.calibration-crowds-heat.md](04-implementation.calibration-crowds-heat.md), the build record for fairer scores, crowds and heat.
+- [x] Approve [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md), its test report (202 tests passing, 26 of 26 live checks local and hosted).
 
 ### 2. Your end-to-end testing (rows 1–34 in [06-e2e-signoff.md](06-e2e-signoff.md))
 All 34 rows are "Not tested". The ones that matter most:

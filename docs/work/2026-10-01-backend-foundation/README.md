@@ -11,7 +11,7 @@ Build the first real Uavert backend (Neon Postgres + PostGIS/H3, Python ingestio
 | 1–3 (addition). Time of day | [01-03-time-of-day.md](01-03-time-of-day.md) | Approved; built: [04-implementation.time-of-day.md](04-implementation.time-of-day.md) approved 2026-10-01 13:33 | 2026-10-01 13:21 |
 | 5. Test the work | [05-test-report.md](05-test-report.md) | Approved | 2026-10-01 13:52 |
 | 1–3 (addition). Solidify + Vercel | [01-03-solidify.md](01-03-solidify.md); built: [04-implementation.solidify.md](04-implementation.solidify.md), tested: [05-test-report.solidify.md](05-test-report.solidify.md) (both approved 2026-10-01 18:07) | Approved; built and tested | 2026-10-01 14:05 |
-| 1–3 (addition). Fairer scores, crowds, heat | [01-03-calibration-crowds-heat.md](01-03-calibration-crowds-heat.md); built: [04-implementation.calibration-crowds-heat.md](04-implementation.calibration-crowds-heat.md), tested: [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md) (both pending approval) | Approved; built and tested | 2026-10-01 18:39 |
+| 1–3 (addition). Fairer scores, crowds, heat | [01-03-calibration-crowds-heat.md](01-03-calibration-crowds-heat.md); built: [04-implementation.calibration-crowds-heat.md](04-implementation.calibration-crowds-heat.md), tested: [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md) (both approved 2026-10-01 19:16) | Approved; built and tested | 2026-10-01 18:39 |
 | 6. End-to-end testing | [06-e2e-signoff.md](06-e2e-signoff.md) | Waiting for your test results | |
 
 **Status snapshot:** [status-goals-and-pending.md](status-goals-and-pending.md): goals, what's done, and what's still pending (as of 2026-10-01).

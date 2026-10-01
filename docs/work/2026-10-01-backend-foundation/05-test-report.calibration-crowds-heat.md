@@ -1,6 +1,6 @@
 # 5. Verify the work (fairer scores, crowds, extreme heat): Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This step checks criteria 40–51 from [01-03-calibration-crowds-heat.md](01-03-calibration-crowds-heat.md) with evidence, and re-checks the earlier criteria on local and hosted.
@@ -67,8 +67,8 @@ These go into the phase 6 checklist:
 Once this and the build record are approved, run the new rows of the phase 6 checklist.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 19:16
+- **User's response:** "approved and run and push to the vercel so i can test online"
 - **Revisions before approval:** none

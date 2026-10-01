@@ -1,6 +1,6 @@
 # 4. Do the work (fairer scores, crowds, extreme heat): Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This document records building [01-03-calibration-crowds-heat.md](01-03-calibration-crowds-heat.md) (approved 2026-10-01 18:39), following the master-workflow build phase. Test results are in [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md).
@@ -93,8 +93,8 @@ New modules are small and pure, with ingestion kept separate. `pyflakes` reports
 Once this and the test report are approved, the phase 6 checklist ([06-e2e-signoff.md](06-e2e-signoff.md)) has new rows for these changes.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 19:16
+- **User's response:** "approved and run and push to the vercel so i can test online"
 - **Revisions before approval:** none
