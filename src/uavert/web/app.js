@@ -10,12 +10,36 @@ const BANDS = {
 const CATEGORY_NAMES = { crime: "Crime", environment: "Air quality", alert: "Official alerts", news: "News" };
 const SOURCE_NAMES = {};
 const CELL_ZOOM = 14;
+const TZ = "America/Toronto";
+
+// ---- time of day ---------------------------------------------------------
+const hourLabel = (h) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
+const torontoHour = () => Number(new Intl.DateTimeFormat("en-CA", { hour: "numeric", hourCycle: "h23", timeZone: TZ }).format(new Date()));
+let lastSearch = null; // re-run when the time changes
+
+function selectedHour() {
+  const v = document.getElementById("when").value;
+  return v === "all" ? null : v === "now" ? torontoHour() : Number(v);
+}
+const hourParam = () => { const h = selectedHour(); return h == null ? "" : `&hour=${h}`; };
+const timeText = () => { const h = selectedHour(); return h == null ? "All day" : hourLabel(h); };
+
+function fillTimeSelector() {
+  const sel = document.getElementById("when");
+  const opt = (value, text) => { const o = document.createElement("option"); o.value = value; o.textContent = text; sel.append(o); };
+  opt("all", "All day");
+  opt("now", `Now (${hourLabel(torontoHour())})`);
+  for (let h = 0; h < 24; h++) opt(String(h), hourLabel(h));
+}
 
 const $ = (id) => document.getElementById(id);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const fmtDate = (iso) => {
   if (!iso) return "unknown";
   if (/^\d{4}$/.test(iso)) return iso;
+  // Whole-day dates are stored as midnight UTC; show the date itself, not the local time it converts to.
+  const day = iso.match(/^(\d{4}-\d{2}-\d{2})(T00:00:00(\.0+)?(\+00:00|Z))?$/);
+  if (day) return new Date(`${day[1]}T12:00:00`).toLocaleDateString("en-CA", { dateStyle: "medium" });
   const d = new Date(iso);
   return isNaN(d) ? iso : d.toLocaleString("en-CA", { dateStyle: "medium", timeStyle: iso.length > 10 ? "short" : undefined });
 };
@@ -72,7 +96,7 @@ async function loadCells() {
   const b = map.getBounds();
   const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map((v) => v.toFixed(5)).join(",");
   try {
-    const body = await api(`/api/v1/cells?bbox=${bbox}`);
+    const body = await api(`/api/v1/cells?bbox=${bbox}${hourParam()}`);
     if (cellLayer) map.removeLayer(cellLayer);
     cellLayer = L.geoJSON(body.data, {
       style: (f) => style(f.properties.band, 0.6),
@@ -126,6 +150,7 @@ const peoplePerHour = (n) => (n == null ? "unknown" : `about ${Math.round(n).toL
 const bandFor = (s) => (s >= 75 ? "high" : s >= 50 ? "elevated" : s >= 25 ? "moderate" : "lower");
 
 async function showNeighbourhood(id) {
+  lastSearch = null; // neighbourhood scores are all-day
   try {
     const d = (await api(`/api/v1/neighbourhoods/${id}`)).data;
     showScore(d.name, `Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d);
@@ -137,9 +162,10 @@ async function checkPoint(lat, lon) {
 }
 
 async function runDestination(path, label) {
+  lastSearch = () => runDestination(path, label);
   setStatus("Checking...");
   try {
-    const d = (await api(path)).data;
+    const d = (await api(path + hourParam())).data;
     setStatus("");
     if (marker) map.removeLayer(marker);
     marker = L.marker([d.location.lat, d.location.lon]).addTo(map);
@@ -151,7 +177,7 @@ async function runDestination(path, label) {
       ? `Street level (about one block) · ${s.incident_count} street incidents within ~250 m · ${peoplePerHour(s.foot_traffic_per_hour)}`
         + (s.vs_surroundings != null ? ` · ${timesAround(s.vs_surroundings)} the reported street crime of the surrounding 1 km, per person` : "")
       : "Street level unavailable here; showing the neighbourhood";
-    showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), where, d.street, [hood]);
+    showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street, [hood]);
   } catch (e) { setStatus(e.message, true); }
 }
 
@@ -161,13 +187,18 @@ $("dest-form").addEventListener("submit", (e) => {
   runDestination(`/api/v1/risk-scores?address=${encodeURIComponent(q)}`, q);
 });
 
-$("route-form").addEventListener("submit", async (e) => {
+$("route-form").addEventListener("submit", (e) => {
   e.preventDefault();
-  const btn = e.submitter; btn.disabled = true;
+  const from = $("from").value.trim(), to = $("to").value.trim();
+  runRoute(from, to, e.submitter);
+});
+
+async function runRoute(from, to, btn) {
+  lastSearch = () => runRoute(from, to, null);
+  if (btn) btn.disabled = true;
   setStatus("Finding a walking route...");
   try {
-    const from = $("from").value.trim(), to = $("to").value.trim();
-    const d = (await api(`/api/v1/route-risks?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}`)).data;
+    const d = (await api(`/api/v1/route-risks?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${hourParam()}`)).data;
     setStatus("");
     if (routeLayer) map.removeLayer(routeLayer);
     routeLayer = L.layerGroup().addTo(map);
@@ -185,10 +216,15 @@ $("route-form").addEventListener("submit", async (e) => {
     const title = el("h3", null, "Stretches that stand out");
     const mins = Math.round(d.duration_s / 60);
     showScore(`${d.from.display_name.split(",")[0]} → ${d.to.display_name.split(",")[0]}`,
-      `Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · highest score along the way`, d,
+      `Showing: ${timeText()} · Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · highest score along the way`, d,
       d.riskiest_segments.length ? [title, segs] : [title, el("p", "muted", d.segments_note)]);
   } catch (err) { setStatus(err.message, true); }
-  finally { btn.disabled = false; }
+  finally { if (btn) btn.disabled = false; }
+}
+
+$("when").addEventListener("change", () => {
+  loadCells();
+  if (lastSearch) lastSearch();
 });
 
 // ---- news and sources --------------------------------------------------
@@ -226,6 +262,7 @@ async function loadSources() {
   } catch (e) { list.replaceChildren(el("li", "muted", e.message)); }
 }
 
+fillTimeSelector();
 renderLegend();
 loadSources().then(() => Promise.all([loadNeighbourhoods(), loadNews()])).then(loadCells)
   .catch((e) => setStatus(e.message, true));

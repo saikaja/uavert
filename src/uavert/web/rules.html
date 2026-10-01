@@ -34,6 +34,11 @@
     <p>Busy streets have more reported incidents partly because far more people are there. Street scores therefore count incidents <strong>per person on foot</strong>, using City of Toronto pedestrian counts at intersections.</p>
     <ul id="traffic"></ul>
 
+    <h2>Time of day</h2>
+    <p>Pick a time and street-level scores change with it. Two things change through the day: how often incidents happen near a block at that time, and how many people are out. Later at night, with fewer people around, the same incidents mean more risk for each person.</p>
+    <ul id="time-params"></ul>
+    <div class="table-wrap"><table id="activity"><thead><tr><th>Hour</th><th>People out vs daytime average</th><th>Basis</th></tr></thead><tbody></tbody></table></div>
+
     <h2>Crime Severity Index weights</h2>
     <p id="csi-note"></p>
     <div class="table-wrap"><table id="weights"><thead><tr><th>Offence</th><th>Weight</th></tr></thead><tbody></tbody></table></div>
@@ -58,7 +63,12 @@
   <script>
     "use strict";
     const row = (cells) => { const tr = document.createElement("tr"); cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.append(td); }); return tr; };
-    const fmt = (iso) => iso ? new Date(iso).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: iso.length > 10 ? "short" : undefined }) : "unknown";
+    const fmt = (iso) => {
+      if (!iso) return "unknown";
+      const day = iso.match(/^(\d{4}-\d{2}-\d{2})(T00:00:00(\.0+)?(\+00:00|Z))?$/);  // whole-day dates
+      if (day) return new Date(`${day[1]}T12:00:00`).toLocaleDateString("en-CA", { dateStyle: "medium" });
+      return new Date(iso).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
+    };
     Promise.all([fetch("/api/v1/scoring-rules").then((r) => r.json()), fetch("/api/v1/sources").then((r) => r.json())]).then(([rules, sources]) => {
       const d = rules.data, p = d.parameters;
       d.bands.forEach((b) => document.querySelector("#bands tbody").append(row([b.label, `${b.min_score}–${b.max_score}`])));
@@ -74,8 +84,17 @@
         `Blocks are never treated as having fewer than ${p.foot_traffic_floor_per_hour} people an hour, because counts at intersections miss people in parking lots and plazas and would otherwise make quiet areas look extreme.`,
         `"Busy area" marks the busiest tenth of counted locations.`,
         `On a walking route, "stretches that stand out" are blocks with at least ${p.standout_min_ratio}× the reported street crime per person of the surrounding 1 km (${p.surroundings_rings} hexagon rings). The 0-100 score itself still compares every block with the whole city.`,
-        "Counts are weekday daytime snapshots, so night-time foot traffic isn't measured.",
+        "Counts are weekday daytime snapshots. When you pick a time of day, night-time foot traffic is estimated as described under Time of day.",
       ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#traffic").append(li); });
+      [
+        `Incidents are counted in a ${p.time_window_hours}-hour window around the chosen hour. A block with few incidents follows Toronto's overall hourly pattern (it needs about ${p.time_prior_weight} nearby incidents to show its own pattern).`,
+        "Homicides are published without a time, so they count evenly across the day.",
+        "6 am to 7 pm: City of Toronto pedestrian counts. 8 pm to 5 am: the City doesn't count at night, so this is estimated from Bike Share Toronto trips, which match the pedestrian counts closely during the day.",
+        "Each hour's scores are ranked against every block at every hour, so a quiet street at 3 am can score higher than the same street at 3 pm.",
+        "Neighbourhood colours stay all-day. Air quality, alerts and news always show current conditions.",
+      ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#time-params").append(li); });
+      const hl = (h) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
+      (d.activity_by_hour || []).forEach((a) => document.querySelector("#activity tbody").append(row([hl(a.hour), `${Math.round(a.factor * 100)}%`, a.basis === "measured" ? "measured (City counts)" : "estimated (Bike Share)"])));
       document.querySelector("#csi-note").textContent = `Statistics Canada, ${d.csi_edition} published table. Every event is counted once, at its most serious offence.`;
       d.csi_weights.forEach((w) => document.querySelector("#weights tbody").append(row([w.label, w.weight.toLocaleString("en-CA")])));
       d.offence_map.forEach((m) => document.querySelector("#mapping tbody").append(row([m.offence_label, m.csi_label, m.weight.toLocaleString("en-CA"), m.match])));

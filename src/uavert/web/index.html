@@ -16,6 +16,12 @@
   <main class="layout">
     <aside class="panel" id="panel">
       <section class="card">
+        <h2><label for="when">When</label></h2>
+        <select id="when" aria-describedby="when-note"></select>
+        <p class="when-note" id="when-note">Changes street-level scores, destinations and walks. Neighbourhood colours are all-day; air quality and alerts are always current.</p>
+      </section>
+
+      <section class="card">
         <h2>Where I'm going</h2>
         <form id="dest-form" class="row">
           <input id="dest" type="search" placeholder="e.g. 100 Queen St W" autocomplete="off" required minlength="3">

@@ -31,7 +31,8 @@ def crime_at(row, hour: int | None, ctx: LiveContext) -> tuple[int, list[dict]]:
     reason = Reason(
         "crime",
         f"At {hour_label(hour)}: incidents near here run at about {intensity[hour]:.1f}× this block's average, "
-        f"and about {factor * 100:.0f}% of daytime foot traffic is out ({how})",
+        + (f"and foot traffic is about {factor:.1f}× the daytime average ({how})" if factor >= 0.95
+           else f"and about {factor * 100:.0f}% of daytime foot traffic is out ({how})"),
         "activity_profile", value=round(intensity[hour], 2), as_of=dates.get("as_of"),
         collected_at=dates.get("collected_at"),
     ).to_dict()

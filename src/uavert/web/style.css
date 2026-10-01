@@ -43,6 +43,8 @@ a { color: var(--accent); }
 .card h3 { font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
 .row { display: flex; gap: 8px; }
 .stack { display: grid; gap: 8px; }
+select { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
+.when-note { font-size: 12px; color: var(--muted); margin: 6px 2px 0; }
 input { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--text); font: inherit; }
 button { padding: 9px 14px; border: 0; border-radius: 8px; background: var(--accent); color: #fff; font: inherit; font-weight: 600; cursor: pointer; white-space: nowrap; }
 :root[data-theme="dark"] button { color: #10202f; }
