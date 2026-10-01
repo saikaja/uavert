@@ -1,6 +1,6 @@
 # 4. Do the work (solidify + Vercel): Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This document records building the additions agreed in [01-03-solidify.md](01-03-solidify.md) (approved 2026-10-01 14:05): the GitHub backup, saved lookups, automatic refresh, the fairness check, homicide smoothing and Vercel hosting. Test results are in [05-test-report.solidify.md](05-test-report.solidify.md).
@@ -71,8 +71,8 @@ No separate simplifier pass was run for this round. New code reuses existing hel
 Once this and the test report are approved, the phase 6 checklist ([06-e2e-signoff.md](06-e2e-signoff.md), updated with the hosted link and the new checks) is yours to run.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 18:07
+- **User's response:** "approve number 2"
 - **Revisions before approval:** none

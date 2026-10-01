@@ -1,6 +1,6 @@
 # 5. Test the work (solidify + Vercel): Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This step checks the additions in [01-03-solidify.md](01-03-solidify.md) (criteria 29–39) with real evidence, and re-checks the earlier criteria on both the local server and the hosted site. The build record is [04-implementation.solidify.md](04-implementation.solidify.md).
@@ -64,8 +64,8 @@ These go into the phase 6 checklist:
 Once this and the build record are approved, you run the updated phase 6 checklist ([06-e2e-signoff.md](06-e2e-signoff.md)).
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 18:07
+- **User's response:** "approve number 2"
 - **Revisions before approval:** none
