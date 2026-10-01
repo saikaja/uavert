@@ -12,3 +12,5 @@ Build the first real Uavert backend (Neon Postgres + PostGIS/H3, Python ingestio
 | 5. Test the work | [05-test-report.md](05-test-report.md) | Approved | 2026-10-01 13:52 |
 | 1–3 (addition). Solidify + Vercel | [01-03-solidify.md](01-03-solidify.md); built: [04-implementation.solidify.md](04-implementation.solidify.md), tested: [05-test-report.solidify.md](05-test-report.solidify.md) (both pending approval) | Approved; built and tested | 2026-10-01 14:05 |
 | 6. End-to-end testing | [06-e2e-signoff.md](06-e2e-signoff.md) | Waiting for your test results | |
+
+**Notes:** [gta-expansion-notes.md](gta-expansion-notes.md): crime data and permissions for York, Durham, Peel and Halton (checked 2026-10-01; permissions needed before any GTA build).
