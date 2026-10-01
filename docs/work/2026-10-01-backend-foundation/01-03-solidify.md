@@ -1,6 +1,6 @@
 # 1–3. Define, design and plan: making it solid, and hosting on Vercel
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 **Adds to:** the approved definition, design revisions and plans in this folder. It covers phases 1–3 in one document, as with [01-03-time-of-day.md](01-03-time-of-day.md).
 
 ## What this step is
@@ -179,8 +179,8 @@ Once this is approved, I build S1–S7 in order.
 Approving this document approves both.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 14:05
+- **User's response:** "yes"
 - **Revisions before approval:** none
