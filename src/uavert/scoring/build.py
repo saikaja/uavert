@@ -128,12 +128,19 @@ def foot_traffic_reason(f: crime.FootTraffic, busy: bool, city_median: float, co
                   as_of=f.last_date.isoformat() if f.last_date else None, collected_at=collected_at).to_dict()
 
 
+def local_hour(e: Event) -> int | None:
+    """The Toronto hour an incident happened; None for homicides, which are published without a time."""
+    return None if e.source_key == "tps_homicides" else e.occurred_at.astimezone(TORONTO_TZ).hour
+
+
 def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int, str], used: dict,
-                traffic: list[tuple[str, float, date]] | None = None) -> dict[str, dict]:
+                traffic: list[tuple[str, float, date]] | None = None,
+                activity: list[float] | None = None) -> dict[str, dict]:
     """Street score per H3 cell: the last 12 months of street incidents, per person on foot nearby.
 
     `cells`: h3 -> neighbourhood id for every cell in the grid.
     `traffic`: (h3, pedestrians per hour, count date) for each counted location since FOOT_TRAFFIC_SINCE.
+    `activity`: people out at each hour 0-23 relative to the daytime average (default: 1.0 every hour).
     """
     street = [e for e in events if e.h3 and crime.counts_on_street(e.premises_type)]
     newest = max(e.occurred_at for e in street)
@@ -168,6 +175,22 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
     foot = {c: crime.foot_traffic_estimate(c, counts_by_cell, city_median, h3.grid_disk) for c in cells}
     per_person = {c: crime.per_person(smoothed[c], foot[c].per_hour) for c in cells}
     scores = crime.percentile_scores(per_person)
+
+    # Time of day: each block's incidents by hour (leaning toward the city's pattern), per person out at that hour,
+    # ranked across every block and every hour together so emptier hours can score higher.
+    weight_of = {e: e.weight * crime.recency_weight((newest - e.occurred_at).total_seconds() / 86400) for e in street}
+    city_shares = crime.window_shares([local_hour(e) for e in street], [weight_of[e] for e in street])
+    activity = activity or [1.0] * 24
+    intensity_by_hour, per_person_by_hour = {}, {}
+    for c in cells:
+        near = nearby[c]
+        shares = crime.window_shares([local_hour(e) for e in near], [weight_of[e] for e in near])
+        intensity_by_hour[c] = [crime.intensity(crime.lean_toward_city(shares[h], len(near), city_shares[h]))
+                                for h in range(24)]
+        for h in range(24):
+            per_person_by_hour[(c, h)] = crime.per_person_at_hour(
+                smoothed[c], intensity_by_hour[c][h], foot[c].per_hour, activity[h])
+    scores_by_hour = crime.percentile_scores(per_person_by_hour)
     as_of = newest.astimezone(TORONTO_TZ).date().isoformat()
 
     out = {}
@@ -195,7 +218,9 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
         out[c] = {"incident_count": len(near), "own_value": own[c], "local_value": local[c],
                   "smoothed_value": smoothed[c], "crime_score": scores[c], "reasons": reasons,
                   "foot_traffic": foot[c], "per_person_value": per_person[c],
-                  "vs_surroundings": crime.surroundings_ratio(c, per_person, h3.grid_disk), "busy_area": busy}
+                  "vs_surroundings": crime.surroundings_ratio(c, per_person, h3.grid_disk), "busy_area": busy,
+                  "crime_score_by_hour": [scores_by_hour[(c, h)] for h in range(24)],
+                  "intensity_by_hour": [round(x, 3) for x in intensity_by_hour[c]]}
     return out
 
 
@@ -204,7 +229,8 @@ async def build(conn: asyncpg.Connection) -> dict:
     weights = {r["offence_key"]: float(r["weight"]) for r in
                await conn.fetch("SELECT offence_key, weight FROM csi_weights WHERE edition = $1", edition)}
     events = await load_events(conn, edition)
-    used = await source_dates(conn, ["statcan_csi", "tps_ncr", "tps_mci", "tps_shootings", "tps_homicides", "toronto_tmc"])
+    used = await source_dates(conn, ["statcan_csi", "tps_ncr", "tps_mci", "tps_shootings", "tps_homicides", "toronto_tmc",
+                                     "activity_profile"])
     used_json = json.dumps(used)
 
     hoods = [dict(r) | {"counts": json.loads(r["counts"])} for r in
@@ -217,7 +243,9 @@ async def build(conn: asyncpg.Connection) -> dict:
     traffic = [(r["h3"], float(r["per_hour"]), r["count_date"]) for r in await conn.fetch(
         "SELECT h3::text AS h3, pedestrians / hours AS per_hour, count_date FROM foot_traffic_counts"
         " WHERE count_date >= $1", crime.FOOT_TRAFFIC_SINCE)]
-    cell_rows = cell_scores(events, cells, {h["id"]: h["name"] for h in hoods}, used, traffic)
+    activity = [float(r["factor_used"]) for r in await conn.fetch("SELECT factor_used FROM activity_by_hour ORDER BY hour")]
+    cell_rows = cell_scores(events, cells, {h["id"]: h["name"] for h in hoods}, used, traffic,
+                            activity if len(activity) == 24 else None)
 
     async with conn.transaction():
         await conn.executemany(
@@ -231,16 +259,18 @@ async def build(conn: asyncpg.Connection) -> dict:
             "CREATE TEMP TABLE cell_scores_load (h3 text, incident_count int, own_value float8, local_value float8,"
             " smoothed_value float8, crime_score int, reasons jsonb, foot_traffic_per_hour float8,"
             " foot_traffic_counts_used int, foot_traffic_first_date date, foot_traffic_last_date date,"
-            " per_person_value float8, vs_surroundings float8, busy_area bool) ON COMMIT DROP"
+            " per_person_value float8, vs_surroundings float8, busy_area bool, crime_score_by_hour smallint[],"
+            " intensity_by_hour real[]) ON COMMIT DROP"
         )
         await conn.copy_records_to_table("cell_scores_load", records=[
             (c, r["incident_count"], r["own_value"], r["local_value"], r["smoothed_value"], r["crime_score"],
              json.dumps(r["reasons"]), r["foot_traffic"].per_hour, r["foot_traffic"].counts_used,
              r["foot_traffic"].first_date, r["foot_traffic"].last_date, r["per_person_value"], r["vs_surroundings"],
-             r["busy_area"]) for c, r in cell_rows.items()])
+             r["busy_area"], r["crime_score_by_hour"], r["intensity_by_hour"]) for c, r in cell_rows.items()])
         columns = ["incident_count", "own_value", "local_value", "smoothed_value", "crime_score", "reasons",
                    "foot_traffic_per_hour", "foot_traffic_counts_used", "foot_traffic_first_date",
-                   "foot_traffic_last_date", "per_person_value", "vs_surroundings", "busy_area"]
+                   "foot_traffic_last_date", "per_person_value", "vs_surroundings", "busy_area",
+                   "crime_score_by_hour", "intensity_by_hour"]
         await conn.execute(
             f"INSERT INTO cell_scores (h3, {', '.join(columns)}, sources_used, computed_at)"
             f" SELECT h3::h3index, {', '.join(columns)}, $1::jsonb, now() FROM cell_scores_load"

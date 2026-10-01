@@ -116,3 +116,42 @@ def busy_area_threshold(location_rates: Iterable[float]) -> float:
     """Pedestrians/hour at the city's 90th percentile of counted locations."""
     ordered = sorted(location_rates)
     return ordered[min(len(ordered) - 1, int(BUSY_AREA_QUANTILE * len(ordered)))] if ordered else float("inf")
+
+
+# ---- Time of day (01-03-time-of-day.md) ----
+
+TIME_WINDOW = 3  # hours: the chosen hour and one either side
+TIME_PRIOR_WEIGHT = 10  # incidents; a block with few nearby incidents follows Toronto's hourly pattern
+
+
+def time_window(hour: int) -> tuple[int, int, int]:
+    return ((hour - 1) % 24, hour, (hour + 1) % 24)
+
+
+def window_shares(hours: Iterable[int | None], weights: Iterable[float]) -> list[float]:
+    """For each hour, the weighted share of incidents in its 3-hour window. Incidents with no
+    recorded time (None) count evenly across the day."""
+    by_hour = [0.0] * 24
+    untimed = 0.0
+    for h, w in zip(hours, weights):
+        if h is None:
+            untimed += w
+        else:
+            by_hour[h] += w
+    total = sum(by_hour) + untimed
+    if total == 0:
+        return [TIME_WINDOW / 24] * 24
+    return [(sum(by_hour[w] for w in time_window(h)) + untimed * TIME_WINDOW / 24) / total for h in range(24)]
+
+
+def lean_toward_city(cell_share: float, incidents: int, city_share: float) -> float:
+    return (incidents * cell_share + TIME_PRIOR_WEIGHT * city_share) / (incidents + TIME_PRIOR_WEIGHT)
+
+
+def intensity(share: float) -> float:
+    """Incidents in a 3-hour window relative to an average 3 hours for the same block (1.0 = average)."""
+    return share / (TIME_WINDOW / 24)
+
+
+def per_person_at_hour(value: float, hour_intensity: float, pedestrians_per_hour: float, activity: float) -> float:
+    return per_person(value * hour_intensity, pedestrians_per_hour * activity)
