@@ -1,6 +1,6 @@
 # 4. Do the work (time of day): Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This document records building the time-of-day addition, which was defined, designed and planned in [01-03-time-of-day.md](01-03-time-of-day.md) (approved 2026-10-01 13:21). It sits alongside the approved [04-implementation.md](04-implementation.md), which is unchanged.
@@ -61,8 +61,8 @@ Once this is approved, phase 5 (test the work) covers everything:
 - the time-of-day addition, including acceptance criteria 21–28
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 13:33
+- **User's response:** "yes"
 - **Revisions before approval:** none
