@@ -10,6 +10,8 @@ import time
 
 import httpx
 
+from uavert.ingest.registry import SOURCE_KEYS
+
 results: list[tuple[str, bool, str]] = []
 
 
@@ -33,7 +35,7 @@ def main(base: str) -> int:
         check("3", bool(sources["eccc_aqhi"]["collected_at"]) and sources["eccc_alerts"]["last_status"] == "ok",
               f"AQHI data {sources['eccc_aqhi']['as_of']}, collected {sources['eccc_aqhi']['collected_at']}; alerts last_status ok")
         complete = all(s["name"] and s["licence"] and s["attribution"] for s in sources.values())
-        check("4", complete and len(sources) == 11,
+        check("4", complete and set(sources) == SOURCE_KEYS,
               f"{len(sources)} sources, each with name, licence, attribution; statuses: "
               + ", ".join(f"{k}={s['last_status']}" for k, s in sorted(sources.items())))
 
@@ -56,13 +58,13 @@ def main(base: str) -> int:
         d = r.json()["data"]
         check("12", r.status_code == 200 and dt < 2,
               f"100 Queen St W -> {d['location']['display_name'][:40]}...: street {d['street']['score']} {d['street']['band']}, "
-              f"neighbourhood {d['neighbourhood']['name']} {d['neighbourhood']['score']}, {dt:.2f}s (cold cache)")
+              f"neighbourhood {d['neighbourhood']['name']} {d['neighbourhood']['score']}, {dt:.2f}s (first call in this run)")
 
         r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "Kensington Market, Toronto"})
         d = r.json()["data"]
         check("13", r.status_code == 200 and dt < 3 and d["geometry"]["type"] == "LineString" and len(d["riskiest_segments"]) <= 3,
               f"Union Station -> Kensington: {d['distance_m']} m, score {d['score']} {d['band']}, "
-              f"{len(d['riskiest_segments'])} stand-out stretch(es), {dt:.2f}s (cold cache)")
+              f"{len(d['riskiest_segments'])} stand-out stretch(es), {dt:.2f}s (first call in this run)")
 
         for label, params, status, code in [
             ("outside", {"address": "100 City Centre Dr, Mississauga"}, 422, "outside_coverage"),
