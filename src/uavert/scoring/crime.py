@@ -20,15 +20,11 @@ def percentile_scores(values: Mapping[K, float]) -> dict[K, int]:
     ordered = sorted(values.values())
     out = {}
     for k, v in values.items():
-        less = _count_less(ordered, v)
-        equal = _count_less(ordered, v, inclusive=True) - less
+        less = bisect_left(ordered, v)
+        equal = bisect_right(ordered, v) - less
         rank = less + (equal - 1) / 2
         out[k] = round(100 * rank / (n - 1))
     return out
-
-
-def _count_less(ordered: list[float], v: float, inclusive: bool = False) -> int:
-    return (bisect_right if inclusive else bisect_left)(ordered, v)
 
 
 def weighted_rate(counts: Mapping[str, float], weights: Mapping[str, float], population: int) -> float:

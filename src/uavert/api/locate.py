@@ -10,14 +10,27 @@ from uavert.api.live import LiveContext
 from uavert.config import get_settings
 from uavert.sources.geocode import Geocoder, Place, parse_latlon
 from uavert.sources.http import SourceUnavailable, make_client
+from uavert.sources.routing import Router
+
+
+def _http(state):
+    if getattr(state, "http", None) is None:
+        state.http = make_client()
+    return state.http
 
 
 def geocoder(request: Request) -> Geocoder:
     state = request.app.state
     if getattr(state, "geocoder", None) is None:
-        state.http = getattr(state, "http", None) or make_client()
-        state.geocoder = Geocoder(state.http, get_settings().nominatim_url)
+        state.geocoder = Geocoder(_http(state), get_settings().nominatim_url)
     return state.geocoder
+
+
+def walking_router(request: Request) -> Router:
+    state = request.app.state
+    if getattr(state, "router", None) is None:
+        state.router = Router(_http(state), get_settings().osrm_url)
+    return state.router
 
 
 async def resolve(request: Request, text: str) -> Place:

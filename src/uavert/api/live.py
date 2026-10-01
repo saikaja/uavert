@@ -2,7 +2,6 @@
 active official alerts and located news reports, combined with a stored crime score."""
 
 import json
-import math
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 
@@ -10,10 +9,12 @@ import asyncpg
 from shapely.geometry import Point, shape
 from shapely.geometry.base import BaseGeometry
 
+from uavert.freshness import iso, source_dates
 from uavert.scoring import alerts as alert_rules
 from uavert.scoring import news as news_rules
 from uavert.scoring.combine import Reason, Score, combine
 from uavert.scoring.environment import STALE_AFTER, environment
+from uavert.scoring.route import distance_m
 
 
 @dataclass
@@ -35,7 +36,7 @@ class LiveContext:
 
     def nearest_station(self, lon: float, lat: float) -> Station | None:
         current = [s for s in self.stations if self.now - s.observed_at <= STALE_AFTER] or self.stations
-        return min(current, key=lambda s: _distance_km(lon, lat, s.lon, s.lat), default=None)
+        return min(current, key=lambda s: distance_m((lon, lat), (s.lon, s.lat)), default=None)
 
     def score(self, lon: float, lat: float, crime_score: int, crime_reasons: list[dict],
               cell: str | None = None, neighbourhood_id: int | None = None) -> Score:
@@ -52,20 +53,9 @@ class LiveContext:
         return combine({"crime": crime_score, "environment": env, "alert": alert, "news": news}, reasons)
 
 
-def _distance_km(lon1: float, lat1: float, lon2: float, lat2: float) -> float:
-    p1, p2 = math.radians(lat1), math.radians(lat2)
-    a = math.sin((p2 - p1) / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(math.radians(lon2 - lon1) / 2) ** 2
-    return 12742 * math.asin(math.sqrt(a))
-
-
-async def load_sources(pool: asyncpg.Pool) -> dict[str, dict]:
-    rows = await pool.fetch("SELECT key, data_as_of, last_collected_at FROM sources ORDER BY key")
-    return {r["key"]: {"as_of": _iso(r["data_as_of"]), "collected_at": _iso(r["last_collected_at"])} for r in rows}
-
-
 async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
     now = now or datetime.now(UTC)
-    ctx = LiveContext(now=now, sources=await load_sources(pool))
+    ctx = LiveContext(now=now, sources=await source_dates(pool))
     for r in await pool.fetch(
         "SELECT DISTINCT ON (station_id) station_name, ST_X(geom) AS lon, ST_Y(geom) AS lat, observed_at, aqhi"
         " FROM aqhi_readings ORDER BY station_id, observed_at DESC"
@@ -76,7 +66,7 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
         " FROM official_alerts WHERE status <> 'ended' AND (expires_at IS NULL OR expires_at > $1)", now
     ):
         a = alert_rules.Alert(r["name"], r["alert_type"], r["risk_colour"], r["status"], r["issued_at"],
-                              r["expires_at"], _iso(r["collected_at"]))
+                              r["expires_at"], iso(r["collected_at"]))
         ctx.alerts.append((a, shape(json.loads(r["g"]))))
     for r in await pool.fetch(
         "SELECT e.headline, e.url, e.publisher, e.category, e.published_at, e.h3::text AS h3, e.collected_at,"
@@ -84,12 +74,8 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
         " WHERE e.h3 IS NOT NULL AND e.published_at > $1", now - timedelta(hours=news_rules.WINDOW_HOURS)
     ):
         ctx.news.append(news_rules.NewsSignal(r["headline"], r["url"], r["publisher"], r["category"],
-                                              r["published_at"], r["h3"], r["neighbourhood_id"], _iso(r["collected_at"])))
+                                              r["published_at"], r["h3"], r["neighbourhood_id"], iso(r["collected_at"])))
     return ctx
-
-
-def _iso(t: datetime | None) -> str | None:
-    return t.isoformat() if t else None
 
 
 def envelope(data, ctx: LiveContext) -> dict:

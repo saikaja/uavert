@@ -1,6 +1,6 @@
 import pytest
 
-from uavert.ingest.reference import DATA_DIR, OffenceMap, UnmappedOffence, load_offence_map, read_csv
+from uavert.ingest.reference import DATA_DIR, UnmappedOffence, load_offence_map, read_csv
 
 
 def test_csv_header_records_source_and_retrieval_date():

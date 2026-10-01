@@ -11,6 +11,7 @@ import asyncpg
 import h3
 
 from uavert.config import get_settings
+from uavert.freshness import source_dates
 from uavert.ingest.reference import load_offence_map
 from uavert.scoring import crime
 from uavert.scoring.combine import Reason
@@ -61,15 +62,6 @@ async def load_events(conn: asyncpg.Connection, edition: str) -> list[Event]:
         for r in rows
     ]
     return count_once(events, event_id=lambda e: e.event_id, weight=lambda e: e.weight)
-
-
-async def sources_used(conn: asyncpg.Connection, keys: list[str]) -> dict:
-    rows = await conn.fetch("SELECT key, data_as_of, last_collected_at FROM sources WHERE key = ANY($1)", keys)
-    return {r["key"]: {"as_of": _iso(r["data_as_of"]), "collected_at": _iso(r["last_collected_at"])} for r in rows}
-
-
-def _iso(t: datetime | None) -> str | None:
-    return t.isoformat() if t else None
 
 
 def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[str, float], ncr_extra: dict[str, tuple[str, str]], used: dict) -> dict[int, dict]:
@@ -179,7 +171,7 @@ async def build(conn: asyncpg.Connection) -> dict:
     weights = {r["offence_key"]: float(r["weight"]) for r in
                await conn.fetch("SELECT offence_key, weight FROM csi_weights WHERE edition = $1", edition)}
     events = await load_events(conn, edition)
-    used = await sources_used(conn, ["statcan_csi", "tps_ncr", "tps_mci", "tps_shootings", "tps_homicides"])
+    used = await source_dates(conn, ["statcan_csi", "tps_ncr", "tps_mci", "tps_shootings", "tps_homicides"])
     used_json = json.dumps(used)
 
     hoods = [dict(r) | {"counts": json.loads(r["counts"])} for r in

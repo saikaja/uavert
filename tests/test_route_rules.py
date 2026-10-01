@@ -1,6 +1,3 @@
-import h3
-import pytest
-
 from uavert.scoring import route
 
 

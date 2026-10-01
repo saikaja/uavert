@@ -4,25 +4,16 @@ from fastapi import APIRouter, Depends, Query, Request
 
 from uavert.api import live
 from uavert.api.errors import ApiError
-from uavert.api.locate import neighbourhood_at, resolve, score_place
+from uavert.api.locate import neighbourhood_at, resolve, score_place, walking_router
 from uavert.api.ratelimit import limit_outside_calls
-from uavert.config import get_settings
 from uavert.scoring import route as route_rules
-from uavert.sources.http import SourceUnavailable, make_client
-from uavert.sources.routing import NoRoute, Router
+from uavert.sources.http import SourceUnavailable
+from uavert.sources.routing import NoRoute
 
 router = APIRouter(tags=["destination and route"])
 
 MAX_ROUTE_M = 10_000
 SAME_PLACE_M = 25
-
-
-def walking_router(request: Request) -> Router:
-    state = request.app.state
-    if getattr(state, "router", None) is None:
-        state.http = getattr(state, "http", None) or make_client()
-        state.router = Router(state.http, get_settings().osrm_url)
-    return state.router
 
 
 def _line(points):

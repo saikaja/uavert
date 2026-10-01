@@ -2,6 +2,7 @@ from fastapi import APIRouter, Request
 
 from uavert.api import live
 from uavert.config import get_settings
+from uavert.freshness import iso
 from uavert.scoring import alerts, crime, environment
 from uavert.scoring.bands import BAND_LABELS, BANDS
 
@@ -18,7 +19,7 @@ async def list_sources(request: Request):
     ctx = await live.load(pool)
     return live.envelope([
         {"key": r["key"], "name": r["name"], "url": r["url"], "licence": r["licence"], "attribution": r["attribution"],
-         "as_of": _iso(r["data_as_of"]), "collected_at": _iso(r["last_collected_at"]),
+         "as_of": iso(r["data_as_of"]), "collected_at": iso(r["last_collected_at"]),
          "last_status": r["last_status"], "last_error": r["last_error"]}
         for r in rows
     ], ctx)
@@ -60,7 +61,3 @@ async def scoring_rules(request: Request):
             "advisory_score": alerts.ADVISORY_SCORE,
         },
     }, ctx)
-
-
-def _iso(t):
-    return t.isoformat() if t else None
