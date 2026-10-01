@@ -5,13 +5,14 @@ import asyncio
 import sys
 
 from uavert import db
-from uavert.ingest import reference
+from uavert.ingest import crime, reference
 from uavert.ingest.runs import ensure_reference_rows
 from uavert.sources.http import make_client
 
 # Each ingest target runs its steps in order; a failed step is reported and the rest still run.
 TARGETS = {
     "reference": ["reference"],
+    "crime": ["crime"],
 }
 
 
@@ -26,7 +27,7 @@ async def _migrate() -> int:
 
 
 async def _ingest(target: str) -> int:
-    steps = {"reference": reference.run}
+    steps = {"reference": reference.run, "crime": crime.run}
     conn = await db.connect()
     failures = []
     try:
