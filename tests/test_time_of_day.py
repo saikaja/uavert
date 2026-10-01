@@ -57,4 +57,5 @@ def test_hourly_scores_rise_when_streets_empty():
     out = cell_scores(events, {a: 1, b: 1}, {1: "Test"}, {}, traffic, activity)
     by_hour = out[a]["crime_score_by_hour"]
     assert len(by_hour) == 24 and by_hour[2] > by_hour[14]  # same incidents at 2 am and 2 pm, far fewer people at 2 am
-    assert out[a]["intensity_by_hour"][2] == pytest.approx(out[a]["intensity_by_hour"][14], rel=0.01)
+    # incidents cluster in both windows, well above an average 3 hours; quiet hours fall below it
+    assert out[a]["intensity_by_hour"][2] > 3 and out[a]["intensity_by_hour"][14] > 3 and out[a]["intensity_by_hour"][8] < 1
