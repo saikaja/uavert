@@ -14,4 +14,6 @@ Build the first real Uavert backend (Neon Postgres + PostGIS/H3, Python ingestio
 | 1–3 (addition). Fairer scores, crowds, heat | [01-03-calibration-crowds-heat.md](01-03-calibration-crowds-heat.md); built: [04-implementation.calibration-crowds-heat.md](04-implementation.calibration-crowds-heat.md), tested: [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md) (both pending approval) | Approved; built and tested | 2026-10-01 18:39 |
 | 6. End-to-end testing | [06-e2e-signoff.md](06-e2e-signoff.md) | Waiting for your test results | |
 
+**Status snapshot:** [status-goals-and-pending.md](status-goals-and-pending.md): goals, what's done, and what's still pending (as of 2026-10-01).
+
 **Notes:** [gta-expansion-notes.md](gta-expansion-notes.md): crime data and permissions for York, Durham, Peel and Halton (checked 2026-10-01; permissions needed before any GTA build).
