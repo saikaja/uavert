@@ -1,11 +1,10 @@
-import json
-
 from fastapi import APIRouter, Depends, Query, Request
 
 from uavert.api import live
 from uavert.api.errors import ApiError
 from uavert.api.locate import neighbourhood_at, resolve, score_place, walking_router
 from uavert.api.ratelimit import limit_outside_calls
+from uavert.api.timeofday import crime_at, time_info
 from uavert.scoring import route as route_rules
 from uavert.sources.http import SourceUnavailable
 from uavert.sources.routing import NoRoute
@@ -29,6 +28,7 @@ async def route_risks(
     request: Request,
     from_: str = Query(alias="from", min_length=3, max_length=200, description="Start: an address or 'lat,lon'"),
     to: str = Query(min_length=3, max_length=200, description="End: an address or 'lat,lon'"),
+    hour: int | None = Query(None, ge=0, le=23, description="Hour of day in Toronto (0-23); omit for all day"),
 ):
     start, end = await resolve(request, from_), await resolve(request, to)
     pool = request.app.state.pool
@@ -39,11 +39,12 @@ async def route_risks(
         raise ApiError(422, "route_too_long", f"Those places are {straight / 1000:.1f} km apart; walking routes are limited to {MAX_ROUTE_M // 1000} km.")
     ctx = await live.load(pool)
     if straight < SAME_PLACE_M:
-        here = await score_place(pool, ctx, end)
+        here = await score_place(pool, ctx, end, hour)
         return live.envelope({"from": {"query": from_, "display_name": start.display_name}, "to": {"query": to, "display_name": end.display_name},
                               "distance_m": 0, "duration_s": 0, "geometry": _line([(end.lon, end.lat)]),
                               **{k: here["street"][k] for k in ("score", "band", "categories", "reasons")},
-                              "riskiest_segments": [], "segments_note": "Start and end are the same place."}, ctx)
+                              "riskiest_segments": [], "segments_note": "Start and end are the same place.",
+                              "time": time_info(hour)}, ctx)
     try:
         walk = await walking_router(request).walk(start, end)
     except NoRoute:
@@ -57,13 +58,13 @@ async def route_risks(
     cells = sorted({route_rules.cell_of(p) for p in points})
     rows = await pool.fetch(
         "SELECT c.h3::text AS h3, ST_X(c.centre) AS lon, ST_Y(c.centre) AS lat, s.crime_score, s.reasons,"
-        " s.vs_surroundings, s.foot_traffic_per_hour FROM cells c JOIN cell_scores s ON s.h3 = c.h3"
+        " s.vs_surroundings, s.foot_traffic_per_hour, s.crime_score_by_hour, s.intensity_by_hour"
+        " FROM cells c JOIN cell_scores s ON s.h3 = c.h3"
         " WHERE c.h3 = ANY($1::text[]::h3index[])",
         cells,
     )
     by_cell = {r["h3"]: r for r in rows}
-    scored = {r["h3"]: ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), cell=r["h3"])
-              for r in rows}
+    scored = {r["h3"]: ctx.score(r["lon"], r["lat"], *crime_at(r, hour, ctx), cell=r["h3"]) for r in rows}
     if not scored:
         raise ApiError(422, "outside_coverage", "That route doesn't pass through the area we cover.")
     worst = max(scored.values(), key=lambda s: s.score)
@@ -81,6 +82,7 @@ async def route_risks(
         "cells_scored": len(scored),
         "riskiest_segments": segments,
         "segments_note": None if segments else "No stretch of this walk stands out from its surroundings.",
+        "time": time_info(hour),
     }, ctx)
 
 

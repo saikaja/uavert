@@ -33,6 +33,7 @@ class LiveContext:
     stations: list[Station] = field(default_factory=list)
     alerts: list[tuple[alert_rules.Alert, BaseGeometry]] = field(default_factory=list)
     news: list[news_rules.NewsSignal] = field(default_factory=list)
+    activity: list[tuple[float, str]] = field(default_factory=list)  # (people out vs daytime, basis) by hour
 
     def nearest_station(self, lon: float, lat: float) -> Station | None:
         current = [s for s in self.stations if self.now - s.observed_at <= STALE_AFTER] or self.stations
@@ -75,6 +76,8 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
     ):
         ctx.news.append(news_rules.NewsSignal(r["headline"], r["url"], r["publisher"], r["category"],
                                               r["published_at"], r["h3"], r["neighbourhood_id"], iso(r["collected_at"])))
+    ctx.activity = [(float(r["factor_used"]), r["basis"])
+                    for r in await pool.fetch("SELECT factor_used, basis FROM activity_by_hour ORDER BY hour")]
     return ctx
 
 

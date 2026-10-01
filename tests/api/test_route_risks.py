@@ -2,7 +2,6 @@ import time
 
 import pytest
 
-from uavert.api.app import app
 from uavert.sources.http import SourceUnavailable
 from uavert.sources.routing import NoRoute, Route
 
@@ -11,24 +10,6 @@ pytestmark = pytest.mark.db
 # Seeded squares: Test Centre (crime 80) west, Test East (20), Test Warning (10 + warning -> 90) east.
 WEST, EAST = "43.655,-79.388", "43.655,-79.376"
 WALK_WEST_TO_EAST = Route([(-79.388, 43.655), (-79.376, 43.655)], 1000, 720)
-
-
-class FakeRouter:
-    def __init__(self, result):
-        self.result = result
-
-    async def walk(self, start, end):
-        if isinstance(self.result, Exception):
-            raise self.result
-        return self.result
-
-
-@pytest.fixture
-def router():
-    def use(result):
-        app.state.router = FakeRouter(result)
-    yield use
-    app.state.router = None
 
 
 async def test_route_score_is_highest_along_route_with_riskiest_stretches(client, seeded, router):

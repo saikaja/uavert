@@ -6,6 +6,7 @@ from fastapi import APIRouter, Query, Request
 from uavert.api import live
 from uavert.api.errors import ApiError
 from uavert.api.locate import street_extras
+from uavert.api.timeofday import crime_at, time_info
 
 router = APIRouter(tags=["street cells"])
 
@@ -26,24 +27,26 @@ def parse_bbox(bbox: str) -> tuple[float, float, float, float]:
 
 
 @router.get("/cells", summary="Street-level cells (H3, about one city block) in a map area, as GeoJSON")
-async def list_cells(request: Request, bbox: str = Query(description="minLon,minLat,maxLon,maxLat", max_length=200)):
+async def list_cells(request: Request, bbox: str = Query(description="minLon,minLat,maxLon,maxLat", max_length=200),
+                     hour: int | None = Query(None, ge=0, le=23, description="Hour of day in Toronto (0-23); omit for all day")):
     box = parse_bbox(bbox)
     pool = request.app.state.pool
     ctx = await live.load(pool)
     rows = await pool.fetch(
         "SELECT c.h3::text AS h3, ST_AsGeoJSON(c.geom, 6) AS g, ST_X(c.centre) AS lon, ST_Y(c.centre) AS lat,"
-        " s.crime_score, s.incident_count, s.reasons, s.foot_traffic_per_hour, s.vs_surroundings, s.busy_area"
+        " s.crime_score, s.incident_count, s.reasons, s.foot_traffic_per_hour, s.vs_surroundings, s.busy_area,"
+        " s.crime_score_by_hour, s.intensity_by_hour"
         " FROM cells c JOIN cell_scores s ON s.h3 = c.h3"
         " WHERE c.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)",
         *box,
     )
     features = []
     for r in rows:
-        score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), cell=r["h3"])
+        score = ctx.score(r["lon"], r["lat"], *crime_at(r, hour, ctx), cell=r["h3"])
         features.append({
             "type": "Feature", "geometry": json.loads(r["g"]),
             "properties": {"h3": r["h3"], "incident_count": r["incident_count"], **street_extras(r),
                            "top_reason": score.reasons[0].text if score.reasons else None,
                            **score.to_dict(with_reasons=False)},
         })
-    return live.envelope({"type": "FeatureCollection", "features": features}, ctx)
+    return live.envelope({"type": "FeatureCollection", "features": features, "time": time_info(hour)}, ctx)

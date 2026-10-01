@@ -19,6 +19,7 @@ async def risk_scores(
     address: str | None = Query(None, min_length=3, max_length=200, description="A Toronto street address or place"),
     lat: float | None = Query(None, ge=-90, le=90),
     lon: float | None = Query(None, ge=-180, le=180),
+    hour: int | None = Query(None, ge=0, le=23, description="Hour of day in Toronto (0-23); omit for all day"),
 ):
     if address:
         place = await resolve(request, address)
@@ -28,4 +29,4 @@ async def risk_scores(
         raise ApiError(422, "validation_error", "Give an address, or both lat and lon.")
     pool = request.app.state.pool
     ctx = await live.load(pool)
-    return live.envelope({"query": address or f"{lat},{lon}", **await score_place(pool, ctx, place)}, ctx)
+    return live.envelope({"query": address or f"{lat},{lon}", **await score_place(pool, ctx, place, hour)}, ctx)

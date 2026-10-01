@@ -7,6 +7,7 @@ from fastapi import Request
 
 from uavert.api.errors import ApiError
 from uavert.api.live import LiveContext
+from uavert.api.timeofday import crime_at, time_info
 from uavert.config import get_settings
 from uavert.sources.geocode import Geocoder, Place, parse_latlon
 from uavert.sources.http import SourceUnavailable, make_client
@@ -71,12 +72,12 @@ def _date(d):
     return d.isoformat() if d else None
 
 
-async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place) -> dict:
+async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place, hour: int | None = None) -> dict:
     hood = await neighbourhood_at(pool, place)
     cell = await pool.fetchrow(
         "SELECT c.h3::text AS h3, s.crime_score, s.incident_count, s.reasons, s.foot_traffic_per_hour,"
         " s.foot_traffic_counts_used, s.foot_traffic_first_date, s.foot_traffic_last_date, s.vs_surroundings,"
-        " s.busy_area FROM cell_scores s"
+        " s.busy_area, s.crime_score_by_hour, s.intensity_by_hour FROM cell_scores s"
         " JOIN cells c ON c.h3 = s.h3 WHERE s.h3 = h3_lat_lng_to_cell(point($1, $2), 9)",
         place.lon, place.lat,
     )
@@ -86,8 +87,7 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place) -> dic
         street = {"h3": cell["h3"], "incident_count": cell["incident_count"], **street_extras(cell),
                   "foot_traffic_counts_used": cell["foot_traffic_counts_used"],
                   "foot_traffic_dates": [_date(cell["foot_traffic_first_date"]), _date(cell["foot_traffic_last_date"])],
-                  **ctx.score(place.lon, place.lat, cell["crime_score"], json.loads(cell["reasons"]),
-                              cell=cell["h3"]).to_dict()}
+                  **ctx.score(place.lon, place.lat, *crime_at(cell, hour, ctx), cell=cell["h3"]).to_dict()}
     else:
         street = {"h3": None, "incident_count": None,
                   **ctx.score(place.lon, place.lat, hood["crime_score"], json.loads(hood["reasons"]),
@@ -96,4 +96,5 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place) -> dic
         "location": {"display_name": place.display_name, "lon": place.lon, "lat": place.lat},
         "street": street,
         "neighbourhood": {"id": hood["id"], "name": hood["name"], **hood_score.to_dict()},
+        "time": time_info(hour),
     }

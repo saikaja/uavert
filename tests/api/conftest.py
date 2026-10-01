@@ -35,7 +35,7 @@ async def seeded(test_pool):
     now = datetime.now(UTC)
     async with test_pool.acquire() as c:
         for t in ("cell_scores", "neighbourhood_scores", "cells", "neighbourhoods", "aqhi_readings", "official_alerts",
-                  "news_events"):
+                  "news_events", "activity_by_hour"):
             await c.execute(f"DELETE FROM {t}")
         region_id = await ensure_reference_rows(c)
         await c.execute("UPDATE sources SET data_as_of = '2026-06-30', last_collected_at = $1, last_status = 'ok'", now)
@@ -55,10 +55,18 @@ async def seeded(test_pool):
             await c.execute(
                 "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons,"
                 " sources_used, foot_traffic_per_hour, foot_traffic_counts_used, foot_traffic_first_date,"
-                " foot_traffic_last_date, per_person_value, vs_surroundings, busy_area)"
-                " SELECT h3, 7, 1, 1, 1, $2, $3::jsonb, '{}', 500, 3, '2022-05-01', '2025-05-01', 0.01, $4, true"
+                " foot_traffic_last_date, per_person_value, vs_surroundings, busy_area, crime_score_by_hour,"
+                " intensity_by_hour)"
+                " SELECT h3, 7, 1, 1, 1, $2, $3::jsonb, '{}', 500, 3, '2022-05-01', '2025-05-01', 0.01, $4, true, $5, $6"
                 " FROM cells WHERE neighbourhood_id = $1",
-                ids[ext], crime, json.dumps([reason | {"text": f"{name} street reason"}]), STANDS_OUT.get(ext))
+                ids[ext], crime, json.dumps([reason | {"text": f"{name} street reason"}]), STANDS_OUT.get(ext),
+                [min(100, crime + 15) if h in (1, 2, 3) else crime for h in range(24)],  # higher in the small hours
+                [1.5 if h in (1, 2, 3) else 0.9 for h in range(24)])
+        for h in range(24):
+            await c.execute(
+                "INSERT INTO activity_by_hour (hour, bikeshare_factor, factor_used, basis, retrieved_on)"
+                " VALUES ($1, $2, $2, $3, '2026-10-01') ON CONFLICT (hour) DO UPDATE SET factor_used = $2, basis = $3",
+                h, 0.11 if h == 2 else 1.0, "measured" if 6 <= h <= 19 else "estimated")
         await c.execute(
             "INSERT INTO aqhi_readings (station_id, station_name, region_id, geom, observed_at, aqhi)"
             " VALUES ('TST', 'Test Station', $1, ST_SetSRID(ST_MakePoint(-79.38, 43.655), 4326), $2, 3)",
@@ -70,3 +78,24 @@ async def seeded(test_pool):
             " 'yellow', 'issued', $2, $3, ST_Multi(ST_GeomFromText($4, 4326)))",
             region_id, now - timedelta(hours=1), now + timedelta(hours=6), square(lon - 0.0001, lat - 0.0001, SIZE + 0.0002))
     return ids
+
+
+class FakeRouter:
+    def __init__(self, result):
+        self.result = result
+
+    async def walk(self, start, end):
+        if isinstance(self.result, Exception):
+            raise self.result
+        return self.result
+
+
+@pytest.fixture
+def router():
+    """Replace the walking-route service: router(Route(...)) or router(SomeException(...))."""
+    from uavert.api.app import app
+
+    def use(result):
+        app.state.router = FakeRouter(result)
+    yield use
+    app.state.router = None
