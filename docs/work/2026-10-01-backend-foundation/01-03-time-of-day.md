@@ -100,7 +100,7 @@ These are follow-ups:
 **Reason added when an hour is chosen.** Example: "At 2 am: incidents near here run at about 1.4× this block's average, and about 11% of daytime foot traffic is out (estimated from Bike Share trips)". It cites the `tps_mci` and `activity_profile` sources and their dates.
 
 ### API contract (fields added only; `/api/v1` stays compatible)
-- **`hour`:** optional on `/cells`, `/risk-scores` and `/route-risks`; `ge=0, le=24 - 1`.
+- **`hour`:** optional on `/cells`, `/risk-scores` and `/route-risks`; whole number from 0 to 23.
 - **`time` object** in the response data:
   - `{"hour": 2, "label": "2 am", "window": "1 am-4 am"}` when an hour is chosen
   - `{"hour": null, "label": "All day"}` otherwise
