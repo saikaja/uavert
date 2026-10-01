@@ -1,6 +1,6 @@
 # 3. Start the work: Uavert backend foundation and Toronto web demo
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 
 ## What this step is
 This step does two things before any code is written:
@@ -78,8 +78,8 @@ Once this plan is approved, phase 4 (do the work) builds the steps in order, wit
 After step 7 I'll send you the ranking comparison (demo weights vs CSI), so you can see how the official weights change the map before Tuesday.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 12:18
+- **User's response:** "yes"
 - **Revisions before approval:** none
