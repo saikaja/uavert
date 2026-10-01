@@ -4,7 +4,7 @@ from uavert.api import live
 from uavert.api.errors import ApiError
 from uavert.api.locate import neighbourhood_at, resolve, score_place, walking_router
 from uavert.api.ratelimit import limit_outside_calls
-from uavert.api.timeofday import crime_at, time_info
+from uavert.api.timeofday import crime_at, moment, time_info
 from uavert.scoring import route as route_rules
 from uavert.scoring.bands import band_for
 from uavert.sources.http import SourceUnavailable
@@ -65,7 +65,8 @@ async def route_risks(
         cells,
     )
     by_cell = {r["h3"]: r for r in rows}
-    scored = {r["h3"]: ctx.score(r["lon"], r["lat"], *crime_at(r, hour, ctx), cell=r["h3"]) for r in rows}
+    scored = {r["h3"]: ctx.score(r["lon"], r["lat"], *crime_at(r, hour, ctx), cell=r["h3"],
+                                 when=moment(hour, ctx)) for r in rows}
     if not scored:
         raise ApiError(422, "outside_coverage", "That route doesn't pass through the area we cover.")
     worst = max(scored.values(), key=lambda s: s.score)

@@ -2,6 +2,7 @@
 
 import csv
 import io
+import json
 from dataclasses import dataclass
 from datetime import date
 
@@ -59,6 +60,51 @@ def parse_tmc_csv(text: str) -> list[TrafficCount]:
         if key not in out or c.count_date > out[key].count_date:
             out[key] = c
     return list(out.values())
+
+
+COOL_PACKAGE = "air-conditioned-and-cool-spaces-heat-relief-network"
+COOL_CSV = "Air Conditioned and Cool Spaces - 4326.csv"
+_DAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
+
+
+@dataclass(frozen=True)
+class CoolSpaceRecord:
+    location_id: str
+    name: str
+    kind: str
+    address: str | None
+    hours: dict
+    notes: str | None
+    lon: float
+    lat: float
+
+
+def _hours(row: dict, day: str):
+    opens, closes = (row.get(f"{day}Open") or "").strip(), (row.get(f"{day}Close") or "").strip()
+    if opens.upper() == "CALL" or closes.upper() == "CALL":
+        return "call"
+    if opens.isdigit() and closes.isdigit() and len(opens) == len(closes) == 4:
+        return [opens, closes]
+    return None
+
+
+def parse_cool_spaces(text: str) -> list[CoolSpaceRecord]:
+    out = []
+    for r in csv.DictReader(io.StringIO(text.lstrip("﻿"))):
+        try:
+            lon, lat = json.loads(r["geometry"])["coordinates"][0]
+        except (KeyError, ValueError, IndexError, TypeError):
+            continue
+        none = lambda v: None if v in (None, "", "None") else v.strip()  # noqa: E731
+        out.append(CoolSpaceRecord(r["locationId"], r["locationName"].strip(), r["locationTypeDesc"].strip(),
+                                   none(r.get("address")), {d: _hours(r, d) for d in _DAYS}, none(r.get("notes")),
+                                   float(lon), float(lat)))
+    return out
+
+
+async def fetch_cool_spaces(client: httpx.AsyncClient) -> list[CoolSpaceRecord]:
+    r = await get(client, await resource_url(client, COOL_PACKAGE, COOL_CSV))
+    return parse_cool_spaces(r.text)
 
 
 async def resource_url(client: httpx.AsyncClient, package: str, resource_name: str) -> str:

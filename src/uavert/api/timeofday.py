@@ -2,7 +2,7 @@
 
 import json
 
-from uavert.api.live import LiveContext
+from uavert.api.live import TORONTO_TZ, LiveContext
 from uavert.scoring.combine import Reason
 
 CURRENT_CONDITIONS_NOTE = "Air quality, alerts and news show current conditions."
@@ -10,6 +10,12 @@ CURRENT_CONDITIONS_NOTE = "Air quality, alerts and news show current conditions.
 
 def hour_label(hour: int) -> str:
     return f"{hour % 12 or 12} {'am' if hour < 12 else 'pm'}"
+
+
+def moment(hour: int | None, ctx: LiveContext):
+    """The Toronto local time scores are checked at: today at the chosen hour, or now."""
+    local = ctx.now.astimezone(TORONTO_TZ)
+    return local if hour is None else local.replace(hour=hour, minute=0, second=0, microsecond=0)
 
 
 def time_info(hour: int | None) -> dict:

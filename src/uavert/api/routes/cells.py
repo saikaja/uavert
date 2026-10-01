@@ -6,7 +6,7 @@ from fastapi import APIRouter, Query, Request
 from uavert.api import live
 from uavert.api.errors import ApiError
 from uavert.api.locate import street_extras
-from uavert.api.timeofday import crime_at, time_info
+from uavert.api.timeofday import crime_at, moment, time_info
 
 router = APIRouter(tags=["street cells"])
 
@@ -40,9 +40,9 @@ async def list_cells(request: Request, bbox: str = Query(description="minLon,min
         " WHERE c.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)",
         *box,
     )
-    features = []
+    features, at = [], moment(hour, ctx)
     for r in rows:
-        score = ctx.score(r["lon"], r["lat"], *crime_at(r, hour, ctx), cell=r["h3"])
+        score = ctx.score(r["lon"], r["lat"], *crime_at(r, hour, ctx), cell=r["h3"], when=at)
         features.append({
             "type": "Feature", "geometry": json.loads(r["g"]),
             "properties": {"h3": r["h3"], "incident_count": r["incident_count"], **street_extras(r),

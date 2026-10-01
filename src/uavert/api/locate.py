@@ -7,7 +7,7 @@ from fastapi import Request
 
 from uavert.api.errors import ApiError
 from uavert.api.live import LiveContext
-from uavert.api.timeofday import crime_at, time_info
+from uavert.api.timeofday import crime_at, moment, time_info
 from uavert.config import get_settings
 from uavert.sources.geocode import Geocoder, Place, parse_latlon
 from uavert.sources.http import SourceUnavailable, make_client
@@ -87,7 +87,8 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place, hour: 
         street = {"h3": cell["h3"], "incident_count": cell["incident_count"], **street_extras(cell),
                   "foot_traffic_counts_used": cell["foot_traffic_counts_used"],
                   "foot_traffic_dates": [_date(cell["foot_traffic_first_date"]), _date(cell["foot_traffic_last_date"])],
-                  **ctx.score(place.lon, place.lat, *crime_at(cell, hour, ctx), cell=cell["h3"]).to_dict()}
+                  **ctx.score(place.lon, place.lat, *crime_at(cell, hour, ctx), cell=cell["h3"],
+                              when=moment(hour, ctx)).to_dict()}
     else:
         street = {"h3": None, "incident_count": None,
                   **ctx.score(place.lon, place.lat, hood["crime_score"], json.loads(hood["reasons"]),

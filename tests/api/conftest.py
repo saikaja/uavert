@@ -35,7 +35,7 @@ async def seeded(test_pool):
     now = datetime.now(UTC)
     async with test_pool.acquire() as c:
         for t in ("cell_scores", "neighbourhood_scores", "cells", "neighbourhoods", "aqhi_readings", "official_alerts",
-                  "news_events", "activity_by_hour"):
+                  "news_events", "activity_by_hour", "cool_spaces"):
             await c.execute(f"DELETE FROM {t}")
         region_id = await ensure_reference_rows(c)
         await c.execute("UPDATE sources SET data_as_of = '2026-06-30', last_collected_at = $1, last_status = 'ok'", now)
@@ -77,6 +77,14 @@ async def seeded(test_pool):
             " issued_at, expires_at, geom) VALUES ($1, 'eccc_alerts', 'TEST-WARN', 'warning', 'test heat warning',"
             " 'red', 'issued', $2, $3, ST_Multi(ST_GeomFromText($4, 4326)))",
             region_id, now - timedelta(hours=1), now + timedelta(hours=6), square(lon - 0.0001, lat - 0.0001, SIZE + 0.0002))
+        every_day = json.dumps({d: ["0900", "2030"] for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")})
+        never = json.dumps({d: None for d in ("mon", "tue", "wed", "thu", "fri", "sat", "sun")})
+        for loc_id, name, hours, lon_, lat_ in (("T-LIB", "Test Library", every_day, -79.364, 43.655),
+                                                ("T-CLOSED", "Test Closed Pool", never, -79.3651, 43.6551)):
+            await c.execute(
+                "INSERT INTO cool_spaces (location_id, region_id, name, kind, hours, geom)"
+                " VALUES ($1, $2, $3, 'Cooling Location', $4::jsonb, ST_SetSRID(ST_MakePoint($5, $6), 4326))",
+                loc_id, region_id, name, hours, lon_, lat_)
     return ids
 
 

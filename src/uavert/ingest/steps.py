@@ -4,27 +4,28 @@ import logging
 
 import asyncpg
 
-from uavert.ingest import crime, live, news, reference, traffic
+from uavert.ingest import crime, heat, live, news, reference, traffic
 from uavert.ingest.runs import ensure_reference_rows
 from uavert.sources.http import make_client
 
 log = logging.getLogger("uavert.ingest")
 
 STEPS = {
-    "reference": reference.run, "crime": crime.run, "traffic": traffic.run, "aqhi": live.run_aqhi,
+    "reference": reference.run, "cool_spaces": heat.run, "crime": crime.run, "traffic": traffic.run, "aqhi": live.run_aqhi,
     "alerts": live.run_alerts, "news_cbc": news.run_cbc, "news_gdelt": news.run_gdelt,
 }
 LIVE = ["aqhi", "alerts", "news_cbc", "news_gdelt"]
 # Each target runs its steps in order; a failed step is reported and the rest still run.
 TARGETS = {
-    "reference": ["reference"],
+    "reference": ["reference", "cool_spaces"],
+    "heat": ["cool_spaces"],
     "crime": ["crime"],
     "traffic": ["traffic"],
     "aqhi": ["aqhi"],
     "alerts": ["alerts"],
     "news": ["news_cbc", "news_gdelt"],
     "live": LIVE,
-    "all": ["reference", "crime", "traffic", *LIVE],
+    "all": ["reference", "cool_spaces", "crime", "traffic", *LIVE],
 }
 
 
