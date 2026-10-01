@@ -15,14 +15,25 @@
     <h1>How scores work</h1>
     <p>Every place gets a score from 0 to 100. <strong>Higher means more reported risk.</strong> Scores are guidance based on public data, not a prediction or a guarantee; no place is ever labelled "safe".</p>
 
-    <h2>Four parts, and the highest one counts</h2>
+    <h2>Five parts, and the highest one counts</h2>
     <ul>
-      <li><strong>Crime:</strong> reported crimes from the Toronto Police Service, each weighted by how seriously Canadian courts treat it (Statistics Canada's Crime Severity Index), then ranked against the rest of Toronto.</li>
+      <li><strong>Crime:</strong> reported crimes from the Toronto Police Service, each weighted by how seriously Canadian courts treat it (Statistics Canada's Crime Severity Index), compared with a typical Toronto block or neighbourhood (see below).</li>
       <li><strong>Air quality:</strong> the current Air Quality Health Index from the nearest Environment Canada station.</li>
-      <li><strong>Official alerts:</strong> an Environment Canada warning (or any orange or red alert) puts the area in the top band. Watches and advisories set a moderate floor.</li>
+      <li><strong>Official alerts:</strong> Environment Canada's own colour sets the level: a yellow alert is moderate (40), orange elevated (65), red high (90). During a heat alert, the nearest City cool space open at that time is named.</li>
       <li><strong>News:</strong> recent news about a protest or violent incident nearby raises the score for 24 hours, at most to "elevated". News reports are unverified and labelled that way.</li>
+      <li><strong>Crowds:</strong> on the dates of large City events (Nuit Blanche, Pride, the Caribbean Carnival, parades, New Year's Eve and others), places within about 1 km are at least moderate (35), with the event named. Big venues such as Rogers Centre are mentioned nearby but don't change the score, because their game and concert schedules aren't available to us.</li>
     </ul>
-    <p>The combined score is the <strong>highest</strong> of the four, never an average, so one serious risk is never hidden by several low ones.</p>
+    <p>The combined score is the <strong>highest</strong> of the five, never an average, so one serious risk is never hidden by several low ones. A walking route shows its <strong>worst block</strong>, and also what <strong>most of the walk</strong> is like.</p>
+
+    <h2>What the numbers mean</h2>
+    <p>Crime scores compare a place with a <strong>typical Toronto block</strong> (or, for neighbourhoods, a typical neighbourhood): the middle of the city, half above and half below. A typical place scores 25; every doubling adds 20 points.</p>
+    <div class="table-wrap"><table><thead><tr><th>Compared with typical</th><th>Score</th></tr></thead><tbody>
+      <tr><td>Half as much reported crime</td><td>5</td></tr>
+      <tr><td>Typical</td><td>25</td></tr>
+      <tr><td>2× typical</td><td>45</td></tr>
+      <tr><td>4× typical</td><td>65</td></tr>
+      <tr><td>8× typical</td><td>85</td></tr>
+    </tbody></table></div>
 
     <h2>Bands</h2>
     <div class="table-wrap"><table id="bands"><thead><tr><th>Band</th><th>Scores</th></tr></thead><tbody></tbody></table></div>
@@ -77,7 +88,7 @@
       const d = rules.data, p = d.parameters;
       d.bands.forEach((b) => document.querySelector("#bands tbody").append(row([b.label, `${b.min_score}–${b.max_score}`])));
       [
-        `Neighbourhood crime: every ${p.neighbourhood_year} incident, weighted and divided by population, ranked across the 158 neighbourhoods.`,
+        `Neighbourhood crime: every ${p.neighbourhood_year} incident, weighted and divided by population, compared with a typical Toronto neighbourhood.`,
         `Street level: the city is split into hexagons about one city block across. Each counts the last ${p.street_window_days} days of incidents ${p.street_premises.join(", ").toLowerCase()} (not inside homes), plus half the average of the surrounding hexagons (about 250 m).`,
         `Recent incidents count more: an incident ${p.half_life_days} days old counts half.`,
         `A hexagon needs at least ${p.min_incidents_for_own_score} nearby incidents to stand on its own; with fewer, its score leans toward its neighbourhood's.`,
@@ -94,7 +105,7 @@
         `Incidents are counted in a ${p.time_window_hours}-hour window around the chosen hour. A block with few incidents follows Toronto's overall hourly pattern (it needs about ${p.time_prior_weight} nearby incidents to show its own pattern).`,
         "Homicides are published without a time, so they count evenly across the day.",
         "6 am to 7 pm: City of Toronto pedestrian counts. 8 pm to 5 am: the City doesn't count at night, so this is estimated from Bike Share Toronto trips, which match the pedestrian counts closely during the day.",
-        "Each hour's scores are ranked against every block at every hour, so a quiet street at 3 am can score higher than the same street at 3 pm.",
+        "Each hour is compared with the same all-day typical block, so a quiet street at 3 am, with few people around, can score higher than the same street at 3 pm.",
         "Neighbourhood colours stay all-day. Air quality, alerts and news always show current conditions.",
       ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#time-params").append(li); });
       const hl = (h) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;

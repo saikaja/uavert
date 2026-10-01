@@ -3,7 +3,7 @@ from fastapi import APIRouter, Request
 from uavert.api import live
 from uavert.config import get_settings
 from uavert.freshness import iso
-from uavert.scoring import alerts, crime, environment, fairness
+from uavert.scoring import alerts, crime, crowds, environment, fairness, heat
 from uavert.scoring.bands import BAND_LABELS, BANDS
 
 router = APIRouter(tags=["data sources"])
@@ -60,6 +60,13 @@ async def scoring_rules(request: Request):
         "activity_by_hour": [{"hour": h, "factor": round(factor, 3), "basis": basis}
                              for h, (factor, basis) in enumerate(ctx.activity)],
         "parameters": {
+            "score_scale": "25 at a typical Toronto block or neighbourhood (the median), +20 per doubling, 0-100",
+            "points_per_doubling": crime.POINTS_PER_DOUBLING,
+            "alert_colour_scores": alerts.COLOUR_SCORES,
+            "crowd_event_score": crowds.EVENT_SCORE,
+            "crowd_event_radius_m": crowds.EVENT_RADIUS_M,
+            "venue_radius_m": crowds.VENUE_RADIUS_M,
+            "cool_space_search_m": heat.SEARCH_M,
             "neighbourhood_year": 2025,
             "street_window_days": 365,
             "half_life_days": crime.HALF_LIFE_DAYS,

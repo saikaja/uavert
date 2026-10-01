@@ -7,7 +7,7 @@ const BANDS = {
   elevated: { label: "Elevated risk", colour: "#d9562f" },
   high: { label: "High risk", colour: "#9e1b2c" },
 };
-const CATEGORY_NAMES = { crime: "Crime", environment: "Air quality", alert: "Official alerts", news: "News" };
+const CATEGORY_NAMES = { crime: "Crime", environment: "Air quality", alert: "Official alerts", news: "News", crowds: "Crowds" };
 const SOURCE_NAMES = {};
 const CELL_ZOOM = 14;
 const TZ = "America/Toronto";
@@ -223,7 +223,8 @@ async function runRoute(from, to, btn) {
     const title = el("h3", null, "Stretches that stand out");
     const mins = Math.round(d.duration_s / 60);
     showScore(`${d.from.display_name.split(",")[0]} → ${d.to.display_name.split(",")[0]}`,
-      `Showing: ${timeText()} · Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · highest score along the way`, d,
+      `Showing: ${timeText()} · Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · `
+        + (d.typical_score != null ? `mostly ${BANDS[d.typical_band].label.toLowerCase()} (${d.typical_score}); worst block shown` : "worst block shown"), d,
       d.riskiest_segments.length ? [title, segs] : [title, el("p", "muted", d.segments_note)]);
   } catch (err) { setStatus(err.message, true); }
   finally { if (btn) btn.disabled = false; }
