@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI, Request
+from fastapi.responses import PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from uavert import db
@@ -63,6 +64,24 @@ app = FastAPI(
 )
 errors.install(app)
 v1 = APIRouter(prefix="/api/v1")
+_pool_lock = asyncio.Lock()
+
+
+@app.middleware("http")
+async def database_and_noindex(request: Request, call_next):
+    # Open the database pool on first use as well as at startup: hosted platforms may not run startup.
+    if getattr(app.state, "pool", None) is None:
+        async with _pool_lock:
+            if getattr(app.state, "pool", None) is None:
+                app.state.pool = await db.create_pool()
+    response = await call_next(request)
+    response.headers["X-Robots-Tag"] = "noindex, nofollow"  # keep the demo out of search engines
+    return response
+
+
+@app.get("/robots.txt", include_in_schema=False)
+async def robots():
+    return PlainTextResponse("User-agent: *\nDisallow: /\n")
 
 
 @v1.get("/health", tags=["system"])

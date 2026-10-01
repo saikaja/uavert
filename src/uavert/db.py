@@ -8,7 +8,7 @@ MIGRATIONS_DIR = PROJECT_ROOT / "db" / "migrations"
 
 
 async def create_pool(url: str | None = None) -> asyncpg.Pool:
-    return await asyncpg.create_pool(url or get_settings().database_url, min_size=1, max_size=5)
+    return await asyncpg.create_pool(url or get_settings().database_url, min_size=1, max_size=get_settings().db_pool_max)
 
 
 async def connect(url: str | None = None) -> asyncpg.Connection:

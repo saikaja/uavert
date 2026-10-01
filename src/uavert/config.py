@@ -28,6 +28,9 @@ class Settings(BaseSettings):
     cbc_rss_url: str = "https://www.cbc.ca/webfeed/rss/rss-canada-toronto"
     gdelt_url: str = "https://api.gdeltproject.org/api/v2/doc/doc"
 
+    # Database connections per app instance (hosted functions use a small number).
+    db_pool_max: int = Field(5, ge=1, validation_alias="DB_POOL_MAX")
+
     # Request limit for endpoints that call outside services, per client IP.
     outside_calls_per_minute: int = 30
 
