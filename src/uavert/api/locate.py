@@ -23,14 +23,14 @@ def _http(state):
 def geocoder(request: Request) -> Geocoder:
     state = request.app.state
     if getattr(state, "geocoder", None) is None:
-        state.geocoder = Geocoder(_http(state), get_settings().nominatim_url)
+        state.geocoder = Geocoder(_http(state), get_settings().nominatim_url, db=state.pool)
     return state.geocoder
 
 
 def walking_router(request: Request) -> Router:
     state = request.app.state
     if getattr(state, "router", None) is None:
-        state.router = Router(_http(state), get_settings().osrm_url)
+        state.router = Router(_http(state), get_settings().osrm_url, db=state.pool)
     return state.router
 
 

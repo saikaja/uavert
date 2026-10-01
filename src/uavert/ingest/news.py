@@ -60,7 +60,7 @@ async def store(conn: asyncpg.Connection, region_id: int, items: list[news.NewsI
 async def _run(conn, client, region_id, source_key, fetch) -> None:
     async with ingest_run(conn, source_key) as r:
         items = await fetch(client)
-        r.rows_written = await store(conn, region_id, items, Geocoder(client, get_settings().nominatim_url))
+        r.rows_written = await store(conn, region_id, items, Geocoder(client, get_settings().nominatim_url, db=conn))
         r.data_as_of = max((i.published_at for i in items), default=None)
         print(f"    {source_key}: {len(items)} stories read, {r.rows_written} labelled as protest or violent incident")
 
