@@ -7,7 +7,7 @@ from fastapi import APIRouter, FastAPI, Request
 from uavert import db
 from uavert.api import errors
 from uavert.api.errors import error_response
-from uavert.api.routes import cells, neighbourhoods, risk_scores, sources
+from uavert.api.routes import cells, neighbourhoods, risk_scores, route_risks, sources
 
 
 @asynccontextmanager
@@ -42,6 +42,6 @@ async def health(request: Request):
     return {"data": {"status": "ok", "database": "ok"}}
 
 
-for module in (neighbourhoods, cells, risk_scores, sources):
+for module in (neighbourhoods, cells, risk_scores, route_risks, sources):
     v1.include_router(module.router)
 app.include_router(v1)
