@@ -13,6 +13,7 @@ HALF_LIFE_DAYS = 180  # an incident six months old counts half
 RING_WEIGHT = 0.5  # weight of the 6 neighbouring cells (about 250 m) relative to the cell itself
 MIN_INCIDENTS = 5  # below this, a cell's score leans toward its neighbourhood's
 STREET_PREMISES = frozenset({"Outside", "Transit", "Commercial"})
+HOMICIDE_YEARS = 3  # homicides are averaged over 3 years so one event doesn't swing a small area
 
 
 def percentile_scores(values: Mapping[K, float]) -> dict[K, int]:

@@ -18,6 +18,7 @@ from uavert.scoring.combine import Reason
 from uavert.scoring.events import count_once
 
 NEIGHBOURHOOD_YEAR = 2025
+HOMICIDE_FIRST_YEAR = NEIGHBOURHOOD_YEAR - crime.HOMICIDE_YEARS + 1  # 2023
 STREET_WINDOW_DAYS = 365
 TORONTO_TZ = ZoneInfo("America/Toronto")
 
@@ -70,9 +71,17 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
     `hoods`: dicts with id, external_id, population, counts (published counts for the year).
     `ncr_extra`: published count name -> (csi_offence_key, group) for offences the incident data lacks.
     """
-    by_hood: dict[str, Counter] = defaultdict(Counter)  # (csi_key, group) -> count
+    by_hood: dict[str, Counter] = defaultdict(Counter)  # (csi_key, group) -> count (homicides: yearly average)
+    homicides: Counter = Counter()  # hood -> homicide events over the averaging years
     for e in events:
-        if e.hood_external_id and e.occurred_at.astimezone(TORONTO_TZ).year == NEIGHBOURHOOD_YEAR:
+        if not e.hood_external_id:
+            continue
+        year = e.occurred_at.astimezone(TORONTO_TZ).year
+        if e.source_key == "tps_homicides":
+            if HOMICIDE_FIRST_YEAR <= year <= NEIGHBOURHOOD_YEAR:
+                by_hood[e.hood_external_id][(e.csi_offence_key, e.group)] += 1 / crime.HOMICIDE_YEARS
+                homicides[e.hood_external_id] += 1
+        elif year == NEIGHBOURHOOD_YEAR:
             by_hood[e.hood_external_id][(e.csi_offence_key, e.group)] += 1
     for h in hoods:
         for name, key in ncr_extra.items():
@@ -100,14 +109,22 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
     for h in hoods:
         d = details[h["id"]]
         top = sorted(d.items(), key=lambda kv: -kv[1]["weighted"])[:2]
-        reasons = [
-            Reason("crime",
-                   f"{counted(v['count'], g)} reported in {NEIGHBOURHOOD_YEAR} "
-                   f"({v['rate_per_100k']:,.0f} per 100,000 residents; Toronto median {medians[g]:,.0f})",
-                   source_key=(src := GROUP_SOURCE.get(g, "tps_mci")), value=v["count"],
-                   as_of=str(NEIGHBOURHOOD_YEAR), collected_at=used.get(src, {}).get("collected_at")).to_dict()
-            for g, v in top if v["count"]
-        ]
+        reasons = []
+        for g, v in top:
+            if not v["count"]:
+                continue
+            src = GROUP_SOURCE.get(g, "tps_mci")
+            if g == "homicides":
+                n = homicides[h["external_id"]]
+                text = (f"{counted(n, g)} in {HOMICIDE_FIRST_YEAR}-{NEIGHBOURHOOD_YEAR} ({crime.HOMICIDE_YEARS}-year average; "
+                        f"{v['rate_per_100k']:,.1f} a year per 100,000 residents; Toronto median {medians[g]:,.1f})")
+                value, as_of = n, f"{HOMICIDE_FIRST_YEAR}-{NEIGHBOURHOOD_YEAR}"
+            else:
+                text = (f"{counted(round(v['count']), g)} reported in {NEIGHBOURHOOD_YEAR} "
+                        f"({v['rate_per_100k']:,.0f} per 100,000 residents; Toronto median {medians[g]:,.0f})")
+                value, as_of = round(v["count"]), str(NEIGHBOURHOOD_YEAR)
+            reasons.append(Reason("crime", text, source_key=src, value=value, as_of=as_of,
+                                  collected_at=used.get(src, {}).get("collected_at")).to_dict())
         out[h["id"]] = {"weighted_rate": rates[h["id"]], "crime_score": scores[h["id"]], "reasons": reasons,
                         "details": {"year": NEIGHBOURHOOD_YEAR, "groups": d, "toronto_median_rate_per_100k": medians}}
     return out
@@ -147,12 +164,23 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
         raise ValueError("No located street incidents to score. Run `uavert ingest crime` first.")
     newest = max(e.occurred_at for e in street)
     since = newest - timedelta(days=STREET_WINDOW_DAYS)
-    street = [e for e in street if e.occurred_at > since and e.h3 in cells]
+    homicides_since = newest - timedelta(days=365 * crime.HOMICIDE_YEARS)
+
+    def is_homicide(e: Event) -> bool:
+        return e.source_key == "tps_homicides"
+
+    def contribution(e: Event) -> float:
+        """Homicides count 1/3 for 3 years; everything else fades over the last 12 months."""
+        if is_homicide(e):
+            return e.weight / crime.HOMICIDE_YEARS
+        return e.weight * crime.recency_weight((newest - e.occurred_at).total_seconds() / 86400)
+
+    street = [e for e in street if e.h3 in cells and e.occurred_at > (homicides_since if is_homicide(e) else since)]
 
     own = dict.fromkeys(cells, 0.0)
     in_cell: dict[str, list[Event]] = defaultdict(list)
     for e in street:
-        own[e.h3] += e.weight * crime.recency_weight((newest - e.occurred_at).total_seconds() / 86400)
+        own[e.h3] += contribution(e)
         in_cell[e.h3].append(e)
 
     def ring(c: str) -> list[str]:
@@ -180,7 +208,7 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
 
     # Time of day: each block's incidents by hour (leaning toward the city's pattern), per person out at that hour,
     # ranked across every block and every hour together so emptier hours can score higher.
-    weight_of = {e: e.weight * crime.recency_weight((newest - e.occurred_at).total_seconds() / 86400) for e in street}
+    weight_of = {e: contribution(e) for e in street}
     city_shares = crime.window_shares([local_hour(e) for e in street], [weight_of[e] for e in street])
     activity = activity or [1.0] * 24
     intensity_by_hour, per_person_by_hour = {}, {}
@@ -203,7 +231,9 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
             groups[e.group][0] += 1
             groups[e.group][1] += e.weight
         incident_reasons = [
-            Reason("crime", f"{counted(n, g)} within about 250 m in the last 12 months (outdoors, transit or businesses)",
+            Reason("crime", f"{counted(n, g)} within about 250 m in the last {crime.HOMICIDE_YEARS} years (each counted at one third)"
+                   if g == "homicides" else
+                   f"{counted(n, g)} within about 250 m in the last 12 months (outdoors, transit or businesses)",
                    source_key=(src := GROUP_SOURCE.get(g, "tps_mci")), value=n, as_of=as_of,
                    collected_at=used.get(src, {}).get("collected_at")).to_dict()
             for g, (n, _) in sorted(groups.items(), key=lambda kv: -kv[1][1])[:2]

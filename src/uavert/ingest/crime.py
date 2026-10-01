@@ -8,6 +8,7 @@ from uavert.ingest.runs import ingest_run
 from uavert.sources import arcgis, tps
 
 START_DATE = "2025-01-01"  # covers calendar 2025 (neighbourhood scores) and the last 12 months (street scores)
+START_DATES = {"tps_homicides": "2023-01-01"}  # homicides use a 3-year average (01-03-solidify.md)
 INCIDENT_SOURCES = ("tps_mci", "tps_shootings", "tps_homicides")
 
 _LOAD_COLUMNS = ["source_key", "event_id", "ucr_code", "ucr_ext", "offence", "csi_offence_key",
@@ -15,7 +16,7 @@ _LOAD_COLUMNS = ["source_key", "event_id", "ucr_code", "ucr_ext", "offence", "cs
 
 
 async def fetch(client: httpx.AsyncClient, source_key: str) -> list[tps.Incident]:
-    where = f"OCC_DATE >= DATE '{START_DATE}'"
+    where = f"OCC_DATE >= DATE '{START_DATES.get(source_key, START_DATE)}'"
     out = []
     async for page in arcgis.query_pages(client, tps.LAYERS[source_key], where, tps.INCIDENT_FIELDS[source_key]):
         out += [tps.parse_incident(source_key, f["attributes"]) for f in page]

@@ -1,6 +1,7 @@
 from datetime import UTC, datetime, timedelta
 
 import h3
+import pytest
 
 from uavert.scoring.build import Event, cell_scores, counted, neighbourhood_scores
 
@@ -69,3 +70,33 @@ def test_cell_scores_allow_for_foot_traffic():
 
 def test_counted_uses_singular_for_one():
     assert counted(1, "robberies") == "1 robbery" and counted(2, "robberies") == "2 robberies"
+
+
+def hom(i, when, hood="1", cell=None):
+    return Event(f"H{i}", "tps_homicides", "murder", 7042, "homicides", None, when, hood, cell)
+
+
+def test_neighbourhood_homicides_use_a_three_year_average():
+    # Criterion 36: one homicide in 2025 now counts a third of what it did.
+    hoods = [{"id": 1, "external_id": "1", "population": 10_000, "counts": {}},
+             {"id": 2, "external_id": "2", "population": 10_000, "counts": {}}]
+    one_2025 = neighbourhood_scores([hom(1, T)], hoods, {"murder": 7042}, {}, {})
+    assert one_2025[1]["weighted_rate"] == pytest.approx(7042 / 3 / 10_000 * 100_000)
+    text = one_2025[1]["reasons"][0]["text"]
+    assert text.startswith("1 homicide in 2023-2025 (3-year average;") and one_2025[1]["reasons"][0]["as_of"] == "2023-2025"
+    # homicides in 2023 and 2024 count too; 2022 doesn't
+    spread = neighbourhood_scores([hom(1, datetime(2023, 3, 1, tzinfo=UTC)), hom(2, datetime(2024, 3, 1, tzinfo=UTC)),
+                                   hom(3, datetime(2022, 3, 1, tzinfo=UTC))], hoods, {"murder": 7042}, {}, {})
+    assert spread[1]["weighted_rate"] == pytest.approx(2 * 7042 / 3 / 10_000 * 100_000)
+
+
+def test_street_homicides_count_a_third_for_three_years():
+    # Criterion 37
+    a = h3.latlng_to_cell(43.6536, -79.3840, 9)
+    newest = datetime(2026, 6, 30, tzinfo=UTC)
+    base = [ev(1, "robbery", "robberies", cell=a, when=newest)]
+    two_years_ago = cell_scores(base + [hom(2, newest - timedelta(days=730), cell=a)], {a: 1}, {1: "Test"}, {})
+    four_years_ago = cell_scores(base + [hom(3, newest - timedelta(days=1460), cell=a)], {a: 1}, {1: "Test"}, {})
+    assert two_years_ago[a]["own_value"] == pytest.approx(583 + 7042 / 3)
+    assert four_years_ago[a]["own_value"] == pytest.approx(583)
+    assert any("1 homicide within about 250 m in the last 3 years" in r["text"] for r in two_years_ago[a]["reasons"])

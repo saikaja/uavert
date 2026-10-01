@@ -57,7 +57,7 @@ async def main(out_path: str) -> None:
 ## How the two are calculated
 
 - **Demo (September 29, 2026):** Toronto Police's published 2025 rates per 100,000, weighted by hand: homicide 10, shootings 5, assault 3, robbery 3, break and enter 2, auto theft 1, theft over $5,000 1, theft from vehicles 1, bicycle theft 0.5.
-- **CSI (this build):** every 2025 incident weighted by its Statistics Canada Crime Severity Index weight (2009 published table): murder 7,042, discharging a firearm 988, robbery 583, aggravated assault 405, break and enter 187, theft over $5,000 139, auto theft 84, assault with a weapon 77, common assault 23, thefts under $5,000 37. Each event is counted once across the Toronto Police datasets.
+- **CSI (this build):** every 2025 incident weighted by its Statistics Canada Crime Severity Index weight (2009 published table): murder 7,042, discharging a firearm 988, robbery 583, aggravated assault 405, break and enter 187, theft over $5,000 139, auto theft 84, assault with a weapon 77, common assault 23, thefts under $5,000 37. Each event is counted once across the Toronto Police datasets, and homicides use the 2023-2025 average (3 years) so a single homicide doesn't swing a small neighbourhood.
 
 Both are ranked across the 158 neighbourhoods (0 = lowest, 100 = highest).
 
