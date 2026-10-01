@@ -1,22 +1,52 @@
 """FastAPI app: `/api/v1` endpoints and the web map."""
 
-from contextlib import asynccontextmanager
+import asyncio
+import logging
+from contextlib import asynccontextmanager, suppress
 from pathlib import Path
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 
 from uavert import db
+from uavert.config import get_settings
+from uavert.ingest.steps import LIVE, run_steps
 from uavert.api import errors
 from uavert.api.errors import error_response
 from uavert.api.routes import cells, neighbourhoods, news, risk_scores, route_risks, sources
+
+
+log = logging.getLogger("uavert.api")
+
+
+async def refresh_once(pool) -> list[str]:
+    """One refresh of the live sources. Never raises: failures are recorded per source."""
+    try:
+        async with pool.acquire() as conn:
+            return await run_steps(conn, LIVE, report=log.info)
+    except Exception:
+        log.exception("Live refresh failed")
+        return LIVE
+
+
+async def refresh_forever(pool, minutes: int) -> None:
+    while True:
+        failed = await refresh_once(pool)
+        log.info("Live refresh done%s", f"; failed: {', '.join(failed)}" if failed else "")
+        await asyncio.sleep(minutes * 60)
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     if getattr(app.state, "pool", None) is None:
         app.state.pool = await db.create_pool()
+    minutes = get_settings().refresh_minutes
+    task = asyncio.create_task(refresh_forever(app.state.pool, minutes)) if minutes > 0 else None
     yield
+    if task:
+        task.cancel()
+        with suppress(asyncio.CancelledError):
+            await task
     await app.state.pool.close()
     if getattr(app.state, "http", None) is not None:
         await app.state.http.aclose()

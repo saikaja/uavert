@@ -1,0 +1,48 @@
+# Keeps the shared Neon database fresh for the hosted site (01-03-solidify.md, criterion 33).
+# Hourly: air quality, alerts, news. Daily: crime and traffic reload, then scores rebuilt.
+# Scheduled runs use the workflow on the default branch; until the app is merged into main, the
+# repository variable DATA_BRANCH says which branch's code to run.
+name: Refresh data
+
+on:
+  schedule:
+    - cron: "17 * * * *"   # hourly
+    - cron: "0 10 * * *"   # daily, 10:00 UTC (6 am Toronto in summer, 5 am in winter)
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Also reload crime and traffic and rebuild scores"
+        type: boolean
+        default: false
+
+concurrency:
+  group: refresh-data
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ vars.DATA_BRANCH || github.ref }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install
+        run: pip install -e .
+      - name: Apply database migrations
+        run: python -m uavert migrate
+      - name: Live sources (air quality, alerts, news)
+        # A source that fails (GDELT often limits requests) is recorded and the rest still run.
+        run: python -m uavert ingest live || echo "::warning::Some live sources failed; earlier data was kept"
+      - name: Crime, traffic and scores
+        if: github.event.schedule == '0 10 * * *' || inputs.full
+        run: |
+          python -m uavert ingest crime
+          python -m uavert ingest traffic
+          python -m uavert build-scores

@@ -4,22 +4,11 @@ import argparse
 import asyncio
 import sys
 
-from uavert import db
-from uavert.ingest import crime, live, news, reference, traffic
-from uavert.ingest.runs import ensure_reference_rows
-from uavert.sources.http import make_client
+import logging
+import os
 
-# Each ingest target runs its steps in order; a failed step is reported and the rest still run.
-TARGETS = {
-    "reference": ["reference"],
-    "crime": ["crime"],
-    "traffic": ["traffic"],
-    "aqhi": ["aqhi"],
-    "alerts": ["alerts"],
-    "news": ["news_cbc", "news_gdelt"],
-    "live": ["aqhi", "alerts", "news_cbc", "news_gdelt"],
-    "all": ["reference", "crime", "traffic", "aqhi", "alerts", "news_cbc", "news_gdelt"],
-}
+from uavert import db
+from uavert.ingest.steps import TARGETS, run_steps
 
 
 async def _migrate() -> int:
@@ -33,21 +22,9 @@ async def _migrate() -> int:
 
 
 async def _ingest(target: str) -> int:
-    steps = {"reference": reference.run, "crime": crime.run, "traffic": traffic.run, "aqhi": live.run_aqhi, "alerts": live.run_alerts,
-             "news_cbc": news.run_cbc, "news_gdelt": news.run_gdelt}
     conn = await db.connect()
-    failures = []
     try:
-        region_id = await ensure_reference_rows(conn)
-        async with make_client() as client:
-            for name in TARGETS[target]:
-                print(f"Ingesting {name} ...", flush=True)
-                try:
-                    await steps[name](conn, client, region_id)
-                    print(f"  {name}: ok")
-                except Exception as e:  # report and continue with the next source
-                    failures.append(name)
-                    print(f"  {name}: FAILED - {type(e).__name__}: {e}")
+        failures = await run_steps(conn, TARGETS[target], report=lambda m: print(m, flush=True))
     finally:
         await conn.close()
     if failures:
@@ -79,6 +56,8 @@ def main(argv: list[str] | None = None) -> int:
     serve = sub.add_parser("serve", help="run the API and web map")
     serve.add_argument("--port", type=int, default=8000)
     serve.add_argument("--reload", action="store_true")
+    serve.add_argument("--refresh-minutes", type=int, default=30,
+                       help="refresh air quality, alerts and news this often while serving (0 = off)")
     args = parser.parse_args(argv)
 
     if args.command == "migrate":
@@ -90,6 +69,8 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "serve":
         import uvicorn
 
+        os.environ.setdefault("UAVERT_REFRESH_MINUTES", str(args.refresh_minutes))
+        logging.basicConfig(level=logging.INFO, format="%(levelname)s:     %(name)s: %(message)s")
         uvicorn.run("uavert.api.app:app", port=args.port, reload=args.reload)
         return 0
     return 1

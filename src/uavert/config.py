@@ -3,6 +3,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -29,6 +30,9 @@ class Settings(BaseSettings):
 
     # Request limit for endpoints that call outside services, per client IP.
     outside_calls_per_minute: int = 30
+
+    # Background refresh of the live sources while the app runs (0 = off; `uavert serve` defaults to 30).
+    refresh_minutes: int = Field(0, ge=0, validation_alias="UAVERT_REFRESH_MINUTES")
 
 
 @lru_cache
