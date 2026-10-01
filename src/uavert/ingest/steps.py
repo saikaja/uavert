@@ -26,6 +26,7 @@ TARGETS = {
     "alerts": ["alerts"],
     "news": ["news_cbc", "news_gdelt"],
     "live": LIVE,
+    "daily": ["cool_spaces", "crowds", "crime", "traffic"],  # what the scheduled daily refresh reloads
     "all": ["reference", "cool_spaces", "crowds", "crime", "traffic", *LIVE],
 }
 
