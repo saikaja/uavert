@@ -35,6 +35,12 @@ async def store_alerts(conn: asyncpg.Connection, region_id: int, alerts: list[ec
                 region_id, a.external_id, a.alert_type, a.alert_code, a.name, a.risk_colour, a.status,
                 a.issued_at, a.expires_at, a.text, json.dumps(a.geometry),
             )
+        # The feed lists every current alert for the area; one that has dropped out was cancelled or has ended.
+        await conn.execute(
+            "UPDATE official_alerts SET status = 'ended' WHERE region_id = $1 AND source_key = 'eccc_alerts'"
+            " AND status <> 'ended' AND NOT (external_id = ANY($2::text[]))",
+            region_id, [a.external_id for a in alerts],
+        )
     return len(alerts)
 
 

@@ -143,6 +143,8 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
     `activity`: people out at each hour 0-23 relative to the daytime average (default: 1.0 every hour).
     """
     street = [e for e in events if e.h3 and crime.counts_on_street(e.premises_type)]
+    if not street:
+        raise ValueError("No located street incidents to score. Run `uavert ingest crime` first.")
     newest = max(e.occurred_at for e in street)
     since = newest - timedelta(days=STREET_WINDOW_DAYS)
     street = [e for e in street if e.occurred_at > since and e.h3 in cells]

@@ -33,6 +33,10 @@ function fillTimeSelector() {
 }
 
 const $ = (id) => document.getElementById(id);
+// Links come from outside feeds: only ordinary web links are clickable.
+const safeUrl = (u) => { try { const p = new URL(u); return p.protocol === "https:" || p.protocol === "http:" ? p.href : null; } catch { return null; } };
+// Leaflet tooltips render HTML, so text from data is escaped first.
+const escapeHtml = (s) => String(s ?? "").replace(/[&<>"']/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[ch]);
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; };
 const fmtDate = (iso) => {
   if (!iso) return "unknown";
@@ -79,16 +83,17 @@ async function loadNeighbourhoods() {
   hoodLayer = L.geoJSON(body.data, {
     style: (f) => style(f.properties.band),
     onEachFeature: (f, layer) => {
-      layer.bindTooltip(`${f.properties.name}: ${f.properties.score}`, { sticky: true });
+      layer.bindTooltip(`${escapeHtml(f.properties.name)}: ${f.properties.score}`, { sticky: true });
       layer.on("click", () => showNeighbourhood(f.properties.id));
     },
   }).addTo(map);
 }
 
-let cellTimer;
+let cellTimer, cellRequest = 0;
 function scheduleCells() { clearTimeout(cellTimer); cellTimer = setTimeout(loadCells, 250); }
 
 async function loadCells() {
+  const request = ++cellRequest;
   const show = map.getZoom() >= CELL_ZOOM;
   $("zoom-hint").hidden = show;
   if (hoodLayer) hoodLayer.setStyle((f) => style(f.properties.band, show ? 0.08 : 0.55));
@@ -97,13 +102,14 @@ async function loadCells() {
   const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map((v) => v.toFixed(5)).join(",");
   try {
     const body = await api(`/api/v1/cells?bbox=${bbox}${hourParam()}`);
+    if (request !== cellRequest) return; // the view or the time changed while this was loading
     if (cellLayer) map.removeLayer(cellLayer);
     cellLayer = L.geoJSON(body.data, {
       style: (f) => style(f.properties.band, 0.6),
       onEachFeature: (f, layer) => {
         const p = f.properties;
         const around = p.vs_surroundings != null ? ` · ${timesAround(p.vs_surroundings)} its surroundings` : "";
-        layer.bindTooltip(`Street score ${p.score}${around} · ${peoplePerHour(p.foot_traffic_per_hour)}`, { sticky: true });
+        layer.bindTooltip(escapeHtml(`Street score ${p.score}${around} · ${peoplePerHour(p.foot_traffic_per_hour)}`), { sticky: true });
         layer.on("click", (e) => checkPoint(e.latlng.lat, e.latlng.lng));
       },
     }).addTo(map);
@@ -138,7 +144,8 @@ function showScore(title, sub, score, extraNodes = []) {
 
 function reasonItem(r) {
   const li = el("li");
-  if (r.url) { const a = el("a", null, r.text); a.href = r.url; a.target = "_blank"; a.rel = "noopener"; li.append(a); }
+  const href = r.url && safeUrl(r.url);
+  if (href) { const a = el("a", null, r.text); a.href = href; a.target = "_blank"; a.rel = "noopener"; li.append(a); }
   else li.append(document.createTextNode(r.text));
   li.append(el("span", "meta", `${SOURCE_NAMES[r.source_key] || r.source_key} · data ${fmtDate(r.as_of)} · collected ${fmtDate(r.collected_at)}`));
   return li;
@@ -235,7 +242,8 @@ async function loadNews() {
     list.replaceChildren();
     if (!items.length) list.append(el("li", "muted", "No protest or violent-incident reports in Toronto news in the last 24 hours."));
     items.forEach((n) => {
-      const li = el("li"); const a = el("a", null, n.headline); a.href = n.url; a.target = "_blank"; a.rel = "noopener";
+      const li = el("li"); const href = safeUrl(n.url);
+      const a = href ? Object.assign(el("a", null, n.headline), { href, target: "_blank", rel: "noopener" }) : el("span", null, n.headline);
       li.append(a, el("span", "meta", `${n.category === "protest" ? "Protest" : "Violent incident"} · ${n.citywide ? "location unknown (not scored)" : n.location_text} · ${n.publisher} · ${fmtDate(n.published_at)}`));
       list.append(li);
     });

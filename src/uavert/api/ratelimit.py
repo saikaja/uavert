@@ -19,6 +19,8 @@ class RateLimiter:
 
     def allow(self, key: str, now: float | None = None) -> bool:
         now = time.monotonic() if now is None else now
+        if len(self._hits) > 10_000:  # drop clients with no hits in the current window
+            self._hits = defaultdict(deque, {k: v for k, v in self._hits.items() if v and now - v[-1] < WINDOW_S})
         hits = self._hits[key]
         while hits and now - hits[0] >= WINDOW_S:
             hits.popleft()

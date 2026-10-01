@@ -80,3 +80,10 @@ def test_rate_limiter_window():
 def test_parse_latlon():
     assert parse_latlon(" 43.65, -79.38 ") == Place("43.65000, -79.38000", -79.38, 43.65)
     assert parse_latlon("Queen St W") is None and parse_latlon("95,-79") is None
+
+
+async def test_map_clicks_by_coordinates_are_not_rate_limited(client, seeded):
+    # Found in the phase 5 review: lat/lon lookups call no outside service, so they don't count toward the limit.
+    statuses = {(await client.get("/api/v1/risk-scores", params={"lat": 43.655, "lon": -79.385})).status_code
+                for _ in range(35)}
+    assert statuses == {200}

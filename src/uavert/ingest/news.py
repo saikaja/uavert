@@ -20,14 +20,15 @@ async def store(conn: asyncpg.Connection, region_id: int, items: list[news.NewsI
     no usable location -> stored as citywide (listed, but never changes a score)."""
     now = now or datetime.now(UTC)
     names = [r["name"] for r in await conn.fetch("SELECT name FROM neighbourhoods WHERE region_id = $1", region_id)]
+    located = {r["url"] for r in await conn.fetch("SELECT url FROM news_events WHERE geom IS NOT NULL")}
     stored = 0
     for item in items:
         category = news.classify(item.headline, item.summary)
-        if category is None or now - item.published_at > MAX_AGE:
+        if category is None or now - item.published_at > MAX_AGE or not item.url.startswith(("https://", "http://")):
             continue
         place_text = news.extract_place(f"{item.headline}. {item.summary}", names)
         lon = lat = None
-        if place_text:
+        if place_text and item.url not in located:
             try:
                 place = await geocoder.search(f"{place_text}, Toronto, Ontario")
             except SourceUnavailable:
@@ -44,8 +45,11 @@ async def store(conn: asyncpg.Connection, region_id: int, items: list[news.NewsI
             " geom, h3, published_at) VALUES ($1, $2, $3, $4, $5, $6, $7,"
             " CASE WHEN $8::float8 IS NULL THEN NULL ELSE ST_SetSRID(ST_MakePoint($8, $9), 4326) END,"
             " CASE WHEN $8::float8 IS NULL THEN NULL ELSE h3_lat_lng_to_cell(point($8, $9), 9) END, $10)"
-            " ON CONFLICT (url) DO UPDATE SET headline = $4, category = $6, location_text = $7, geom = EXCLUDED.geom,"
-            " h3 = EXCLUDED.h3, last_seen_at = now()",
+            # A story located before keeps its location if this run couldn't (or didn't need to) locate it.
+            " ON CONFLICT (url) DO UPDATE SET headline = $4, category = $6,"
+            " location_text = COALESCE(EXCLUDED.location_text, news_events.location_text),"
+            " geom = COALESCE(EXCLUDED.geom, news_events.geom), h3 = COALESCE(EXCLUDED.h3, news_events.h3),"
+            " last_seen_at = now()",
             region_id, item.source_key, item.url, item.headline, item.publisher, category, place_text, lon, lat,
             item.published_at,
         )

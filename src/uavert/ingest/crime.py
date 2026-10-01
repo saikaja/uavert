@@ -68,4 +68,5 @@ async def run(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: in
             incidents = await fetch(client, source_key)
             r.rows_written = await store(conn, region_id, incidents)
             r.data_as_of = max((i.occurred_at for i in incidents), default=None)
-            print(f"    {source_key}: {len(incidents)} records fetched, {r.rows_written} stored, latest {r.data_as_of:%Y-%m-%d}")
+            latest = f"{r.data_as_of:%Y-%m-%d}" if r.data_as_of else "none"
+            print(f"    {source_key}: {len(incidents)} records fetched, {r.rows_written} stored, latest {latest}")

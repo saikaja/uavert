@@ -40,7 +40,6 @@ async def scoring_rules(request: Request):
         edition,
     )
     ctx = await live.load(pool)
-    activity = await pool.fetch("SELECT hour, factor_used, basis FROM activity_by_hour ORDER BY hour")
     bands = [{"band": b, "label": BAND_LABELS[b], "min_score": lo,
               "max_score": (BANDS[i + 1][1] - 1) if i + 1 < len(BANDS) else 100} for i, (b, lo) in enumerate(BANDS)]
     return live.envelope({
@@ -49,8 +48,8 @@ async def scoring_rules(request: Request):
         "csi_edition": edition,
         "csi_weights": [dict(w) | {"weight": float(w["weight"]), "retrieved_on": w["retrieved_on"].isoformat()} for w in weights],
         "offence_map": [dict(m) | {"weight": float(m["weight"])} for m in mapping],
-        "activity_by_hour": [{"hour": a["hour"], "factor": round(float(a["factor_used"]), 3), "basis": a["basis"]}
-                             for a in activity],
+        "activity_by_hour": [{"hour": h, "factor": round(factor, 3), "basis": basis}
+                             for h, (factor, basis) in enumerate(ctx.activity)],
         "parameters": {
             "neighbourhood_year": 2025,
             "street_window_days": 365,

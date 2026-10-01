@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Query, Request
 
 from uavert.api import live
 from uavert.api.errors import ApiError
@@ -12,7 +12,6 @@ router = APIRouter(tags=["destination and route"])
 @router.get(
     "/risk-scores",
     summary="Where I'm going: the risk score for an address or a point",
-    dependencies=[Depends(limit_outside_calls)],
 )
 async def risk_scores(
     request: Request,
@@ -22,6 +21,7 @@ async def risk_scores(
     hour: int | None = Query(None, ge=0, le=23, description="Hour of day in Toronto (0-23); omit for all day"),
 ):
     if address:
+        limit_outside_calls(request)  # only address lookups call the geocoding service
         place = await resolve(request, address)
     elif lat is not None and lon is not None:
         place = Place(f"{lat:.5f}, {lon:.5f}", lon, lat)

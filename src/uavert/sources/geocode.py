@@ -58,5 +58,8 @@ class Geocoder:
                 "viewbox": TORONTO_VIEWBOX, "bounded": 0,
             })
         place = Place(results[0]["display_name"], float(results[0]["lon"]), float(results[0]["lat"])) if results else None
-        self._cache[key] = (time.monotonic(), place)
+        now = time.monotonic()
+        if len(self._cache) > 5_000:  # drop expired entries
+            self._cache = {k: v for k, v in self._cache.items() if now - v[0] < CACHE_TTL_S}
+        self._cache[key] = (now, place)
         return place

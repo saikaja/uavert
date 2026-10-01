@@ -59,7 +59,7 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
     ctx = LiveContext(now=now, sources=await source_dates(pool))
     for r in await pool.fetch(
         "SELECT DISTINCT ON (station_id) station_name, ST_X(geom) AS lon, ST_Y(geom) AS lat, observed_at, aqhi"
-        " FROM aqhi_readings ORDER BY station_id, observed_at DESC"
+        " FROM aqhi_readings WHERE observed_at > $1::timestamptz - interval '2 days' ORDER BY station_id, observed_at DESC", now
     ):
         ctx.stations.append(Station(r["station_name"], r["lon"], r["lat"], r["observed_at"], float(r["aqhi"])))
     for r in await pool.fetch(
