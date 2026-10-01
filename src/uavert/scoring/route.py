@@ -1,11 +1,12 @@
-"""Route scoring: sample the route every 25 m, map samples to H3 cells, find the riskiest stretches."""
+"""Route scoring: sample the route every 25 m, map samples to H3 cells, find the stretches that
+stand out from their surroundings (design revision 2)."""
 
 import math
 from dataclasses import dataclass, field
 
 import h3
 
-from uavert.scoring.bands import band_for
+from uavert.scoring.crime import STANDOUT_MIN_RATIO
 
 STEP_M = 25.0
 MAX_STRETCHES = 3
@@ -33,10 +34,23 @@ def cell_of(point: tuple[float, float]) -> str:
     return h3.latlng_to_cell(point[1], point[0], 9)
 
 
+def cells_in_order(points: list[tuple[float, float]]) -> list[tuple[str, list[tuple[float, float]]]]:
+    """Group consecutive route points by the cell they fall in."""
+    groups: list[tuple[str, list[tuple[float, float]]]] = []
+    for p in points:
+        cell = cell_of(p)
+        if groups and groups[-1][0] == cell:
+            groups[-1][1].append(p)
+        else:
+            if groups:
+                groups[-1][1].append(p)  # keep pieces joined end to end
+            groups.append((cell, [p]))
+    return groups
+
+
 @dataclass
 class Stretch:
-    score: int
-    band: str
+    ratio: float
     worst_cell: str
     points: list[tuple[float, float]] = field(default_factory=list)
 
@@ -45,24 +59,22 @@ class Stretch:
         return sum(distance_m(a, b) for a, b in zip(self.points, self.points[1:]))
 
 
-def stretches(points: list[tuple[float, float]], scores: dict[str, int]) -> list[Stretch]:
-    """Split the route into runs of consecutive points whose cells share a band. Points in cells
-    without a score (outside the grid) join the run they're in without changing it."""
+def standout_stretches(points: list[tuple[float, float]], ratios: dict[str, float | None]) -> list[Stretch]:
+    """Runs of consecutive cells at least STANDOUT_MIN_RATIO times their surroundings, the ones that
+    stand out most first, at most MAX_STRETCHES."""
     runs: list[Stretch] = []
-    for p in points:
-        cell = cell_of(p)
-        score = scores.get(cell)
-        if runs and (score is None or band_for(score) == runs[-1].band):
+    previous_qualified = False
+    for cell, pts in cells_in_order(points):
+        ratio = ratios.get(cell)
+        if ratio is None or ratio < STANDOUT_MIN_RATIO:
+            previous_qualified = False
+            continue
+        if previous_qualified:
             run = runs[-1]
-            run.points.append(p)
-            if score is not None and score > run.score:
-                run.score, run.worst_cell = score, cell
-        elif score is not None:
-            if runs:
-                runs[-1].points.append(p)  # keep stretches joined end to end
-            runs.append(Stretch(score, band_for(score), cell, [p]))
-    return runs
-
-
-def riskiest(runs: list[Stretch], n: int = MAX_STRETCHES) -> list[Stretch]:
-    return sorted(runs, key=lambda s: (-s.score, -s.length_m))[:n]
+            run.points += pts
+            if ratio > run.ratio:
+                run.ratio, run.worst_cell = ratio, cell
+        else:
+            runs.append(Stretch(ratio, cell, list(pts)))
+        previous_qualified = True
+    return sorted(runs, key=lambda s: -s.ratio)[:MAX_STRETCHES]

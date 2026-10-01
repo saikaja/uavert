@@ -50,5 +50,22 @@ def test_cell_scores_count_street_incidents_nearby_and_lean_when_sparse():
     assert out[far]["smoothed_value"] > 0
 
 
+def test_cell_scores_allow_for_foot_traffic():
+    a = h3.latlng_to_cell(43.6536, -79.3840, 9)
+    b = h3.latlng_to_cell(43.70, -79.40, 9)  # far away, same raw incidents
+    cells = {a: 1, b: 1}
+    newest = datetime(2026, 6, 30, tzinfo=UTC)
+    events = [ev(i, "robbery", "robberies", cell=a, when=newest) for i in range(6)] +              [ev(10 + i, "robbery", "robberies", cell=b, when=newest) for i in range(6)]
+    traffic = [(a, 2000.0, datetime(2025, 5, 1).date()), (b, 50.0, datetime(2024, 5, 1).date())]
+    out = cell_scores(events, cells, {1: "Test"}, {}, traffic)
+    # same incidents, but 2,000 people an hour at a vs 50 (treated as the floor of 100) at b
+    assert out[a]["per_person_value"] < out[b]["per_person_value"]
+    assert out[a]["crime_score"] < out[b]["crime_score"]
+    assert out[a]["foot_traffic"].per_hour == 2000 and out[a]["busy_area"]
+    texts = [r["text"] for r in out[a]["reasons"]]
+    assert texts[1].startswith("Busy area: about 2,000 people an hour on foot nearby (1 City of Toronto count, 2025)")
+    assert out[a]["reasons"][1]["source_key"] == "toronto_tmc" and out[a]["reasons"][1]["as_of"] == "2025-05-01"
+
+
 def test_counted_uses_singular_for_one():
     assert counted(1, "robberies") == "1 robbery" and counted(2, "robberies") == "2 robberies"

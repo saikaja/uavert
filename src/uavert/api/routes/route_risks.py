@@ -43,7 +43,7 @@ async def route_risks(
         return live.envelope({"from": {"query": from_, "display_name": start.display_name}, "to": {"query": to, "display_name": end.display_name},
                               "distance_m": 0, "duration_s": 0, "geometry": _line([(end.lon, end.lat)]),
                               **{k: here["street"][k] for k in ("score", "band", "categories", "reasons")},
-                              "riskiest_segments": []}, ctx)
+                              "riskiest_segments": [], "segments_note": "Start and end are the same place."}, ctx)
     try:
         walk = await walking_router(request).walk(start, end)
     except NoRoute:
@@ -56,18 +56,22 @@ async def route_risks(
     points = route_rules.densify(walk.coordinates)
     cells = sorted({route_rules.cell_of(p) for p in points})
     rows = await pool.fetch(
-        "SELECT c.h3::text AS h3, ST_X(c.centre) AS lon, ST_Y(c.centre) AS lat, s.crime_score, s.reasons"
-        " FROM cells c JOIN cell_scores s ON s.h3 = c.h3 WHERE c.h3 = ANY($1::text[]::h3index[])",
+        "SELECT c.h3::text AS h3, ST_X(c.centre) AS lon, ST_Y(c.centre) AS lat, s.crime_score, s.reasons,"
+        " s.vs_surroundings, s.foot_traffic_per_hour FROM cells c JOIN cell_scores s ON s.h3 = c.h3"
+        " WHERE c.h3 = ANY($1::text[]::h3index[])",
         cells,
     )
+    by_cell = {r["h3"]: r for r in rows}
     scored = {r["h3"]: ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), cell=r["h3"])
               for r in rows}
     if not scored:
         raise ApiError(422, "outside_coverage", "That route doesn't pass through the area we cover.")
     worst = max(scored.values(), key=lambda s: s.score)
-    runs = route_rules.stretches(points, {c: s.score for c, s in scored.items()})
-    segments = [{"geometry": _line(r.points), "length_m": round(r.length_m), "score": r.score, "band": r.band,
-                 "reasons": [x.to_dict() for x in scored[r.worst_cell].reasons]} for r in route_rules.riskiest(runs)]
+    stretches = route_rules.standout_stretches(points, {c: r["vs_surroundings"] for c, r in by_cell.items()})
+    segments = [{"geometry": _line(s.points), "length_m": round(s.length_m),
+                 "vs_surroundings": round(s.ratio, 1),
+                 "foot_traffic_per_hour": _rounded(by_cell[s.worst_cell]["foot_traffic_per_hour"]),
+                 **scored[s.worst_cell].to_dict()} for s in stretches]
     return live.envelope({
         "from": {"query": from_, "display_name": start.display_name, "lon": start.lon, "lat": start.lat},
         "to": {"query": to, "display_name": end.display_name, "lon": end.lon, "lat": end.lat},
@@ -76,4 +80,9 @@ async def route_risks(
         **worst.to_dict(),
         "cells_scored": len(scored),
         "riskiest_segments": segments,
+        "segments_note": None if segments else "No stretch of this walk stands out from its surroundings.",
     }, ctx)
+
+
+def _rounded(v):
+    return round(v) if v is not None else None

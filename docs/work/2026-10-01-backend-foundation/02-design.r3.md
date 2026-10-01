@@ -1,6 +1,6 @@
 # 2. Review the design (revision 3): adjusting street scores for foot traffic
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-01  ·  **Status:** Approved
 **Revises:** [02-design.md](02-design.md) and [02-design.r2.md](02-design.r2.md) (both approved 2026-10-01). Everything in them stays as it is except what is changed below.
 
 ## Why this revision
@@ -141,8 +141,8 @@ Fields are only added, so `/api/v1` stays compatible.
 Once this is approved, I build revisions 2 and 3 together on the same branch, with tests, as an addition to phase 4. I then update `04-implementation.md` and ask you to approve phase 4.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-01 13:00
+- **User's response:** "yes"
 - **Revisions before approval:** none

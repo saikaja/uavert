@@ -2,6 +2,9 @@
 
 from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Hashable, Iterable, Mapping
+from dataclasses import dataclass
+from datetime import date
+from statistics import median
 from typing import TypeVar
 
 K = TypeVar("K", bound=Hashable)
@@ -60,3 +63,56 @@ def lean_toward_neighbourhood(local: float, incidents: int, neighbourhood_averag
         return local
     share = incidents / MIN_INCIDENTS
     return share * local + (1 - share) * neighbourhood_average
+
+
+# ---- Foot traffic (design revision 3) and "compared with surroundings" (revision 2) ----
+
+FOOT_TRAFFIC_FLOOR = 100.0  # pedestrians/hour; below this, counts can't show how many people are around
+FOOT_TRAFFIC_SINCE = date(2015, 1, 1)
+FOOT_TRAFFIC_MAX_RINGS = 3  # look up to about 600 m for counts
+SURROUNDINGS_RINGS = 6  # about 1 km
+BUSY_AREA_QUANTILE = 0.9
+STANDOUT_MIN_RATIO = 1.5
+
+
+@dataclass(frozen=True)
+class FootTraffic:
+    per_hour: float
+    counts_used: int
+    first_date: date | None
+    last_date: date | None
+
+    @property
+    def estimated(self) -> bool:
+        return self.counts_used == 0
+
+
+def foot_traffic_estimate(cell: K, counts: Mapping[K, list[tuple[float, date]]], city_median: float,
+                          disk: Callable[[K, int], Iterable[K]]) -> FootTraffic:
+    """Median pedestrians/hour of counts within 1 ring of the cell, else 2, else 3, else the city median.
+    `counts` maps a cell to its (pedestrians per hour, count date) pairs."""
+    for k in range(1, FOOT_TRAFFIC_MAX_RINGS + 1):
+        found = [c for n in disk(cell, k) for c in counts.get(n, [])]
+        if found:
+            dates = [d for _, d in found]
+            return FootTraffic(median(v for v, _ in found), len(found), min(dates), max(dates))
+    return FootTraffic(city_median, 0, None, None)
+
+
+def per_person(value: float, pedestrians_per_hour: float) -> float:
+    return value / max(pedestrians_per_hour, FOOT_TRAFFIC_FLOOR)
+
+
+def surroundings_ratio(cell: K, values: Mapping[K, float], disk: Callable[[K, int], Iterable[K]]) -> float | None:
+    """The cell's value divided by the median of the other cells within about 1 km. None when that median is 0."""
+    around = [values[n] for n in disk(cell, SURROUNDINGS_RINGS) if n != cell and n in values]
+    if not around:
+        return None
+    m = median(around)
+    return values[cell] / m if m > 0 else None
+
+
+def busy_area_threshold(location_rates: Iterable[float]) -> float:
+    """Pedestrians/hour at the city's 90th percentile of counted locations."""
+    ordered = sorted(location_rates)
+    return ordered[min(len(ordered) - 1, int(BUSY_AREA_QUANTILE * len(ordered)))] if ordered else float("inf")

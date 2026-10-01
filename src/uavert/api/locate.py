@@ -60,17 +60,32 @@ async def neighbourhood_at(pool: asyncpg.Pool, place: Place) -> asyncpg.Record:
     return row
 
 
+def street_extras(row) -> dict:
+    """Foot traffic and "compared with surroundings" for a street cell row."""
+    ft, vs = row["foot_traffic_per_hour"], row["vs_surroundings"]
+    return {"foot_traffic_per_hour": round(ft) if ft is not None else None,
+            "vs_surroundings": round(vs, 2) if vs is not None else None, "busy_area": row["busy_area"]}
+
+
+def _date(d):
+    return d.isoformat() if d else None
+
+
 async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place) -> dict:
     hood = await neighbourhood_at(pool, place)
     cell = await pool.fetchrow(
-        "SELECT c.h3::text AS h3, s.crime_score, s.incident_count, s.reasons FROM cell_scores s"
+        "SELECT c.h3::text AS h3, s.crime_score, s.incident_count, s.reasons, s.foot_traffic_per_hour,"
+        " s.foot_traffic_counts_used, s.foot_traffic_first_date, s.foot_traffic_last_date, s.vs_surroundings,"
+        " s.busy_area FROM cell_scores s"
         " JOIN cells c ON c.h3 = s.h3 WHERE s.h3 = h3_lat_lng_to_cell(point($1, $2), 9)",
         place.lon, place.lat,
     )
     hood_score = ctx.score(hood["lon"], hood["lat"], hood["crime_score"], json.loads(hood["reasons"]),
                            neighbourhood_id=hood["id"])
     if cell:  # the street cell; at the city edge a point can fall in a cell whose centre is outside Toronto
-        street = {"h3": cell["h3"], "incident_count": cell["incident_count"],
+        street = {"h3": cell["h3"], "incident_count": cell["incident_count"], **street_extras(cell),
+                  "foot_traffic_counts_used": cell["foot_traffic_counts_used"],
+                  "foot_traffic_dates": [_date(cell["foot_traffic_first_date"]), _date(cell["foot_traffic_last_date"])],
                   **ctx.score(place.lon, place.lat, cell["crime_score"], json.loads(cell["reasons"]),
                               cell=cell["h3"]).to_dict()}
     else:

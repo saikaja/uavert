@@ -15,6 +15,7 @@ SQUARES = {  # external_id: (name, min_lon, min_lat, crime_score)
     "T3": ("Test Warning", -79.370, 43.650, 10),
 }
 SIZE = 0.01
+STANDS_OUT = {"T1": 2.5, "T2": 1.0}  # vs_surroundings for each square's cells; T3: none (quiet surroundings)
 
 
 def square(min_lon, min_lat, size=SIZE):
@@ -52,9 +53,12 @@ async def seeded(test_pool):
                 "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used)"
                 " VALUES ($1, $2, $3, $4::jsonb, '{\"groups\": {}}', '{}')", ids[ext], crime * 10.0, crime, json.dumps([reason]))
             await c.execute(
-                "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons, sources_used)"
-                " SELECT h3, 7, 1, 1, 1, $2, $3::jsonb, '{}' FROM cells WHERE neighbourhood_id = $1",
-                ids[ext], crime, json.dumps([reason | {"text": f"{name} street reason"}]))
+                "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons,"
+                " sources_used, foot_traffic_per_hour, foot_traffic_counts_used, foot_traffic_first_date,"
+                " foot_traffic_last_date, per_person_value, vs_surroundings, busy_area)"
+                " SELECT h3, 7, 1, 1, 1, $2, $3::jsonb, '{}', 500, 3, '2022-05-01', '2025-05-01', 0.01, $4, true"
+                " FROM cells WHERE neighbourhood_id = $1",
+                ids[ext], crime, json.dumps([reason | {"text": f"{name} street reason"}]), STANDS_OUT.get(ext))
         await c.execute(
             "INSERT INTO aqhi_readings (station_id, station_name, region_id, geom, observed_at, aqhi)"
             " VALUES ('TST', 'Test Station', $1, ST_SetSRID(ST_MakePoint(-79.38, 43.655), 4326), $2, 3)",

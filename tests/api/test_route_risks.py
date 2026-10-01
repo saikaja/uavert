@@ -41,9 +41,16 @@ async def test_route_score_is_highest_along_route_with_riskiest_stretches(client
     assert d["distance_m"] == 1000 and d["geometry"]["type"] == "LineString"
     assert d["score"] == 80 and d["band"] == "high"  # Test Centre's crime 80 is the highest along the way
     segs = d["riskiest_segments"]
-    assert 1 <= len(segs) <= 3 and segs[0]["score"] == 80
+    assert len(segs) == 1 and d["segments_note"] is None  # only Test Centre cells stand out (2.5x)
+    assert segs[0]["vs_surroundings"] == 2.5 and segs[0]["score"] == 80 and segs[0]["foot_traffic_per_hour"] == 500
     assert segs[0]["reasons"][0]["text"] == "Test Centre street reason"
-    assert all(s["geometry"]["type"] == "LineString" for s in segs)
+    assert segs[0]["geometry"]["type"] == "LineString" and segs[0]["length_m"] > 0
+
+
+async def test_route_where_nothing_stands_out_says_so(client, seeded, router):
+    router(Route([(-79.378, 43.655), (-79.372, 43.655)], 500, 360))  # inside Test East only (1.0x)
+    d = (await client.get("/api/v1/route-risks", params={"from": "43.655,-79.378", "to": "43.655,-79.372"})).json()["data"]
+    assert d["riskiest_segments"] == [] and d["segments_note"] == "No stretch of this walk stands out from its surroundings."
 
 
 async def test_same_start_and_end_scores_the_place(client, seeded, router):

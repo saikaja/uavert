@@ -42,6 +42,9 @@ async def test_address_returns_street_and_neighbourhood_scores(client, seeded, g
     assert d["neighbourhood"]["name"] == "Test Centre" and d["neighbourhood"]["score"] == 80
     assert d["street"]["h3"] and d["street"]["score"] == 80 and d["street"]["band"] == "high"
     assert d["street"]["reasons"][0]["text"] == "Test Centre street reason"
+    s = d["street"]
+    assert (s["foot_traffic_per_hour"], s["foot_traffic_counts_used"], s["vs_surroundings"], s["busy_area"]) == (500, 3, 2.5, True)
+    assert s["foot_traffic_dates"] == ["2022-05-01", "2025-05-01"]
 
 
 async def test_lat_lon_instead_of_address(client, seeded):

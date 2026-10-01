@@ -30,6 +30,10 @@
     <h2>Neighbourhood and street level</h2>
     <ul id="params"></ul>
 
+    <h2>Allowing for crowds</h2>
+    <p>Busy streets have more reported incidents partly because far more people are there. Street scores therefore count incidents <strong>per person on foot</strong>, using City of Toronto pedestrian counts at intersections.</p>
+    <ul id="traffic"></ul>
+
     <h2>Crime Severity Index weights</h2>
     <p id="csi-note"></p>
     <div class="table-wrap"><table id="weights"><thead><tr><th>Offence</th><th>Weight</th></tr></thead><tbody></tbody></table></div>
@@ -41,7 +45,7 @@
     <h2>Limitations</h2>
     <ul>
       <li>Crime data is what was <em>reported</em> to police. Toronto Police describes it as preliminary, and locations are moved to the nearest intersection for privacy.</li>
-      <li>Busy areas have more incidents partly because far more people are there; scores count incidents, not risk per visitor.</li>
+      <li>Street scores allow for foot traffic, but the counts are daytime snapshots at intersections and can be several years old (the dates are shown with each score).</li>
       <li>Neighbourhood rates use resident population, so areas with many visitors and few residents look higher.</li>
       <li>A single serious incident (for example a homicide) can move a small neighbourhood a long way; it fades over the following months.</li>
       <li>Toronto has only a few air quality stations, so air quality is similar across most of the city.</li>
@@ -65,6 +69,13 @@
         `A hexagon needs at least ${p.min_incidents_for_own_score} nearby incidents to stand on its own; with fewer, its score leans toward its neighbourhood's.`,
         `Air quality readings older than ${p.aqhi_stale_after_hours} hours are still used but marked "not current".`,
       ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#params").append(li); });
+      [
+        `Foot traffic for each block is the median of the City's pedestrian counts within about 250 m (widening to about 600 m where there are none), using counts from ${p.foot_traffic_since.slice(0, 4)} on, converted to people per hour.`,
+        `Blocks are never treated as having fewer than ${p.foot_traffic_floor_per_hour} people an hour, because counts at intersections miss people in parking lots and plazas and would otherwise make quiet areas look extreme.`,
+        `"Busy area" marks the busiest tenth of counted locations.`,
+        `On a walking route, "stretches that stand out" are blocks with at least ${p.standout_min_ratio}× the reported street crime per person of the surrounding 1 km (${p.surroundings_rings} hexagon rings). The 0-100 score itself still compares every block with the whole city.`,
+        "Counts are weekday daytime snapshots, so night-time foot traffic isn't measured.",
+      ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#traffic").append(li); });
       document.querySelector("#csi-note").textContent = `Statistics Canada, ${d.csi_edition} published table. Every event is counted once, at its most serious offence.`;
       d.csi_weights.forEach((w) => document.querySelector("#weights tbody").append(row([w.label, w.weight.toLocaleString("en-CA")])));
       d.offence_map.forEach((m) => document.querySelector("#mapping tbody").append(row([m.offence_label, m.csi_label, m.weight.toLocaleString("en-CA"), m.match])));

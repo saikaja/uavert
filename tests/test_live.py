@@ -104,3 +104,28 @@ async def test_failed_fetch_keeps_old_rows_and_records_failure(test_db_url, monk
 
 async def _no_sleep(_):
     return None
+
+
+@pytest.mark.db
+@respx.mock
+async def test_failed_traffic_download_keeps_stored_counts(test_db_url, monkeypatch):
+    from uavert.ingest import traffic
+    from uavert.sources import toronto_open_data as tod
+
+    monkeypatch.setattr("uavert.sources.http.asyncio.sleep", _no_sleep)
+    conn = await db.connect(test_db_url)
+    try:
+        region_id = await ensure_reference_rows(conn)
+        sample = tod.parse_tmc_csv((Path(__file__).parent / "fixtures" / "traffic" / "tmc_sample.csv").read_text(encoding="utf-8"))
+        await traffic.store(conn, region_id, sample)
+        before = await conn.fetchval("SELECT count(*) FROM foot_traffic_counts")
+        assert before >= len(sample)
+        respx.get(url__startswith=tod.CKAN).mock(side_effect=httpx.ConnectTimeout("down"))
+        async with httpx.AsyncClient() as client:
+            with pytest.raises(Exception):
+                await traffic.run(conn, client, region_id)
+        assert await conn.fetchval("SELECT count(*) FROM foot_traffic_counts") == before
+        assert await conn.fetchval("SELECT last_status FROM sources WHERE key = 'toronto_tmc'") == "failed"
+    finally:
+        await conn.execute("DELETE FROM foot_traffic_counts")
+        await conn.close()

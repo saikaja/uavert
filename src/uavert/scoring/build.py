@@ -3,7 +3,7 @@
 import json
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from statistics import median
 from zoneinfo import ZoneInfo
 
@@ -113,10 +113,27 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
     return out
 
 
-def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int, str], used: dict) -> dict[str, dict]:
-    """Street score per H3 cell from the last 12 months of street incidents.
+def foot_traffic_reason(f: crime.FootTraffic, busy: bool, city_median: float, collected_at: str | None) -> dict:
+    if f.estimated:
+        text = f"No foot-traffic count nearby; using the Toronto median of about {city_median:,.0f} people an hour"
+    else:
+        years = str(f.first_date.year) if f.first_date.year == f.last_date.year else f"{f.first_date.year}-{f.last_date.year}"
+        plural = "s" if f.counts_used != 1 else ""
+        counted = f"{f.counts_used} City of Toronto count{plural}, {years}"
+        if busy:
+            text = f"Busy area: about {f.per_hour:,.0f} people an hour on foot nearby ({counted}); the score allows for crowds"
+        else:
+            text = f"About {f.per_hour:,.0f} people an hour on foot nearby ({counted}); the score allows for this"
+    return Reason("crime", text, "toronto_tmc", value=round(f.per_hour),
+                  as_of=f.last_date.isoformat() if f.last_date else None, collected_at=collected_at).to_dict()
+
+
+def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int, str], used: dict,
+                traffic: list[tuple[str, float, date]] | None = None) -> dict[str, dict]:
+    """Street score per H3 cell: the last 12 months of street incidents, per person on foot nearby.
 
     `cells`: h3 -> neighbourhood id for every cell in the grid.
+    `traffic`: (h3, pedestrians per hour, count date) for each counted location since FOOT_TRAFFIC_SINCE.
     """
     street = [e for e in events if e.h3 and crime.counts_on_street(e.premises_type)]
     newest = max(e.occurred_at for e in street)
@@ -141,7 +158,16 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
     hood_avg = {hood: sum(v) / len(v) for hood, v in by_hood.items()}
 
     smoothed = {c: crime.lean_toward_neighbourhood(local[c], len(nearby[c]), hood_avg[cells[c]]) for c in cells}
-    scores = crime.percentile_scores(smoothed)
+
+    counts_by_cell: dict[str, list[tuple[float, date]]] = defaultdict(list)
+    for cell, rate, day in traffic or []:
+        counts_by_cell[cell].append((rate, day))
+    rates = [rate for _, rate, _ in traffic or []]
+    city_median = median(rates) if rates else crime.FOOT_TRAFFIC_FLOOR
+    busy_from = crime.busy_area_threshold(rates)
+    foot = {c: crime.foot_traffic_estimate(c, counts_by_cell, city_median, h3.grid_disk) for c in cells}
+    per_person = {c: crime.per_person(smoothed[c], foot[c].per_hour) for c in cells}
+    scores = crime.percentile_scores(per_person)
     as_of = newest.astimezone(TORONTO_TZ).date().isoformat()
 
     out = {}
@@ -151,18 +177,25 @@ def cell_scores(events: list[Event], cells: dict[str, int], hood_names: dict[int
         for e in near:
             groups[e.group][0] += 1
             groups[e.group][1] += e.weight
-        reasons = [
+        incident_reasons = [
             Reason("crime", f"{counted(n, g)} within about 250 m in the last 12 months (outdoors, transit or businesses)",
                    source_key=(src := GROUP_SOURCE.get(g, "tps_mci")), value=n, as_of=as_of,
                    collected_at=used.get(src, {}).get("collected_at")).to_dict()
             for g, (n, _) in sorted(groups.items(), key=lambda kv: -kv[1][1])[:2]
         ]
+        busy = foot[c].per_hour >= busy_from and not foot[c].estimated
+        # Order matters: the API shows the first two crime reasons.
+        reasons = incident_reasons[:1] + [
+            foot_traffic_reason(foot[c], busy, city_median, used.get("toronto_tmc", {}).get("collected_at"))]
         if len(near) < crime.MIN_INCIDENTS:
             reasons.append(Reason("crime", f"Few street incidents recorded nearby, so this score leans on the "
                                   f"{hood_names[hood]} average", source_key="tps_mci", value=len(near), as_of=as_of,
                                   collected_at=used.get("tps_mci", {}).get("collected_at")).to_dict())
+        reasons += incident_reasons[1:]
         out[c] = {"incident_count": len(near), "own_value": own[c], "local_value": local[c],
-                  "smoothed_value": smoothed[c], "crime_score": scores[c], "reasons": reasons}
+                  "smoothed_value": smoothed[c], "crime_score": scores[c], "reasons": reasons,
+                  "foot_traffic": foot[c], "per_person_value": per_person[c],
+                  "vs_surroundings": crime.surroundings_ratio(c, per_person, h3.grid_disk), "busy_area": busy}
     return out
 
 
@@ -171,7 +204,7 @@ async def build(conn: asyncpg.Connection) -> dict:
     weights = {r["offence_key"]: float(r["weight"]) for r in
                await conn.fetch("SELECT offence_key, weight FROM csi_weights WHERE edition = $1", edition)}
     events = await load_events(conn, edition)
-    used = await source_dates(conn, ["statcan_csi", "tps_ncr", "tps_mci", "tps_shootings", "tps_homicides"])
+    used = await source_dates(conn, ["statcan_csi", "tps_ncr", "tps_mci", "tps_shootings", "tps_homicides", "toronto_tmc"])
     used_json = json.dumps(used)
 
     hoods = [dict(r) | {"counts": json.loads(r["counts"])} for r in
@@ -181,7 +214,10 @@ async def build(conn: asyncpg.Connection) -> dict:
     hood_rows = neighbourhood_scores(events, hoods, weights, ncr_extra, used)
 
     cells = {r["h3"]: r["neighbourhood_id"] for r in await conn.fetch("SELECT h3::text AS h3, neighbourhood_id FROM cells")}
-    cell_rows = cell_scores(events, cells, {h["id"]: h["name"] for h in hoods}, used)
+    traffic = [(r["h3"], float(r["per_hour"]), r["count_date"]) for r in await conn.fetch(
+        "SELECT h3::text AS h3, pedestrians / hours AS per_hour, count_date FROM foot_traffic_counts"
+        " WHERE count_date >= $1", crime.FOOT_TRAFFIC_SINCE)]
+    cell_rows = cell_scores(events, cells, {h["id"]: h["name"] for h in hoods}, used, traffic)
 
     async with conn.transaction():
         await conn.executemany(
@@ -193,17 +229,23 @@ async def build(conn: asyncpg.Connection) -> dict:
         )
         await conn.execute(
             "CREATE TEMP TABLE cell_scores_load (h3 text, incident_count int, own_value float8, local_value float8,"
-            " smoothed_value float8, crime_score int, reasons text) ON COMMIT DROP"
+            " smoothed_value float8, crime_score int, reasons jsonb, foot_traffic_per_hour float8,"
+            " foot_traffic_counts_used int, foot_traffic_first_date date, foot_traffic_last_date date,"
+            " per_person_value float8, vs_surroundings float8, busy_area bool) ON COMMIT DROP"
         )
         await conn.copy_records_to_table("cell_scores_load", records=[
             (c, r["incident_count"], r["own_value"], r["local_value"], r["smoothed_value"], r["crime_score"],
-             json.dumps(r["reasons"])) for c, r in cell_rows.items()])
+             json.dumps(r["reasons"]), r["foot_traffic"].per_hour, r["foot_traffic"].counts_used,
+             r["foot_traffic"].first_date, r["foot_traffic"].last_date, r["per_person_value"], r["vs_surroundings"],
+             r["busy_area"]) for c, r in cell_rows.items()])
+        columns = ["incident_count", "own_value", "local_value", "smoothed_value", "crime_score", "reasons",
+                   "foot_traffic_per_hour", "foot_traffic_counts_used", "foot_traffic_first_date",
+                   "foot_traffic_last_date", "per_person_value", "vs_surroundings", "busy_area"]
         await conn.execute(
-            "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons, sources_used, computed_at)"
-            " SELECT h3::h3index, incident_count, own_value, local_value, smoothed_value, crime_score, reasons::jsonb, $1::jsonb, now()"
-            " FROM cell_scores_load ON CONFLICT (h3) DO UPDATE SET incident_count = EXCLUDED.incident_count,"
-            " own_value = EXCLUDED.own_value, local_value = EXCLUDED.local_value, smoothed_value = EXCLUDED.smoothed_value,"
-            " crime_score = EXCLUDED.crime_score, reasons = EXCLUDED.reasons, sources_used = EXCLUDED.sources_used, computed_at = now()",
+            f"INSERT INTO cell_scores (h3, {', '.join(columns)}, sources_used, computed_at)"
+            f" SELECT h3::h3index, {', '.join(columns)}, $1::jsonb, now() FROM cell_scores_load"
+            f" ON CONFLICT (h3) DO UPDATE SET {', '.join(f'{c} = EXCLUDED.{c}' for c in columns)},"
+            " sources_used = EXCLUDED.sources_used, computed_at = now()",
             used_json,
         )
     return {"events": len(events), "neighbourhoods": len(hood_rows), "cells": len(cell_rows)}

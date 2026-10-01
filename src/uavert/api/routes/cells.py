@@ -5,6 +5,7 @@ from fastapi import APIRouter, Query, Request
 
 from uavert.api import live
 from uavert.api.errors import ApiError
+from uavert.api.locate import street_extras
 
 router = APIRouter(tags=["street cells"])
 
@@ -31,7 +32,8 @@ async def list_cells(request: Request, bbox: str = Query(description="minLon,min
     ctx = await live.load(pool)
     rows = await pool.fetch(
         "SELECT c.h3::text AS h3, ST_AsGeoJSON(c.geom, 6) AS g, ST_X(c.centre) AS lon, ST_Y(c.centre) AS lat,"
-        " s.crime_score, s.incident_count, s.reasons FROM cells c JOIN cell_scores s ON s.h3 = c.h3"
+        " s.crime_score, s.incident_count, s.reasons, s.foot_traffic_per_hour, s.vs_surroundings, s.busy_area"
+        " FROM cells c JOIN cell_scores s ON s.h3 = c.h3"
         " WHERE c.geom && ST_MakeEnvelope($1, $2, $3, $4, 4326)",
         *box,
     )
@@ -40,7 +42,7 @@ async def list_cells(request: Request, bbox: str = Query(description="minLon,min
         score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), cell=r["h3"])
         features.append({
             "type": "Feature", "geometry": json.loads(r["g"]),
-            "properties": {"h3": r["h3"], "incident_count": r["incident_count"],
+            "properties": {"h3": r["h3"], "incident_count": r["incident_count"], **street_extras(r),
                            "top_reason": score.reasons[0].text if score.reasons else None,
                            **score.to_dict(with_reasons=False)},
         })

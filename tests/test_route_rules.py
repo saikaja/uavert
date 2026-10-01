@@ -7,24 +7,36 @@ def test_densify_leaves_no_gap_over_25m():
     assert max(gaps) <= 25.01 and pts[0] == (-79.390, 43.655) and pts[-1] == (-79.380, 43.655)
 
 
-def test_stretches_split_by_band_and_rank_riskiest():
-    pts = route.densify([(-79.395, 43.655), (-79.365, 43.655)])
-    cells = [route.cell_of(p) for p in pts]
-    unique = list(dict.fromkeys(cells))
-    # first third lower, middle third high, last third moderate
-    k = len(unique) // 3
-    scores = {c: 10 for c in unique[:k]} | {c: 90 for c in unique[k:2 * k]} | {c: 30 for c in unique[2 * k:]}
-    runs = route.stretches(pts, scores)
-    assert [r.band for r in runs] == ["lower", "high", "moderate"]
-    top = route.riskiest(runs)
-    assert [r.score for r in top] == [90, 30, 10]
-    assert top[0].length_m > 100
-    # stretches join end to end
-    assert runs[0].points[-1] == runs[1].points[0]
+def walk():
+    pts = route.densify([(-79.400, 43.655), (-79.370, 43.655)])  # about 2.4 km, 10+ cells
+    return pts, [cell for cell, _ in route.cells_in_order(pts)]
 
 
-def test_points_outside_grid_join_current_stretch():
-    pts = route.densify([(-79.395, 43.655), (-79.385, 43.655)])
-    first = route.cell_of(pts[0])
-    runs = route.stretches(pts, {first: 40})
-    assert len(runs) == 1 and runs[0].score == 40 and len(runs[0].points) == len(pts)
+def test_cells_in_order_joins_pieces_end_to_end():
+    pts, cells = walk()
+    groups = route.cells_in_order(pts)
+    assert len(groups) == len(cells) and groups[0][1][-1] == groups[1][1][0]
+
+
+def test_standout_stretches_ranked_thresholded_and_joined():
+    pts, cells = walk()
+    ratios = {c: 1.0 for c in cells}
+    ratios[cells[1]], ratios[cells[2]] = 2.0, 3.0  # two neighbours: one stretch, worst 3.0
+    ratios[cells[5]] = 1.4  # below 1.5: not a stretch
+    ratios[cells[7]] = 1.6
+    ratios[cells[-1]] = None  # quiet surroundings: never a stretch
+    out = route.standout_stretches(pts, ratios)
+    assert [s.ratio for s in out] == [3.0, 1.6]
+    assert out[0].worst_cell == cells[2] and out[0].length_m > 100
+
+
+def test_at_most_three_stretches():
+    pts, cells = walk()
+    ratios = {c: (2.0 + i if i % 2 == 0 else 1.0) for i, c in enumerate(cells)}  # every other cell stands out
+    out = route.standout_stretches(pts, ratios)
+    assert len(out) == 3 and out[0].ratio > out[1].ratio > out[2].ratio
+
+
+def test_nothing_stands_out():
+    pts, cells = walk()
+    assert route.standout_stretches(pts, {c: 1.2 for c in cells}) == []

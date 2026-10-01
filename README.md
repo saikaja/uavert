@@ -3,6 +3,7 @@
 Location risk scores for Toronto from public data: an ingestion pipeline, a scoring engine, a versioned API and a web map.
 
 - **Crime:** Toronto Police incidents, weighted by Statistics Canada's Crime Severity Index (CSI), scored per neighbourhood and per street block (H3 hexagons, about 0.1 km²).
+- **Foot traffic:** street scores count incidents per person on foot, using City of Toronto pedestrian counts at intersections. Walking routes highlight the stretches that stand out from their surroundings.
 - **Air quality:** live Air Quality Health Index from Environment Canada.
 - **Official alerts:** Environment Canada weather alerts.
 - **News:** CBC Toronto and GDELT headlines about protests and violent incidents, labelled unverified.
@@ -34,7 +35,7 @@ Every command below is run with the virtual environment's Python (`.venv/Scripts
 
 ```sh
 python -m uavert migrate              # create or upgrade the database schema
-python -m uavert ingest all           # reference data, crime incidents, air quality, alerts, news (about 1 minute)
+python -m uavert ingest all           # reference data, crime incidents, foot traffic, air quality, alerts, news (about 1 minute)
 python -m uavert build-scores         # compute neighbourhood and street crime scores (about 10 seconds)
 python -m uavert serve                # web map at http://localhost:8000, API docs at http://localhost:8000/api/docs
 ```
@@ -75,7 +76,7 @@ All endpoints are read-only `GET`s and are public for now.
 | `/api/v1/neighbourhoods/{id}` | One neighbourhood: score, reasons, crime details |
 | `/api/v1/cells?bbox=minLon,minLat,maxLon,maxLat` | Street-level cells in an area of up to 25 km² (GeoJSON) |
 | `/api/v1/risk-scores?address=...` or `?lat=&lon=` | Where I'm going: street and neighbourhood scores |
-| `/api/v1/route-risks?from=...&to=...` | Where I'm walking: route score and its 3 riskiest stretches (walks of up to 10 km) |
+| `/api/v1/route-risks?from=...&to=...` | Where I'm walking: route score and up to 3 stretches that stand out from their surroundings (walks of up to 10 km) |
 | `/api/v1/news-events?since_hours=24` | Recent labelled news reports |
 | `/api/v1/sources` | Every source with licence, attribution, data date and collection time |
 | `/api/v1/scoring-rules` | Bands, CSI weights, offence mapping, parameters |
@@ -102,6 +103,7 @@ tests/                    unit tests; tests/api are API tests against the Neon t
 |---|---|
 | Toronto Police Service Public Safety Data Portal | Toronto Police open data terms; data is preliminary, locations offset to the nearest intersection |
 | Statistics Canada, Crime Severity Index weights (2009 published table) | Statistics Canada Open Licence |
+| City of Toronto intersection traffic counts | Open Government Licence – Toronto (the dataset page says "not specified"; confirm before public launch) |
 | Environment and Climate Change Canada (MSC GeoMet) | ECCC Data Servers End-use Licence |
 | CBC News Toronto RSS | Personal, non-commercial use. Headlines and links only; needs permission or a licensed feed before public launch |
 | The GDELT Project | Free with attribution |

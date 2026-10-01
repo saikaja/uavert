@@ -77,7 +77,9 @@ async function loadCells() {
     cellLayer = L.geoJSON(body.data, {
       style: (f) => style(f.properties.band, 0.6),
       onEachFeature: (f, layer) => {
-        layer.bindTooltip(`Street score ${f.properties.score} - ${f.properties.top_reason || ""}`, { sticky: true });
+        const p = f.properties;
+        const around = p.vs_surroundings != null ? ` · ${timesAround(p.vs_surroundings)} its surroundings` : "";
+        layer.bindTooltip(`Street score ${p.score}${around} · ${peoplePerHour(p.foot_traffic_per_hour)}`, { sticky: true });
         layer.on("click", (e) => checkPoint(e.latlng.lat, e.latlng.lng));
       },
     }).addTo(map);
@@ -118,6 +120,9 @@ function reasonItem(r) {
   return li;
 }
 
+const timesAround = (r) => (r == null ? null : r > 10 ? "more than 10×" : `${r.toFixed(1)}×`);
+const peoplePerHour = (n) => (n == null ? "unknown" : `about ${Math.round(n).toLocaleString("en-CA")} people an hour on foot`);
+
 const bandFor = (s) => (s >= 75 ? "high" : s >= 50 ? "elevated" : s >= 25 ? "moderate" : "lower");
 
 async function showNeighbourhood(id) {
@@ -141,8 +146,10 @@ async function runDestination(path, label) {
     if (label) map.setView([d.location.lat, d.location.lon], 15);
     const hood = el("p", "muted",
       `Neighbourhood: ${d.neighbourhood.name} - ${d.neighbourhood.score} (${BANDS[d.neighbourhood.band].label.toLowerCase()})`);
-    const where = d.street.incident_count != null
-      ? `Street level (about one block) · ${d.street.incident_count} street incidents within ~250 m`
+    const s = d.street;
+    const where = s.incident_count != null
+      ? `Street level (about one block) · ${s.incident_count} street incidents within ~250 m · ${peoplePerHour(s.foot_traffic_per_hour)}`
+        + (s.vs_surroundings != null ? ` · ${timesAround(s.vs_surroundings)} the reported street crime of the surrounding 1 km, per person` : "")
       : "Street level unavailable here; showing the neighbourhood";
     showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), where, d.street, [hood]);
   } catch (e) { setStatus(e.message, true); }
@@ -166,20 +173,20 @@ $("route-form").addEventListener("submit", async (e) => {
     routeLayer = L.layerGroup().addTo(map);
     const line = L.geoJSON(d.geometry, { style: { color: "#1f4e79", weight: 5, opacity: 0.85 } }).addTo(routeLayer);
     d.riskiest_segments.forEach((s, i) => L.geoJSON(s.geometry, { style: { color: BANDS[s.band].colour, weight: 9, opacity: 0.95 } })
-      .bindTooltip(`Riskiest stretch ${i + 1}: ${s.score}`).addTo(routeLayer));
+      .bindTooltip(`Stands out ${i + 1}: ${timesAround(s.vs_surroundings)} its surroundings`).addTo(routeLayer));
     map.fitBounds(line.getBounds(), { padding: [30, 30] });
 
     const segs = el("ol", "reasons segments");
     d.riskiest_segments.forEach((s) => {
-      const li = el("li", null, `${s.score} (${BANDS[s.band].label.toLowerCase()}), ${s.length_m} m`);
-      if (s.reasons[0]) li.append(el("span", "meta", s.reasons[0].text));
+      const li = el("li", null, `${timesAround(s.vs_surroundings)} the reported street crime of its surroundings, per person · ${s.length_m} m · score ${s.score}`);
+      li.append(el("span", "meta", `${peoplePerHour(s.foot_traffic_per_hour)}${s.reasons[0] ? " · " + s.reasons[0].text : ""}`));
       segs.append(li);
     });
-    const title = el("h3", null, "Riskiest stretches");
+    const title = el("h3", null, "Stretches that stand out");
     const mins = Math.round(d.duration_s / 60);
     showScore(`${d.from.display_name.split(",")[0]} → ${d.to.display_name.split(",")[0]}`,
       `Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · highest score along the way`, d,
-      d.riskiest_segments.length ? [title, segs] : []);
+      d.riskiest_segments.length ? [title, segs] : [title, el("p", "muted", d.segments_note)]);
   } catch (err) { setStatus(err.message, true); }
   finally { btn.disabled = false; }
 });

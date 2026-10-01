@@ -52,6 +52,8 @@ async def test_cells_in_bbox(client, seeded):
     assert r.status_code == 200
     props = [f["properties"] for f in r.json()["data"]["features"]]
     assert props and all(p["band"] in BANDS and p["incident_count"] == 7 and p["top_reason"] for p in props)
+    assert all(p["foot_traffic_per_hour"] == 500 and p["busy_area"] is True for p in props)
+    assert {p["vs_surroundings"] for p in props} <= {2.5, 1.0, None}
 
 
 @pytest.mark.parametrize("bbox,code", [
@@ -74,6 +76,7 @@ async def test_scoring_rules(client, seeded):
     d = (await client.get("/api/v1/scoring-rules")).json()["data"]
     assert [b["band"] for b in d["bands"]] == ["lower", "moderate", "elevated", "high"]
     assert d["parameters"]["min_incidents_for_own_score"] == 5
+    assert d["parameters"]["foot_traffic_floor_per_hour"] == 100 and d["parameters"]["standout_min_ratio"] == 1.5
 
 
 # Criterion 9: no band or label anywhere says "safe".
