@@ -12,7 +12,7 @@ Build the first real Uavert backend (Neon Postgres + PostGIS/H3, Python ingestio
 | 5. Test the work | [05-test-report.md](05-test-report.md) | Approved | 2026-10-01 13:52 |
 | 1–3 (addition). Solidify + Vercel | [01-03-solidify.md](01-03-solidify.md); built: [04-implementation.solidify.md](04-implementation.solidify.md), tested: [05-test-report.solidify.md](05-test-report.solidify.md) (both approved 2026-10-01 18:07) | Approved; built and tested | 2026-10-01 14:05 |
 | 1–3 (addition). Fairer scores, crowds, heat | [01-03-calibration-crowds-heat.md](01-03-calibration-crowds-heat.md); built: [04-implementation.calibration-crowds-heat.md](04-implementation.calibration-crowds-heat.md), tested: [05-test-report.calibration-crowds-heat.md](05-test-report.calibration-crowds-heat.md) (both approved 2026-10-01 19:16) | Approved; built and tested | 2026-10-01 18:39 |
-| 1–3 (addition). Odds alongside the score | [01-03-odds.md](01-03-odds.md) | Approved; building | 2026-10-07 15:22 |
+| 1–3 (addition). Odds alongside the score | [01-03-odds.md](01-03-odds.md); revision [01-03-odds.r2.md](01-03-odds.r2.md) (leave out jail incidents) | Approved; building. r2 approved 2026-10-07 15:44 | 2026-10-07 15:22 |
 | 6. End-to-end testing | [06-e2e-signoff.md](06-e2e-signoff.md) | Waiting for your test results | |
 
 **Next steps (start here):** [next-steps.md](next-steps.md): where to pick up and what to do next (as of 2026-10-01 19:20).
