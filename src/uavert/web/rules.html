@@ -1,0 +1,137 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Uavert Scores Work</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Uavert <span>Toronto</span></div>
+    <nav><a href="/">Map</a><a href="/api/docs" target="_blank" rel="noopener">API</a></nav>
+  </header>
+  <main class="rules">
+    <h1>How scores work</h1>
+    <p>Every place gets a score from 0 to 100. <strong>Higher means more reported risk.</strong> Scores are guidance based on public data, not a prediction or a guarantee; no place is ever labelled "safe".</p>
+
+    <h2>Five parts, and the highest one counts</h2>
+    <ul>
+      <li><strong>Crime:</strong> reported crimes from the Toronto Police Service, each weighted by how seriously Canadian courts treat it (Statistics Canada's Crime Severity Index), compared with a typical Toronto block or neighbourhood (see below).</li>
+      <li><strong>Air quality:</strong> the current Air Quality Health Index from the nearest Environment Canada station.</li>
+      <li><strong>Official alerts:</strong> Environment Canada's own colour sets the level: a yellow alert is moderate (40), orange elevated (65), red high (90). During a heat alert, the nearest City cool space open at that time is named.</li>
+      <li><strong>News:</strong> recent news about a protest or violent incident nearby raises the score for 24 hours, at most to "elevated". News reports are unverified and labelled that way.</li>
+      <li><strong>Crowds:</strong> on the dates of large City events (Nuit Blanche, Pride, the Caribbean Carnival, parades, New Year's Eve and others), places within about 1 km are at least moderate (35), with the event named. Big venues such as Rogers Centre are mentioned nearby but don't change the score, because their game and concert schedules aren't available to us.</li>
+    </ul>
+    <p>The combined score is the <strong>highest</strong> of the five, never an average, so one serious risk is never hidden by several low ones. A walking route shows its <strong>worst block</strong>, and also what <strong>most of the walk</strong> is like.</p>
+
+    <h2>What the numbers mean</h2>
+    <p>Crime scores compare a place with a <strong>typical Toronto block</strong> (or, for neighbourhoods, a typical neighbourhood): the middle of the city, half above and half below. A typical place scores 25; every doubling adds 20 points.</p>
+    <div class="table-wrap"><table><thead><tr><th>Compared with typical</th><th>Score</th></tr></thead><tbody>
+      <tr><td>Half as much reported crime</td><td>5</td></tr>
+      <tr><td>Typical</td><td>25</td></tr>
+      <tr><td>2× typical</td><td>45</td></tr>
+      <tr><td>4× typical</td><td>65</td></tr>
+      <tr><td>8× typical</td><td>85</td></tr>
+    </tbody></table></div>
+
+    <h2>Bands</h2>
+    <div class="table-wrap"><table id="bands"><thead><tr><th>Band</th><th>Scores</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>Neighbourhood and street level</h2>
+    <ul id="params"></ul>
+
+    <h2 id="odds">Odds per resident</h2>
+    <p>Next to the score, each neighbourhood shows its odds: <strong>one reported incident a year for every N residents</strong>, for 2025, with Toronto's figure alongside for comparison. It is worked out as the neighbourhood's population divided by its reported incidents, at three levels of severity:</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Level</th><th>Offences</th></tr></thead>
+      <tbody>
+        <tr><td>High: serious violence</td><td>Homicides (averaged over 3 years), shootings, firearm offences, robberies, aggravated assaults and assaults with a weapon or causing bodily harm</td></tr>
+        <tr><td>Medium: assault</td><td>Common assault</td></tr>
+        <tr><td>Low: property crime</td><td>Break-ins, auto thefts, thefts over $5,000, thefts from vehicles and bicycle thefts</td></tr>
+      </tbody>
+    </table></div>
+    <p>Odds from 100 up are rounded to two figures (for example 1 in 450). They are <strong>not</strong> anyone's personal chance of being a victim: one incident can involve several people or none (a car theft), some crime isn't reported, and incidents involving visitors are counted against residents only, so busy areas with few residents show higher odds. Unlike street scores, the odds don't allow for foot traffic.</p>
+
+    <h2>Allowing for crowds</h2>
+    <p>Busy streets have more reported incidents partly because far more people are there. Street scores therefore count incidents <strong>per person on foot</strong>, using City of Toronto pedestrian counts at intersections.</p>
+    <ul id="traffic"></ul>
+
+    <h2>Time of day</h2>
+    <p>Pick a time and street-level scores change with it. Two things change through the day: how often incidents happen near a block at that time, and how many people are out. Later at night, with fewer people around, the same incidents mean more risk for each person.</p>
+    <ul id="time-params"></ul>
+    <div class="table-wrap"><table id="activity"><thead><tr><th>Hour</th><th>People out vs daytime average</th><th>Basis</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>Crime Severity Index weights</h2>
+    <p id="csi-note"></p>
+    <div class="table-wrap"><table id="weights"><thead><tr><th>Offence</th><th>Weight</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>How Toronto Police offences map to the index</h2>
+    <p>"Closest" means Statistics Canada doesn't publish a separate weight for that exact offence, so the nearest one is used.</p>
+    <div class="table-wrap"><table id="mapping"><thead><tr><th>Toronto Police offence</th><th>Index offence</th><th>Weight</th><th>Match</th></tr></thead><tbody></tbody></table></div>
+
+    <h2>Fairness check</h2>
+    <p>Crime scores can end up flagging poorer areas simply because they are poorer. Every time scores are rebuilt, Uavert checks how closely neighbourhood crime scores follow household income and the share of low-income households (2021 Census). If either relationship is strong (0.5 or more on a scale where 0 means none and 1 means scores rank exactly with income), the weights are flagged for review.</p>
+    <p id="fairness" class="muted">Loading...</p>
+
+    <h2>Limitations</h2>
+    <ul>
+      <li>Crime data is what was <em>reported</em> to police. Toronto Police describes it as preliminary, and locations are moved to the nearest intersection for privacy.</li>
+      <li>Street scores allow for foot traffic, but the counts are daytime snapshots at intersections and can be several years old (the dates are shown with each score).</li>
+      <li>Neighbourhood rates use resident population, so areas with many visitors and few residents look higher.</li>
+      <li>Incidents recorded inside Toronto's two jails (Toronto South Detention Centre, 130 Horner Ave, and Toronto East Detention Centre, 55 Civic Rd) are left out of scores and odds. Toronto Police records them at the jail's address, and they aren't a risk to people in the neighbourhood. Incidents outside the jails still count.</li>
+      <li>A single serious incident (for example a homicide) can move a small neighbourhood a long way; it fades over the following months.</li>
+      <li>Toronto has only a few air quality stations, so air quality is similar across most of the city.</li>
+      <li>News is matched by keywords and is often missing a location; it is never treated as confirmed.</li>
+    </ul>
+
+    <h2>Sources and when they were collected</h2>
+    <div class="table-wrap"><table id="sources"><thead><tr><th>Source</th><th>Data up to</th><th>Collected</th><th>Licence</th></tr></thead><tbody></tbody></table></div>
+  </main>
+  <script>
+    "use strict";
+    const row = (cells) => { const tr = document.createElement("tr"); cells.forEach((c) => { const td = document.createElement("td"); td.textContent = c; tr.append(td); }); return tr; };
+    const fmt = (iso) => {
+      if (!iso) return "unknown";
+      const day = iso.match(/^(\d{4}-\d{2}-\d{2})(T00:00:00(\.0+)?(\+00:00|Z))?$/);  // whole-day dates
+      if (day) return new Date(`${day[1]}T12:00:00`).toLocaleDateString("en-CA", { dateStyle: "medium" });
+      return new Date(iso).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
+    };
+    Promise.all([fetch("/api/v1/scoring-rules").then((r) => r.json()), fetch("/api/v1/sources").then((r) => r.json())]).then(([rules, sources]) => {
+      const d = rules.data, p = d.parameters;
+      d.bands.forEach((b) => document.querySelector("#bands tbody").append(row([b.label, `${b.min_score}–${b.max_score}`])));
+      [
+        `Neighbourhood crime: every ${p.neighbourhood_year} incident, weighted and divided by population, compared with a typical Toronto neighbourhood.`,
+        `Street level: the city is split into hexagons about one city block across. Each counts the last ${p.street_window_days} days of incidents ${p.street_premises.join(", ").toLowerCase()} (not inside homes), plus half the average of the surrounding hexagons (about 250 m).`,
+        `Recent incidents count more: an incident ${p.half_life_days} days old counts half.`,
+        `A hexagon needs at least ${p.min_incidents_for_own_score} nearby incidents to stand on its own; with fewer, its score leans toward its neighbourhood's.`,
+        `Air quality readings older than ${p.aqhi_stale_after_hours} hours are still used but marked "not current".`,
+      ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#params").append(li); });
+      [
+        `Foot traffic for each block is the median of the City's pedestrian counts within about 250 m (widening to about 600 m where there are none), using counts from ${p.foot_traffic_since.slice(0, 4)} on, converted to people per hour.`,
+        `Blocks are never treated as having fewer than ${p.foot_traffic_floor_per_hour} people an hour, because counts at intersections miss people in parking lots and plazas and would otherwise make quiet areas look extreme.`,
+        `"Busy area" marks the busiest tenth of counted locations.`,
+        `On a walking route, "stretches that stand out" are blocks with at least ${p.standout_min_ratio}× the reported street crime per person of the surrounding 1 km (${p.surroundings_rings} hexagon rings). The 0-100 score itself still compares every block with the whole city.`,
+        "Counts are weekday daytime snapshots. When you pick a time of day, night-time foot traffic is estimated as described under Time of day.",
+      ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#traffic").append(li); });
+      [
+        `Incidents are counted in a ${p.time_window_hours}-hour window around the chosen hour. A block with few incidents follows Toronto's overall hourly pattern (it needs about ${p.time_prior_weight} nearby incidents to show its own pattern).`,
+        "Homicides are published without a time, so they count evenly across the day.",
+        "6 am to 7 pm: City of Toronto pedestrian counts. 8 pm to 5 am: the City doesn't count at night, so this is estimated from Bike Share Toronto trips, which match the pedestrian counts closely during the day.",
+        "Each hour is compared with the same all-day typical block, so a quiet street at 3 am, with few people around, can score higher than the same street at 3 pm.",
+        "Neighbourhood colours stay all-day. Air quality, alerts and news always show current conditions.",
+      ].forEach((t) => { const li = document.createElement("li"); li.textContent = t; document.querySelector("#time-params").append(li); });
+      const hl = (h) => `${h % 12 || 12} ${h < 12 ? "am" : "pm"}`;
+      (d.activity_by_hour || []).forEach((a) => document.querySelector("#activity tbody").append(row([hl(a.hour), `${Math.round(a.factor * 100)}%`, a.basis === "measured" ? "measured (City counts)" : "estimated (Bike Share)"])));
+      const f = d.fairness;
+      document.querySelector("#fairness").textContent = f
+        ? `${f.label}. Across ${f.neighbourhoods} neighbourhoods, scores vs median household income: ${f.rho_median_household_income}; vs share of low-income households: ${f.rho_low_income_share}. Checked ${fmt(f.computed_at)} against the ${f.census_year} Census.`
+        : "Not computed yet.";
+      document.querySelector("#csi-note").textContent = `Statistics Canada, ${d.csi_edition} published table. Every event is counted once, at its most serious offence.`;
+      d.csi_weights.forEach((w) => document.querySelector("#weights tbody").append(row([w.label, w.weight.toLocaleString("en-CA")])));
+      d.offence_map.forEach((m) => document.querySelector("#mapping tbody").append(row([m.offence_label, m.csi_label, m.weight.toLocaleString("en-CA"), m.match])));
+      sources.data.forEach((s) => document.querySelector("#sources tbody").append(row([s.name, fmt(s.as_of), fmt(s.collected_at), s.licence])));
+    });
+  </script>
+</body>
+</html>

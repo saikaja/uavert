@@ -1,0 +1,80 @@
+import pytest
+
+from uavert.ingest.reference import DATA_DIR, UnmappedOffence, load_offence_map, read_csv
+
+
+def test_csv_header_records_source_and_retrieval_date():
+    head = (DATA_DIR / "csi_weights.csv").read_text(encoding="utf-8").splitlines()[:5]
+    assert any("t001-eng.htm" in l for l in head)
+    assert any("Retrieved: 2026-10-01" in l for l in head)
+
+
+def test_csi_weights_match_published_values():
+    w = {r["offence_key"]: float(r["weight"]) for r in read_csv(DATA_DIR / "csi_weights.csv")}
+    assert w["murder"] == 7042 and w["robbery"] == 583 and w["break_and_enter"] == 187 and w["assault_1"] == 23
+
+
+def test_every_mapping_points_at_a_published_weight():
+    keys = {r["offence_key"] for r in read_csv(DATA_DIR / "csi_weights.csv")}
+    assert {m.csi_offence_key for m in load_offence_map().rows()} <= keys
+
+
+def test_exact_code_wins_over_wildcard():
+    m = load_offence_map()
+    assert m.resolve("tps_mci", "1450", "120").match == "exact"
+    assert m.resolve("tps_mci", "1450", "100").match == "closest"
+    assert m.resolve("tps_shootings", "*", "*").csi_offence_key == "discharge_firearm_intent"
+
+
+def test_unmapped_offence_stops_with_its_name():
+    m = load_offence_map()
+    with pytest.raises(UnmappedOffence, match="1234-100 'Made Up Offence'"):
+        m.check({("tps_mci", "1610", "100", "Robbery With Weapon"), ("tps_mci", "1234", "100", "Made Up Offence")})
+
+
+def test_all_offences_seen_in_last_12_months_are_mapped():
+    # (UCR code, ext) pairs returned by Toronto Police MCI for 2025-07-01 onwards, queried 2026-10-01.
+    seen = ["1430-100", "2135-210", "2120-200", "1420-100", "2130-210", "1460-100", "1420-110", "2120-220",
+            "1610-100", "1610-220", "2132-200", "1610-200", "2120-210", "1610-210", "1610-130", "1410-100",
+            "2130-211", "1450-120", "1610-140", "1610-180", "1480-100", "1457-100", "1450-100", "1480-110",
+            "2130-200", "1461-100", "2133-200", "1610-150", "1430-110", "1460-110", "2130-215", "1610-110",
+            "1470-100", "1455-100", "2120-230", "1610-190", "1610-170", "1610-160", "2130-220", "1462-100",
+            "1410-110", "1440-100", "2121-200"]
+    load_offence_map().check({("tps_mci", *s.split("-"), "seen") for s in seen})
+
+
+def test_activity_profile_has_24_hours_sources_and_dates():
+    from datetime import date
+
+    from uavert.ingest.reference import read_activity_profile
+
+    rows, retrieved = read_activity_profile()
+    assert retrieved == date(2026, 10, 1)
+    assert all(float(r["factor_used"]) > 0 for r in rows)
+    basis = {int(r["hour"]): r["basis"] for r in rows}
+    assert {h for h, b in basis.items() if b == "measured"} == set(range(6, 20))  # the City counts 6 am-8 pm only
+    head = (DATA_DIR / "activity_by_hour.csv").read_text(encoding="utf-8")
+    assert "traffic-volumes-at-intersections-for-all-modes" in head and "bike-share-toronto-ridership-data" in head
+    # fewer people out at 3 am than at 5 pm
+    factor = {int(r["hour"]): float(r["factor_used"]) for r in rows}
+    assert factor[3] < 0.1 < 1.5 < factor[17]
+
+
+def test_every_offence_has_one_severity_level():
+    # 01-03-odds.md: serious violence high, common assault medium, property crime low
+    assert load_offence_map().severities() == {
+        "murder": "high", "discharge_firearm_intent": "high", "use_firearm_offence": "high",
+        "weapons_possession": "high", "robbery": "high", "assault_3": "high", "assault_2": "high",
+        "assault_1": "medium",
+        "break_and_enter": "low", "theft_over_5000": "low", "motor_vehicle_theft": "low", "theft_under_5000": "low",
+    }
+
+
+def test_one_offence_with_two_levels_is_refused():
+    from uavert.ingest.reference import OffenceMap
+
+    row = {"source_key": "tps_mci", "ucr_code": "1", "ucr_ext": "*", "offence_label": "x", "csi_offence_key": "robbery",
+           "match": "exact", "group_label": "robberies", "severity": "high"}
+    m = OffenceMap([row, row | {"ucr_code": "2", "severity": "low"}])
+    with pytest.raises(ValueError, match="robbery"):
+        m.severities()

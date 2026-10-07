@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Uavert Toronto</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Uavert <span>Toronto</span></div>
+    <nav><a href="/rules.html">How scores work</a><a href="/api/docs" target="_blank" rel="noopener">API</a></nav>
+  </header>
+
+  <main class="layout">
+    <aside class="panel" id="panel">
+      <section class="card">
+        <h2><label for="when">When</label></h2>
+        <select id="when" aria-describedby="when-note"></select>
+        <p class="when-note" id="when-note">Changes street-level scores, destinations and walks. Neighbourhood colours are all-day; air quality and alerts are always current.</p>
+      </section>
+
+      <section class="card">
+        <h2>Where I'm going</h2>
+        <form id="dest-form" class="row">
+          <input id="dest" type="search" placeholder="e.g. 100 Queen St W" autocomplete="off" required minlength="3">
+          <button type="submit">Check</button>
+        </form>
+      </section>
+
+      <section class="card">
+        <h2>Where I'm walking</h2>
+        <form id="route-form" class="stack">
+          <input id="from" type="search" placeholder="From, e.g. Union Station" autocomplete="off" required minlength="3">
+          <input id="to" type="search" placeholder="To, e.g. Kensington Market" autocomplete="off" required minlength="3">
+          <button type="submit">Check walk</button>
+        </form>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section class="card" id="details" hidden>
+        <div class="score-head">
+          <div class="score-badge" id="score-badge">--</div>
+          <div>
+            <div class="score-band" id="score-band"></div>
+            <div class="score-title" id="score-title"></div>
+            <div class="score-sub" id="score-sub"></div>
+          </div>
+        </div>
+        <div class="cats" id="cats"></div>
+        <h3>Why</h3>
+        <ul class="reasons" id="reasons"></ul>
+        <div id="extra"></div>
+      </section>
+
+      <section class="card">
+        <h2>Recent news <span class="tag">unverified</span></h2>
+        <ul class="news" id="news"><li class="muted">Loading...</li></ul>
+      </section>
+
+      <section class="card">
+        <h2>Data collected</h2>
+        <ul class="sources" id="sources"><li class="muted">Loading...</li></ul>
+      </section>
+
+      <p class="disclaimer">Scores are guidance based on reported data, not a guarantee of anyone's safety. Higher means more reported risk; no area is ever labelled safe.</p>
+    </aside>
+
+    <div class="map-wrap">
+      <div id="map" aria-label="Map of Toronto risk scores"></div>
+      <div class="legend" id="legend"></div>
+      <div class="zoom-hint" id="zoom-hint">Zoom in to see street-level scores</div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Major Toronto venues (capacity 5,000 or more), for "big crowds" context near them.
+# Capacity: the largest regular seated configuration in each venue's Wikipedia infobox (concert or stadium modes noted).
+# Retrieved: 2026-10-01. Review when venues change.
+name,address,capacity,capacity_note,source_url,retrieved_on
+Rogers Centre,"1 Blue Jays Way, Toronto",39150,"baseball; concerts up to about 55,000",https://en.wikipedia.org/wiki/Rogers_Centre,2026-10-01
+BMO Field,"170 Princes' Boulevard, Toronto",28351,,https://en.wikipedia.org/wiki/BMO_Field,2026-10-01
+Scotiabank Arena,"40 Bay Street, Toronto",19800,"basketball and concerts",https://en.wikipedia.org/wiki/Scotiabank_Arena,2026-10-01
+RBC Amphitheatre,"909 Lake Shore Boulevard West, Toronto",16100,"formerly Budweiser Stage; approximate",https://en.wikipedia.org/wiki/Budweiser_Stage,2026-10-01
+Lamport Stadium,"1151 King Street West, Toronto",9600,,https://en.wikipedia.org/wiki/Lamport_Stadium,2026-10-01
+Coca-Cola Coliseum,"19 Nunavut Road, Toronto",9250,"centre-stage concerts; hockey 8,140",https://en.wikipedia.org/wiki/Coca-Cola_Coliseum,2026-10-01
+Varsity Stadium,"299 Bloor Street West, Toronto",5000,,https://en.wikipedia.org/wiki/Varsity_Stadium,2026-10-01

@@ -1,0 +1,31 @@
+# How many people are out at each hour, relative to the 6 am-8 pm average (1.0).
+# Measured hours: City of Toronto Turning Movement Counts, 15-minute pedestrian volumes, 3,532 14-hour counts
+#   (tmc_raw_data_2020_2029.csv, https://open.toronto.ca/dataset/traffic-volumes-at-intersections-for-all-modes/).
+# Estimated hours (no counts at night): Bike Share Toronto ridership 2025, 7,812,520 trips by start hour
+#   (https://open.toronto.ca/dataset/bike-share-toronto-ridership-data/), scaled by 1.005 to match the counts over 6 am-7 pm.
+# Retrieved: 2026-10-01. Regenerate with scripts/build_activity_profile.py.
+hour,pedestrian_factor,bikeshare_factor,factor_used,basis
+0,,0.242,0.243,estimated
+1,,0.150,0.151,estimated
+2,,0.110,0.111,estimated
+3,,0.059,0.059,estimated
+4,,0.043,0.043,estimated
+5,,0.094,0.094,estimated
+6,0.195,0.256,0.195,measured
+7,0.439,0.549,0.439,measured
+8,0.995,1.134,0.995,measured
+9,0.816,0.797,0.816,measured
+10,0.728,0.657,0.728,measured
+11,0.893,0.762,0.893,measured
+12,1.160,0.885,1.160,measured
+13,1.071,0.930,1.071,measured
+14,1.072,0.973,1.072,measured
+15,1.279,1.108,1.279,measured
+16,1.338,1.435,1.338,measured
+17,1.602,1.828,1.602,measured
+18,1.345,1.519,1.345,measured
+19,1.067,1.168,1.067,measured
+20,,0.874,0.879,estimated
+21,,0.674,0.678,estimated
+22,,0.526,0.528,estimated
+23,,0.404,0.406,estimated

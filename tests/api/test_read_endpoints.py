@@ -1,0 +1,130 @@
+import re
+
+import pytest
+
+pytestmark = pytest.mark.db
+BANDS = {"lower", "moderate", "elevated", "high"}
+
+
+async def test_neighbourhoods_geojson_with_scores(client, seeded):
+    r = await client.get("/api/v1/neighbourhoods")
+    assert r.status_code == 200
+    body = r.json()
+    feats = {f["properties"]["name"]: f["properties"] for f in body["data"]["features"]}
+    assert set(feats) == {"Test Centre", "Test East", "Test Warning"}
+    centre = feats["Test Centre"]
+    assert centre["score"] == 80 and centre["band"] == "high"
+    assert set(centre["categories"]) == {"crime", "environment", "alert", "news", "crowds"}
+    assert body["data"]["features"][0]["geometry"]["type"] in ("Polygon", "MultiPolygon")
+
+
+async def test_warning_moves_covered_neighbourhood_to_high(client, seeded):
+    feats = {f["properties"]["name"]: f["properties"] for f in (await client.get("/api/v1/neighbourhoods")).json()["data"]["features"]}
+    assert feats["Test Warning"]["categories"]["alert"] == 90 and feats["Test Warning"]["band"] == "high"
+    assert feats["Test East"]["categories"]["alert"] == 0
+    detail = (await client.get(f"/api/v1/neighbourhoods/{seeded['T3']}")).json()["data"]
+    assert "test heat warning" in detail["reasons"][0]["text"]
+
+
+async def test_neighbourhood_detail_reasons_carry_source_and_dates(client, seeded):
+    r = await client.get(f"/api/v1/neighbourhoods/{seeded['T1']}")
+    assert r.status_code == 200
+    d = r.json()["data"]
+    assert d["name"] == "Test Centre" and 1 <= len(d["reasons"]) <= 3
+    for reason in d["reasons"]:
+        assert reason["source_key"] and "as_of" in reason and "collected_at" in reason
+
+
+async def test_neighbourhood_detail_has_odds(client, seeded):
+    d = (await client.get(f"/api/v1/neighbourhoods/{seeded['T1']}")).json()["data"]
+    assert d["odds"]["levels"]["high"] == {"incidents": 20, "one_in": 500, "toronto_incidents": 60, "toronto_one_in": 500}
+    assert (await client.get(f"/api/v1/neighbourhoods/{seeded['T2']}")).json()["data"]["odds"] is None
+
+
+async def test_unknown_neighbourhood_is_404(client, seeded):
+    r = await client.get("/api/v1/neighbourhoods/999999")
+    assert r.status_code == 404 and r.json()["error"]["code"] == "not_found"
+
+
+async def test_meta_lists_data_date_and_collection_time_per_source(client, seeded):
+    meta = (await client.get("/api/v1/neighbourhoods")).json()["meta"]
+    assert meta["generated_at"]
+    assert set(meta["sources"]["tps_mci"]) == {"as_of", "collected_at"}
+    assert meta["sources"]["tps_mci"]["collected_at"]
+
+
+async def test_cells_in_bbox(client, seeded):
+    r = await client.get("/api/v1/cells", params={"bbox": "-79.395,43.645,-79.355,43.665"})
+    assert r.status_code == 200
+    props = [f["properties"] for f in r.json()["data"]["features"]]
+    assert props and all(p["band"] in BANDS and p["incident_count"] == 7 and p["top_reason"] for p in props)
+    assert all(p["foot_traffic_per_hour"] == 500 and p["busy_area"] is True for p in props)
+    assert {p["vs_surroundings"] for p in props} <= {2.5, 1.0, None}
+
+
+@pytest.mark.parametrize("bbox,code", [
+    ("-79.6,43.6,-79.2,43.8", "bbox_too_large"),
+    ("-79.36,43.66,-79.39,43.65", "invalid_bbox"),
+    ("not,a,bbox", "invalid_bbox"),
+])
+async def test_cells_bad_bbox(client, seeded, bbox, code):
+    r = await client.get("/api/v1/cells", params={"bbox": bbox})
+    assert r.status_code == 422 and r.json()["error"]["code"] == code
+
+
+async def test_sources_list_freshness(client, seeded):
+    data = (await client.get("/api/v1/sources")).json()["data"]
+    mci = next(s for s in data if s["key"] == "tps_mci")
+    assert mci["licence"] and mci["attribution"] and mci["as_of"].startswith("2026-06-30") and mci["collected_at"]
+
+
+async def test_scoring_rules(client, seeded):
+    d = (await client.get("/api/v1/scoring-rules")).json()["data"]
+    assert [b["band"] for b in d["bands"]] == ["lower", "moderate", "elevated", "high"]
+    assert d["parameters"]["min_incidents_for_own_score"] == 5
+    assert d["parameters"]["foot_traffic_floor_per_hour"] == 100 and d["parameters"]["standout_min_ratio"] == 1.5
+
+
+# Criterion 9: no band or label anywhere says "safe".
+async def test_no_response_labels_anything_safe(client, seeded):
+    for path in ["/api/v1/neighbourhoods", f"/api/v1/neighbourhoods/{seeded['T1']}",
+                 "/api/v1/cells?bbox=-79.395,43.645,-79.355,43.665", "/api/v1/scoring-rules"]:
+        text = (await client.get(path)).text
+        assert not re.search(r'"(band|label)"\s*:\s*"[^"]*safe', text, re.I), path
+
+
+async def test_scoring_rules_include_latest_fairness_check(client, seeded, test_pool):
+    # Criterion 34
+    await test_pool.execute(
+        "INSERT INTO fairness_checks (rho_income, rho_low_income, n, label, census_year) VALUES (-0.28, 0.24, 158, $1, 2021)",
+        "Scores don't mostly follow income")
+    f = (await client.get("/api/v1/scoring-rules")).json()["data"]["fairness"]
+    assert f["rho_median_household_income"] == -0.28 and f["neighbourhoods"] == 158 and f["census_year"] == 2021
+    assert f["label"] == "Scores don't mostly follow income" and f["review_threshold"] == 0.5 and f["computed_at"]
+
+
+async def test_search_engines_are_told_not_to_index(client, seeded):
+    # Criterion 39
+    r = await client.get("/api/v1/health")
+    assert r.headers["X-Robots-Tag"] == "noindex, nofollow"
+    robots = await client.get("/robots.txt")
+    assert robots.status_code == 200 and "Disallow: /" in robots.text and robots.headers["X-Robots-Tag"]
+
+
+async def test_pool_opens_on_first_request_when_startup_did_not_run(test_db_url, monkeypatch):
+    import httpx
+
+    from uavert.api.app import app
+    from uavert.config import get_settings
+
+    monkeypatch.setenv("DATABASE_URL", test_db_url)
+    get_settings.cache_clear()
+    saved, app.state.pool = app.state.pool, None  # as on a host that skips startup
+    try:
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://test") as c:
+            assert (await c.get("/api/v1/health")).status_code == 200
+        assert app.state.pool is not None
+        await app.state.pool.close()
+    finally:
+        app.state.pool = saved
+        get_settings.cache_clear()
