@@ -119,7 +119,7 @@ async function loadCells() {
 map.on("moveend", scheduleCells);
 
 // ---- details panel -----------------------------------------------------
-function showScore(title, sub, score, extraNodes = []) {
+function showScore(title, sub, score, extraNodes = [], oddsNodes = []) {
   $("details").hidden = false;
   const badge = $("score-badge");
   badge.textContent = score.score;
@@ -127,6 +127,7 @@ function showScore(title, sub, score, extraNodes = []) {
   $("score-band").textContent = BANDS[score.band].label;
   $("score-title").textContent = title;
   $("score-sub").textContent = sub || "";
+  $("odds").replaceChildren(...oddsNodes); // directly under the score (01-03-odds.md)
 
   const cats = $("cats"); cats.replaceChildren();
   Object.entries(score.categories).forEach(([k, v]) => {
@@ -182,7 +183,7 @@ async function showNeighbourhood(id) {
   try {
     const d = (await api(`/api/v1/neighbourhoods/${id}`)).data;
     showScore(d.name, `Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d,
-      oddsNodes(d.odds, d.name));
+      [], oddsNodes(d.odds, d.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
@@ -207,7 +208,7 @@ async function runDestination(path, label) {
         + (s.vs_surroundings != null ? ` · ${timesAround(s.vs_surroundings)} the reported street crime of the surrounding 1 km, per person` : "")
       : "Street level unavailable here; showing the neighbourhood";
     showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street,
-      [hood, ...oddsNodes(d.neighbourhood.odds, d.neighbourhood.name)]);
+      [hood], oddsNodes(d.neighbourhood.odds, d.neighbourhood.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
