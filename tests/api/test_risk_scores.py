@@ -47,6 +47,20 @@ async def test_address_returns_street_and_neighbourhood_scores(client, seeded, g
     assert s["foot_traffic_dates"] == ["2022-05-01", "2025-05-01"]
 
 
+async def test_address_carries_its_neighbourhoods_odds(client, seeded, geocoder):
+    d = (await client.get("/api/v1/risk-scores", params={"address": "1 Test Centre St"})).json()["data"]
+    odds = d["neighbourhood"]["odds"]
+    assert (odds["year"], odds["population"], odds["toronto_population"]) == (2025, 10_000, 30_000)
+    assert {k: (v["one_in"], v["toronto_one_in"]) for k, v in odds["levels"].items()} == {
+        "high": (500, 500), "medium": (200, 200), "low": (77, 77), "any": (50, 50)}
+    assert d["street"]["score"] == 80 and d["neighbourhood"]["score"] == 80  # scores unchanged
+
+
+async def test_neighbourhood_without_stored_odds_returns_null(client, seeded):
+    r = await client.get("/api/v1/risk-scores", params={"lat": 43.655, "lon": -79.365})
+    assert r.json()["data"]["neighbourhood"]["odds"] is None
+
+
 async def test_lat_lon_instead_of_address(client, seeded):
     r = await client.get("/api/v1/risk-scores", params={"lat": 43.655, "lon": -79.365})
     assert r.status_code == 200 and r.json()["data"]["neighbourhood"]["name"] == "Test Warning"

@@ -39,9 +39,10 @@ async def get_neighbourhood(request: Request, neighbourhood_id: int = Path(ge=1)
         raise ApiError(404, "not_found", f"No neighbourhood with id {neighbourhood_id}.")
     ctx = await live.load(pool)
     score = ctx.score(r["lon"], r["lat"], r["crime_score"], json.loads(r["reasons"]), neighbourhood_id=r["id"])
+    details = json.loads(r["details"])
     return live.envelope({
         "id": r["id"], "name": r["name"], "population": r["population"], "population_year": r["valid_year"],
         "centre": {"lon": r["lon"], "lat": r["lat"]},
-        "crime_details": json.loads(r["details"]), "crime_computed_at": r["computed_at"].isoformat(),
+        "crime_details": details, "crime_computed_at": r["computed_at"].isoformat(), "odds": details.get("odds"),
         **score.to_dict(),
     }, ctx)

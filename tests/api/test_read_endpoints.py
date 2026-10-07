@@ -35,6 +35,12 @@ async def test_neighbourhood_detail_reasons_carry_source_and_dates(client, seede
         assert reason["source_key"] and "as_of" in reason and "collected_at" in reason
 
 
+async def test_neighbourhood_detail_has_odds(client, seeded):
+    d = (await client.get(f"/api/v1/neighbourhoods/{seeded['T1']}")).json()["data"]
+    assert d["odds"]["levels"]["high"] == {"incidents": 20, "one_in": 500, "toronto_incidents": 60, "toronto_one_in": 500}
+    assert (await client.get(f"/api/v1/neighbourhoods/{seeded['T2']}")).json()["data"]["odds"] is None
+
+
 async def test_unknown_neighbourhood_is_404(client, seeded):
     r = await client.get("/api/v1/neighbourhoods/999999")
     assert r.status_code == 404 and r.json()["error"]["code"] == "not_found"

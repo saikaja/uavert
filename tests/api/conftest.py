@@ -9,12 +9,16 @@ import pytest
 
 from uavert.ingest.reference import build_cells
 from uavert.ingest.runs import ensure_reference_rows
+from uavert.scoring.odds import odds
 
 SQUARES = {  # external_id: (name, min_lon, min_lat, crime_score)
     "T1": ("Test Centre", -79.390, 43.650, 80),
     "T2": ("Test East", -79.380, 43.650, 20),
     "T3": ("Test Warning", -79.370, 43.650, 10),
 }
+# T1's odds: 20 serious violent, 50 assault, 130 property incidents among 10,000 residents; T2 and T3 have none stored
+T1_ODDS = odds({"high": 20, "medium": 50, "low": 130, "any": 200}, 10_000,
+               {"high": 60, "medium": 150, "low": 390, "any": 600}, 30_000, 2025)
 SIZE = 0.01
 STANDS_OUT = {"T1": 2.5, "T2": 1.0}  # vs_surroundings for each square's cells; T3: none (quiet surroundings)
 
@@ -52,7 +56,8 @@ async def seeded(test_pool):
                       "as_of": "2025", "collected_at": now.isoformat()}
             await c.execute(
                 "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used)"
-                " VALUES ($1, $2, $3, $4::jsonb, '{\"groups\": {}}', '{}')", ids[ext], crime * 10.0, crime, json.dumps([reason]))
+                " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, '{}')", ids[ext], crime * 10.0, crime, json.dumps([reason]),
+                json.dumps({"groups": {}} | ({"odds": T1_ODDS} if ext == "T1" else {})))
             await c.execute(
                 "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons,"
                 " sources_used, foot_traffic_per_hour, foot_traffic_counts_used, foot_traffic_first_date,"
