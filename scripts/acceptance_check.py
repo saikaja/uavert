@@ -59,6 +59,15 @@ def main(base: str) -> int:
         check("12", r.status_code == 200 and dt < 2,
               f"100 Queen St W -> {d['location']['display_name'][:40]}...: street {d['street']['score']} {d['street']['band']}, "
               f"neighbourhood {d['neighbourhood']['name']} {d['neighbourhood']['score']}, {dt:.2f}s (first call in this run)")
+        odds = d["neighbourhood"].get("odds") or {}
+        levels = odds.get("levels", {})
+        check("odds-1", set(levels) == {"high", "medium", "low", "any"} and odds.get("year") == 2025
+              and all(l["one_in"] is None or l["one_in"] >= 1 for l in levels.values()),
+              f"{d['neighbourhood']['name']}: " + ", ".join(f"{k} 1 in {levels[k]['one_in']}" for k in sorted(levels)))
+        toronto = {k: l["toronto_one_in"] for k, l in levels.items()}
+        check("odds-3", 50 <= toronto.get("any", 0) <= 100 and toronto.get("high", 0) > toronto.get("medium", 0) > toronto.get("any", 0),
+              f"Toronto 2025: " + ", ".join(f"{k} 1 in {v}" for k, v in sorted(toronto.items())))
+        check("odds-1b", bool(detail.get("odds", {}).get("levels")), f"/neighbourhoods/{p['id']} has odds")
 
         r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "Kensington Market, Toronto"})
         d = r.json()["data"]
