@@ -154,13 +154,35 @@ function reasonItem(r) {
 const timesAround = (r) => (r == null ? null : r > 10 ? "more than 10×" : `${r.toFixed(1)}×`);
 const peoplePerHour = (n) => (n == null ? "unknown" : `about ${Math.round(n).toLocaleString("en-CA")} people an hour on foot`);
 
+// ---- odds per resident (01-03-odds.md) -----------------------------------
+const ODDS_LEVELS = [["high", "High: serious violence"], ["medium", "Medium: assault"], ["low", "Low: property crime"], ["any", "Any"]];
+const oneIn = (n) => (n == null ? "None reported" : `1 in ${n.toLocaleString("en-CA")}`);
+
+function oddsNodes(odds, name) {
+  if (!odds) return [];
+  const table = el("table", "odds");
+  const head = el("tr");
+  head.append(el("th", null, "Severity"), el("th", null, "Here"), el("th", null, "Toronto"));
+  table.append(head);
+  ODDS_LEVELS.forEach(([k, label]) => {
+    const l = odds.levels[k]; const row = el("tr");
+    row.append(el("th", null, label), el("td", null, oneIn(l.one_in)), el("td", null, oneIn(l.toronto_one_in)));
+    table.append(row);
+  });
+  const note = el("p", "meta", "One reported incident a year for every N residents. Not a personal prediction: many incidents involve visitors, "
+    + "some aren't reported, and property crimes affect cars and homes rather than people. ");
+  const how = el("a", null, "How this is worked out"); how.href = "/rules.html#odds"; note.append(how);
+  return [el("h3", null, `Odds in ${name} (${odds.year}), per resident`), table, note];
+}
+
 const bandFor = (s) => (s >= 75 ? "high" : s >= 50 ? "elevated" : s >= 25 ? "moderate" : "lower");
 
 async function showNeighbourhood(id) {
   lastSearch = null; // neighbourhood scores are all-day
   try {
     const d = (await api(`/api/v1/neighbourhoods/${id}`)).data;
-    showScore(d.name, `Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d);
+    showScore(d.name, `Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d,
+      oddsNodes(d.odds, d.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
@@ -184,7 +206,8 @@ async function runDestination(path, label) {
       ? `Street level (about one block) · ${s.incident_count} street incidents within ~250 m · ${peoplePerHour(s.foot_traffic_per_hour)}`
         + (s.vs_surroundings != null ? ` · ${timesAround(s.vs_surroundings)} the reported street crime of the surrounding 1 km, per person` : "")
       : "Street level unavailable here; showing the neighbourhood";
-    showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street, [hood]);
+    showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street,
+      [hood, ...oddsNodes(d.neighbourhood.odds, d.neighbourhood.name)]);
   } catch (e) { setStatus(e.message, true); }
 }
 
