@@ -144,6 +144,8 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 ## Merged before sign-off
 On 2026-10-07, Sai asked to merge `feature/backend-foundation` into `main` ("merge") before testing, after being told rows 1–38 were untested. It was merged at `261c0fb`, keeping the branch's `vercel.json`, which turns production deploys from `main` back on. **This is not an end-to-end sign-off:** the checklist above still needs Sai's results, and anything that fails is fixed on `main`.
 
+Also on 2026-10-07, with Sai's approval ("yes"), the GitHub Actions variable `DATA_BRANCH` was deleted, so the data refresh now runs from `main`. The first run afterwards (`37678808823`) checked out `refs/heads/main` and succeeded. The feature branch is kept on GitHub for reference.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
