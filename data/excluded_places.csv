@@ -1,0 +1,6 @@
+# Places whose incidents are left out of crime scores and odds (01-03-odds.r2.md).
+# Toronto Police records each jail's incidents (almost all assaults inside, many on officers) at one point; these are the
+# points in the Major Crime Indicators data, checked 2026-10-07. Only incidents with the listed premises type within the radius are left out.
+name,address,lon,lat,radius_m,premises_type,reason
+Toronto South Detention Centre,130 Horner Ave,-79.51581,43.61208,50,Other,Provincial jail: incidents inside aren't a risk to the public
+Toronto East Detention Centre,55 Civic Rd,-79.28276,43.72794,50,Other,Provincial jail: incidents inside aren't a risk to the public

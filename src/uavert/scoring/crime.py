@@ -4,7 +4,7 @@ from bisect import bisect_left, bisect_right
 from collections.abc import Callable, Hashable, Iterable, Mapping
 from dataclasses import dataclass
 from datetime import date
-from math import log2
+from math import cos, hypot, log2, radians
 from statistics import median
 from typing import TypeVar
 
@@ -57,6 +57,22 @@ def counts_on_street(premises_type: str | None) -> bool:
     """Street scores count incidents outside, on transit or in commercial places. Shootings and
     homicides have no premises type and always count; incidents inside homes never do."""
     return premises_type is None or premises_type in STREET_PREMISES
+
+
+METRES_PER_DEGREE = 111_195
+
+
+def at_excluded_place(premises_type: str | None, lon: float | None, lat: float | None, places: Iterable) -> bool:
+    """True for an incident inside a place left out of scores (a jail): the listed premises type, within its radius.
+    `places` have lon, lat, radius_m and premises_type."""
+    if lon is None or lat is None:
+        return False
+    for p in places:
+        dx = (lon - p.lon) * cos(radians(p.lat)) * METRES_PER_DEGREE
+        dy = (lat - p.lat) * METRES_PER_DEGREE
+        if premises_type == p.premises_type and hypot(dx, dy) <= p.radius_m:
+            return True
+    return False
 
 
 def recency_weight(age_days: float, half_life_days: float = HALF_LIFE_DAYS) -> float:

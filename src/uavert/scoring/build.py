@@ -12,7 +12,7 @@ import h3
 
 from uavert.config import get_settings
 from uavert.freshness import source_dates
-from uavert.ingest.reference import load_offence_map
+from uavert.ingest.reference import load_excluded_places, load_offence_map
 from uavert.scoring import crime, fairness, odds
 from uavert.scoring.combine import Reason
 from uavert.scoring.events import count_once
@@ -50,9 +50,10 @@ class Event:
 
 async def load_events(conn: asyncpg.Connection, edition: str) -> list[Event]:
     offence_map = load_offence_map()
+    excluded = load_excluded_places()  # incidents inside the two jails (01-03-odds.r2.md)
     rows = await conn.fetch(
         "SELECT i.event_id, i.source_key, i.ucr_code, i.ucr_ext, i.csi_offence_key, w.weight, i.premises_type,"
-        " i.occurred_at, i.hood_external_id, i.h3::text AS h3"
+        " i.occurred_at, i.hood_external_id, i.h3::text AS h3, ST_X(i.geom) AS lon, ST_Y(i.geom) AS lat"
         " FROM incidents i JOIN csi_weights w ON w.edition = $1 AND w.offence_key = i.csi_offence_key",
         edition,
     )
@@ -60,7 +61,7 @@ async def load_events(conn: asyncpg.Connection, edition: str) -> list[Event]:
         Event(r["event_id"], r["source_key"], r["csi_offence_key"], float(r["weight"]),
               offence_map.resolve(r["source_key"], r["ucr_code"], r["ucr_ext"]).group_label,
               r["premises_type"], r["occurred_at"], r["hood_external_id"], r["h3"])
-        for r in rows
+        for r in rows if not crime.at_excluded_place(r["premises_type"], r["lon"], r["lat"], excluded)
     ]
     return count_once(events, event_id=lambda e: e.event_id, weight=lambda e: e.weight)
 

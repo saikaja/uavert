@@ -78,6 +78,23 @@ def load_offence_map() -> OffenceMap:
     return OffenceMap(read_csv(DATA_DIR / "offence_map.csv"))
 
 
+@dataclass(frozen=True)
+class ExcludedPlace:
+    """A place whose incidents are left out of crime scores and odds (01-03-odds.r2.md)."""
+    name: str
+    address: str
+    lon: float
+    lat: float
+    radius_m: float
+    premises_type: str
+    reason: str
+
+
+def load_excluded_places() -> list[ExcludedPlace]:
+    return [ExcludedPlace(r["name"], r["address"], float(r["lon"]), float(r["lat"]), float(r["radius_m"]),
+                          r["premises_type"], r["reason"]) for r in read_csv(DATA_DIR / "excluded_places.csv")]
+
+
 async def load_csi_and_offence_map(conn: asyncpg.Connection) -> int:
     weights = read_csv(DATA_DIR / "csi_weights.csv")
     edition = get_settings().csi_edition

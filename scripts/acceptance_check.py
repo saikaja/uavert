@@ -45,6 +45,8 @@ def main(base: str) -> int:
         check("10", len(feats) == 158 and {"score", "band", "categories"} <= set(p) and feats[0]["geometry"],
               f"{len(feats)} neighbourhoods with score, band, categories, GeoJSON; meta.sources has "
               f"{len(hoods['meta']['sources'])} entries with as_of and collected_at")
+        mimico = next(f["properties"] for f in feats if f["properties"]["name"] == "Mimico-Queensway")
+        check("odds-r2", mimico["score"] <= 30, f"Mimico-Queensway {mimico['score']} with jail incidents left out (was 40)")
         detail = c.get(f"/api/v1/neighbourhoods/{p['id']}").json()["data"]
         ok = 1 <= len(detail["reasons"]) <= 3 and all(x["source_key"] and "as_of" in x and "collected_at" in x for x in detail["reasons"])
         check("10b", ok, f"{detail['name']}: {len(detail['reasons'])} reasons, e.g. \"{detail['reasons'][0]['text']}\"")
