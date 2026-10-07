@@ -1,6 +1,6 @@
 # Phase 5 (addition): Verify the work: Odds alongside the score
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-07  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-07  ·  **Status:** Approved
 
 ## What this step is
 Proof that the odds addition ([01-03-odds.md](01-03-odds.md) and revision [01-03-odds.r2.md](01-03-odds.r2.md); built in [04-implementation.odds.md](04-implementation.odds.md), approved 2026-10-07) meets every acceptance criterion, before Sai's end-to-end testing.
@@ -58,8 +58,8 @@ Compared with the baseline: 204 tests and 26 acceptance checks passed before thi
 Once approved, Sai tests rows 35–38 in [06-e2e-signoff.md](06-e2e-signoff.md), along with the earlier rows that are still open.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-07 15:56
+- **User's response:** "yes"
 - **Revisions before approval:** none
