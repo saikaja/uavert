@@ -146,6 +146,8 @@ On 2026-10-07, Sai asked to merge `feature/backend-foundation` into `main` ("mer
 
 Also on 2026-10-07, with Sai's approval ("yes"), the GitHub Actions variable `DATA_BRANCH` was deleted, so the data refresh now runs from `main`. The first run afterwards (`37678808823`) checked out `refs/heads/main` and succeeded. The feature branch is kept on GitHub for reference.
 
+**Fix after Sai's first look (2026-10-07):** Sai reported "i cannot see the odds score". The odds were rendering, but at the bottom of the results panel, below every reason, which is out of view on a laptop without scrolling. The approved definition said "under the score". They were moved directly under the score badge (`f213c23`, [screenshot](screenshots/12-odds-under-score.png)) and deployed from `main`; the hosted acceptance check passed 30 of 30. Walks show no odds, as designed.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
