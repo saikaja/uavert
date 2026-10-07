@@ -141,6 +141,9 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 - **Local installs:** must use the README's editable install (`-e`).
 - **Licences:** the City of Toronto traffic dataset's licence says "not specified" on its page; confirm before a public launch.
 
+## Merged before sign-off
+On 2026-10-07, Sai asked to merge `feature/backend-foundation` into `main` ("merge") before testing, after being told rows 1–38 were untested. It was merged at `261c0fb`, keeping the branch's `vercel.json`, which turns production deploys from `main` back on. **This is not an end-to-end sign-off:** the checklist above still needs Sai's results, and anything that fails is fixed on `main`.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
