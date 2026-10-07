@@ -162,11 +162,11 @@ function oddsNodes(odds, name) {
   if (!odds) return [];
   const table = el("table", "odds");
   const head = el("tr");
-  head.append(el("th", null, "Severity"), el("th", null, "Here"), el("th", null, "Toronto"));
+  head.append(...["Severity", "Here", "Toronto"].map((t) => Object.assign(el("th", null, t), { scope: "col" })));
   table.append(head);
   ODDS_LEVELS.forEach(([k, label]) => {
     const l = odds.levels[k]; const row = el("tr");
-    row.append(el("th", null, label), el("td", null, oneIn(l.one_in)), el("td", null, oneIn(l.toronto_one_in)));
+    row.append(Object.assign(el("th", null, label), { scope: "row" }), el("td", null, oneIn(l.one_in)), el("td", null, oneIn(l.toronto_one_in)));
     table.append(row);
   });
   const note = el("p", "meta", "One reported incident a year for every N residents. Not a personal prediction: many incidents involve visitors, "
