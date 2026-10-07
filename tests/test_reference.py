@@ -58,3 +58,23 @@ def test_activity_profile_has_24_hours_sources_and_dates():
     # fewer people out at 3 am than at 5 pm
     factor = {int(r["hour"]): float(r["factor_used"]) for r in rows}
     assert factor[3] < 0.1 < 1.5 < factor[17]
+
+
+def test_every_offence_has_one_severity_level():
+    # 01-03-odds.md: serious violence high, common assault medium, property crime low
+    assert load_offence_map().severities() == {
+        "murder": "high", "discharge_firearm_intent": "high", "use_firearm_offence": "high",
+        "weapons_possession": "high", "robbery": "high", "assault_3": "high", "assault_2": "high",
+        "assault_1": "medium",
+        "break_and_enter": "low", "theft_over_5000": "low", "motor_vehicle_theft": "low", "theft_under_5000": "low",
+    }
+
+
+def test_one_offence_with_two_levels_is_refused():
+    from uavert.ingest.reference import OffenceMap
+
+    row = {"source_key": "tps_mci", "ucr_code": "1", "ucr_ext": "*", "offence_label": "x", "csi_offence_key": "robbery",
+           "match": "exact", "group_label": "robberies", "severity": "high"}
+    m = OffenceMap([row, row | {"ucr_code": "2", "severity": "low"}])
+    with pytest.raises(ValueError, match="robbery"):
+        m.severities()

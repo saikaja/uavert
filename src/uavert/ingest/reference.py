@@ -16,6 +16,7 @@ from uavert.sources import arcgis, tps
 DATA_DIR = PROJECT_ROOT / "data"
 NCR_YEAR = 2025
 H3_RESOLUTION = 9
+SEVERITIES = ("high", "medium", "low")
 
 
 def read_csv(path: Path) -> list[dict]:
@@ -33,6 +34,7 @@ class OffenceMapping:
     csi_offence_key: str
     match: str
     group_label: str
+    severity: str  # high, medium or low (01-03-odds.md)
 
 
 class UnmappedOffence(Exception):
@@ -60,6 +62,16 @@ class OffenceMap:
 
     def rows(self) -> list[OffenceMapping]:
         return list(self._rows.values())
+
+    def severities(self) -> dict[str, str]:
+        """CSI offence -> severity level. Every mapping to the same CSI offence must give it the same level."""
+        out: dict[str, str] = {}
+        for m in self._rows.values():
+            if m.severity not in SEVERITIES:
+                raise ValueError(f"{m.offence_label}: severity must be one of {SEVERITIES}, not '{m.severity}'")
+            if out.setdefault(m.csi_offence_key, m.severity) != m.severity:
+                raise ValueError(f"{m.csi_offence_key} is given two severity levels in offence_map.csv")
+        return out
 
 
 def load_offence_map() -> OffenceMap:
