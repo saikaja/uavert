@@ -107,6 +107,10 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 32 | Search an address near **Rogers Centre** (for example `125 Blue Jays Way`) | Among the reasons (if room) or on the rules page: "Near Rogers Centre: can draw about 39,150 people on event days"; the Crowds bar stays 0 on non-event days | Not tested | |
 | 33 | **On Saturday October 3, evening** (Nuit Blanche): search `100 Queen St W` | The Crowds bar shows 35 and a reason "Nuit Blanche 2026 today, about … m away: large crowds and road closures expected" | Not tested | (only testable on Oct 3–4) |
 | 34 | **If a heat warning is ever active** (summer): search any address in the warned area | A reason "Environment Canada heat warning in effect. Nearest cool space: … about … m away, open until …" | Not tested | (only testable during a heat alert) |
+| 35 | **Odds (added 2026-10-07):** on https://uavert.vercel.app search `100 Queen St W` | Under the score: "Odds in Yonge-Bay Corridor (2025), per resident", with a table: High 1 in 110 (Toronto 1 in 470), Medium 1 in 47 (220), Low 1 in 47 (140), Any 1 in 19 (73), and the note "One reported incident a year for every N residents. Not a personal prediction…". Is the wording clear to you? | Not tested | (your judgement) |
+| 36 | Click any neighbourhood on the map (zoomed out) | The same odds table appears for that neighbourhood, after its reasons | Not tested | |
+| 37 | Search `150 Horner Ave` (Mimico-Queensway, near the jail) | Neighbourhood score **24 (lower reported risk)**, not 40; odds Medium about 1 in 310, not 1 in 28 | Not tested | |
+| 38 | Click **How this is worked out** under the odds; also check rows 35–37 **on your phone** | The rules page opens at "Odds per resident" with the three severity levels; "Limitations" names the two jails. On the phone, the table fits the screen without sideways scrolling | Not tested | |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".

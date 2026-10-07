@@ -1,6 +1,6 @@
 # Phase 4 (addition): Do the work: Odds alongside the score
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-07  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-07  ·  **Status:** Approved
 
 ## What this step is
 The build record for the odds addition ([01-03-odds.md](01-03-odds.md), approved 2026-10-07 15:22) and its revision ([01-03-odds.r2.md](01-03-odds.r2.md), leave out incidents inside the two jails, approved 2026-10-07).
@@ -65,8 +65,8 @@ I reviewed the diff for reuse and simplicity:
 Once approved, phase 5 verifies the work against every acceptance criterion and records it in `05-test-report.odds.md`. Then rows are added to the end-to-end checklist for you to test.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-07 15:49
+- **User's response:** "yes"
 - **Revisions before approval:** none
