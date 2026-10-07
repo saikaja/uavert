@@ -13,7 +13,7 @@ import h3
 from uavert.config import get_settings
 from uavert.freshness import source_dates
 from uavert.ingest.reference import load_offence_map
-from uavert.scoring import crime, fairness
+from uavert.scoring import crime, fairness, odds
 from uavert.scoring.combine import Reason
 from uavert.scoring.events import count_once
 
@@ -65,12 +65,15 @@ async def load_events(conn: asyncpg.Connection, edition: str) -> list[Event]:
     return count_once(events, event_id=lambda e: e.event_id, weight=lambda e: e.weight)
 
 
-def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[str, float], ncr_extra: dict[str, tuple[str, str]], used: dict) -> dict[int, dict]:
-    """Calendar-year CSI-weighted rate per 100,000 residents, ranked across the city.
+def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[str, float], ncr_extra: dict[str, tuple[str, str]], used: dict,
+                         severities: dict[str, str] | None = None) -> dict[int, dict]:
+    """Calendar-year CSI-weighted rate per 100,000 residents, ranked across the city, with the odds per resident.
 
     `hoods`: dicts with id, external_id, population, counts (published counts for the year).
     `ncr_extra`: published count name -> (csi_offence_key, group) for offences the incident data lacks.
+    `severities`: CSI offence -> severity level (default: from the offence map).
     """
+    severities = severities or load_offence_map().severities()
     by_hood: dict[str, Counter] = defaultdict(Counter)  # (csi_key, group) -> count (homicides: yearly average)
     homicides: Counter = Counter()  # hood -> homicide events over the averaging years
     for e in events:
@@ -87,7 +90,7 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
         for name, key in ncr_extra.items():
             by_hood[h["external_id"]][key] += h["counts"].get(name, 0)
 
-    rates, details = {}, {}
+    rates, details, levels = {}, {}, {}
     for h in hoods:
         counts = by_hood[h["external_id"]]
         pop = h["population"] or 0
@@ -95,6 +98,7 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
         for (key, _group), c in counts.items():
             per_offence[key] += c
         rates[h["id"]] = crime.weighted_rate(per_offence, weights, pop)
+        levels[h["id"]] = odds.by_level(per_offence, severities)
         groups = defaultdict(lambda: {"count": 0, "weighted": 0.0})
         for (key, group), c in counts.items():
             groups[group]["count"] += c
@@ -106,6 +110,8 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
                for g in {g for d in details.values() for g in d}}
     typical = median(rates.values())
     scores = {k: crime.relative_score(v, typical) for k, v in rates.items()}
+    toronto = {level: sum(c[level] for c in levels.values()) for level in odds.LEVELS}
+    toronto_population = sum(h["population"] or 0 for h in hoods)
     out = {}
     for h in hoods:
         d = details[h["id"]]
@@ -131,7 +137,9 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
             reasons.append(Reason("crime", text, source_key=src, value=value, as_of=as_of,
                                   collected_at=used.get(src, {}).get("collected_at")).to_dict())
         out[h["id"]] = {"weighted_rate": rates[h["id"]], "crime_score": scores[h["id"]], "reasons": reasons,
-                        "details": {"year": NEIGHBOURHOOD_YEAR, "groups": d, "toronto_median_rate_per_100k": medians}}
+                        "details": {"year": NEIGHBOURHOOD_YEAR, "groups": d, "toronto_median_rate_per_100k": medians,
+                                    "odds": odds.odds(levels[h["id"]], h["population"], toronto, toronto_population,
+                                                      NEIGHBOURHOOD_YEAR)}}
     return out
 
 
