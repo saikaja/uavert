@@ -13,9 +13,10 @@ import h3
 from uavert.config import get_settings
 from uavert.freshness import source_dates
 from uavert.ingest.reference import load_excluded_places, load_offence_map
-from uavert.scoring import crime, fairness, odds
+from uavert.scoring import crime, fairness, odds, trends
 from uavert.scoring.combine import Reason
 from uavert.scoring.events import count_once
+from uavert.sources.tps import CrimeYear
 
 NEIGHBOURHOOD_YEAR = 2025
 HOMICIDE_FIRST_YEAR = NEIGHBOURHOOD_YEAR - crime.HOMICIDE_YEARS + 1  # 2023
@@ -142,6 +143,18 @@ def neighbourhood_scores(events: list[Event], hoods: list[dict], weights: dict[s
                                     "odds": odds.odds(levels[h["id"]], h["population"], toronto, toronto_population,
                                                       NEIGHBOURHOOD_YEAR)}}
     return out
+
+
+def add_trends(hood_rows: dict[int, dict], rows: list[CrimeYear], used: dict) -> None:
+    """Attach the 10- and 5-year trends (01-03-trends.md) to each neighbourhood's details. Rows are keyed by
+    neighbourhood id; with no yearly figures loaded, nothing is added."""
+    if not rows:
+        return
+    per_hood, toronto = trends.trends(rows, NEIGHBOURHOOD_YEAR)
+    source = {"source_key": "tps_ncr", "collected_at": used.get("tps_ncr", {}).get("collected_at")}
+    for hid, r in hood_rows.items():
+        if t := per_hood.get(str(hid)):
+            r["details"]["trend"] = t | {"toronto": toronto} | source
 
 
 def typical_block_reason(ratio: float, f: crime.FootTraffic, busy: bool, city_median: float, as_of: str,
@@ -293,6 +306,9 @@ async def build(conn: asyncpg.Connection) -> dict:
     ncr_extra = {m.ucr_code: (m.csi_offence_key, m.group_label)
                  for m in load_offence_map().rows() if m.source_key == "tps_ncr"}
     hood_rows = neighbourhood_scores(events, hoods, weights, ncr_extra, used)
+    add_trends(hood_rows, [CrimeYear(str(r["neighbourhood_id"]), r["year"], r["offence"], r["count"], r["rate_per_100k"])
+                           for r in await conn.fetch("SELECT neighbourhood_id, year, offence, count, rate_per_100k"
+                                                     " FROM neighbourhood_crime_years")], used)
     census = {r["external_id"]: r for r in await conn.fetch(
         "SELECT external_id, median_household_income, low_income_pct, census_year FROM neighbourhood_census")}
     # Fairness uses the underlying rates: the same order as the scores, unaffected by capping at 0 and 100.

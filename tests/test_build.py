@@ -114,3 +114,29 @@ def test_first_street_reason_is_the_most_frequent_offence():
     assert reasons[0].startswith("5 assaults within about 250 m")
     assert reasons[1].startswith("About ")  # how the block compares with a typical one
     assert any(t.startswith("1 homicide within about 250 m") for t in reasons)
+
+
+def test_trends_are_attached_to_each_neighbourhood_with_toronto_and_source():
+    import json
+    from pathlib import Path
+
+    from uavert.scoring.build import add_trends
+    from uavert.sources import tps
+
+    attrs = json.loads((Path(__file__).parent / "fixtures" / "tps" / "ncr_years_one.json").read_text())["attributes"]
+    rows = [tps.CrimeYear("7", r.year, r.offence, r.count, r.rate_per_100k) for r in tps.parse_crime_years(attrs, 2014, 2025)]
+    hood_rows = {7: {"details": {}}, 8: {"details": {}}}
+    add_trends(hood_rows, rows, {"tps_ncr": {"collected_at": "2026-10-08T15:32:17+00:00"}})
+    t = hood_rows[7]["details"]["trend"]
+    assert t["windows"]["10"]["groups"]["violent"]["direction"] == "falling"
+    assert t["toronto"]["series"]["all"][-1]["year"] == 2025
+    assert (t["source_key"], t["collected_at"]) == ("tps_ncr", "2026-10-08T15:32:17+00:00")
+    assert "trend" not in hood_rows[8]["details"]  # no yearly figures for it
+
+
+def test_no_yearly_figures_adds_no_trend():
+    from uavert.scoring.build import add_trends
+
+    hood_rows = {7: {"details": {}}}
+    add_trends(hood_rows, [], {})
+    assert hood_rows[7]["details"] == {}
