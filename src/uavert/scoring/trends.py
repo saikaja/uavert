@@ -68,7 +68,9 @@ def trends(rows: list[CrimeYear], last_year: int) -> tuple[dict[str, dict], dict
     figures = {(r.hood_external_id, r.year, r.offence): r for r in rows}
     pops = populations(rows)
     years = range(first_year, last_year + 1)
-    hood_ids = sorted({r.hood_external_id for r in rows})
+    # Only neighbourhoods with every figure; one with a gap gets no trend (and isn't counted in Toronto's).
+    hood_ids = sorted(h for h in {r.hood_external_id for r in rows}
+                      if all((h, y, k) in figures for y in years for k in GROUPS["all"]))
 
     def point(year, offences, hood):
         figs = [figures[(hood, year, k)] for k in offences]

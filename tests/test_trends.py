@@ -75,3 +75,13 @@ def test_toronto_is_all_neighbourhoods_together():
     assert toronto["series"]["violent"][-1]["rate_per_1000"] == pytest.approx(hood["170"]["series"]["violent"][-1]["rate_per_1000"], abs=0.1)
     assert toronto["series"]["violent"][-1]["count"] == 2 * 614
     assert toronto["windows"]["10"]["groups"]["violent"]["change_pct"] == -38
+
+
+def test_a_neighbourhood_missing_a_figure_is_left_out_not_a_crash():
+    # review finding: an incomplete yearly table must not stop build-scores
+    rows = yonge_bay()
+    gap = [tps.CrimeYear("999", r.year, r.offence, r.count, r.rate_per_100k) for r in rows
+           if not (r.year == 2019 and r.offence == "ROBBERY")]
+    hood, toronto = trends.trends(rows + gap, last_year=2025)
+    assert set(hood) == {"170"}
+    assert toronto["series"]["violent"][-1]["count"] == 614  # Toronto from complete neighbourhoods only

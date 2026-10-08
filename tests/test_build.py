@@ -140,3 +140,20 @@ def test_no_yearly_figures_adds_no_trend():
     hood_rows = {7: {"details": {}}}
     add_trends(hood_rows, [], {})
     assert hood_rows[7]["details"] == {}
+
+
+def test_trends_wait_for_the_scoring_year_to_be_published(capsys):
+    # review finding: when the scoring year moves on before Toronto Police publishes it, scores still build
+    import json
+    from pathlib import Path
+
+    from uavert.scoring import build
+    from uavert.sources import tps
+
+    attrs = json.loads((Path(__file__).parent / "fixtures" / "tps" / "ncr_years_one.json").read_text())["attributes"]
+    rows = [tps.CrimeYear("7", r.year, r.offence, r.count, r.rate_per_100k)
+            for r in tps.parse_crime_years(attrs, 2014, 2025) if r.year < 2025]
+    hood_rows = {7: {"details": {}}}
+    build.add_trends(hood_rows, rows, {})
+    assert hood_rows[7]["details"] == {}
+    assert "no trends" in capsys.readouterr().out

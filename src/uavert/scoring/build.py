@@ -150,6 +150,9 @@ def add_trends(hood_rows: dict[int, dict], rows: list[CrimeYear], used: dict) ->
     neighbourhood id; with no yearly figures loaded, nothing is added."""
     if not rows:
         return
+    if not any(r.year == NEIGHBOURHOOD_YEAR for r in rows):
+        print(f"  no trends: the yearly figures don't include {NEIGHBOURHOOD_YEAR} yet (reload the reference data)")
+        return
     per_hood, toronto = trends.trends(rows, NEIGHBOURHOOD_YEAR)
     source = {"source_key": "tps_ncr", "collected_at": used.get("tps_ncr", {}).get("collected_at")}
     for hid, r in hood_rows.items():
