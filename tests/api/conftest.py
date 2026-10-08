@@ -39,7 +39,7 @@ def reset_rate_limit():
 async def seeded(test_pool):
     now = datetime.now(UTC)
     async with test_pool.acquire() as c:
-        for t in ("cell_scores", "neighbourhood_scores", "cells", "neighbourhoods", "aqhi_readings", "official_alerts",
+        for t in ("cell_scores", "neighbourhood_scores", "neighbourhood_crime_years", "cells", "neighbourhoods", "aqhi_readings", "official_alerts",
                   "news_events", "activity_by_hour", "cool_spaces", "crowd_events", "venues"):
             await c.execute(f"DELETE FROM {t}")
         region_id = await ensure_reference_rows(c)

@@ -4,7 +4,7 @@ pytestmark = pytest.mark.db
 
 DATA_TABLES = [
     "regions", "sources", "neighbourhoods", "csi_weights", "offence_map", "incidents",
-    "cells", "aqhi_readings", "official_alerts", "news_events",
+    "cells", "aqhi_readings", "official_alerts", "news_events", "neighbourhood_crime_years",
 ]
 
 
