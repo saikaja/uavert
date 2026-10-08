@@ -70,6 +70,17 @@ def main(base: str) -> int:
         check("odds-3", 50 <= toronto.get("any", 0) <= 100 and toronto.get("high", 0) > toronto.get("medium", 0) > toronto.get("any", 0),
               f"Toronto 2025: " + ", ".join(f"{k} 1 in {v}" for k, v in sorted(toronto.items())))
         check("odds-1b", bool(detail.get("odds", {}).get("levels")), f"/neighbourhoods/{p['id']} has odds")
+        trend = d["neighbourhood"].get("trend") or {}
+        w10 = trend.get("windows", {}).get("10", {})
+        check("trends-2", [x["year"] for x in trend.get("series", {}).get("violent", [])] == list(range(2016, 2026))
+              and trend.get("windows", {}).get("5", {}).get("first_year") == 2021 and len(w10.get("offences", {})) == 9,
+              f"{d['neighbourhood']['name']}: violent {w10.get('groups', {}).get('violent')}, "
+              f"property {w10.get('groups', {}).get('property')}")
+        tg = trend.get("toronto", {}).get("windows", {}).get("10", {}).get("groups", {})
+        check("trends-3", abs(tg.get("violent", {}).get("change_pct", 99) - 10) <= 1
+              and abs(tg.get("property", {}).get("change_pct", 99) - 5) <= 1,
+              f"Toronto 2016-2025: violent {tg.get('violent', {}).get('change_pct')}%, property {tg.get('property', {}).get('change_pct')}%")
+        check("trends-2b", bool(detail.get("trend", {}).get("windows")), f"/neighbourhoods/{p['id']} has a trend")
 
         r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "Kensington Market, Toronto"})
         d = r.json()["data"]
