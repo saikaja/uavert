@@ -1,6 +1,6 @@
 # Phase 4 (addition): Do the work: Crime trendlines
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-08  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-08  ·  **Status:** Approved
 
 ## What this step is
 Build the approved plan in [01-03-trends.md](01-03-trends.md) (slices T1–T5) with tests, on branch `feature/trends`.
@@ -67,8 +67,8 @@ In the Vercel project settings, add `DATABASE_URL` (the Neon `main` direct host,
 Once you've added the Preview settings and approved this document, I'll write `05-test-report.trends.md` (preview acceptance check, review of the diff) for approval. Then I'll ask before merging to `main`.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-08 11:53
+- **User's response:** "looks good"
 - **Revisions before approval:** none
