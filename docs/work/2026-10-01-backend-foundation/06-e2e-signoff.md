@@ -111,6 +111,10 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 36 | Click any neighbourhood on the map (zoomed out) | The same odds table appears for that neighbourhood, after its reasons | Not tested | |
 | 37 | Search `150 Horner Ave` (Mimico-Queensway, near the jail) | Neighbourhood score **24 (lower reported risk)**, not 40; odds Medium about 1 in 310, not 1 in 28 | Not tested | |
 | 38 | Click **How this is worked out** under the odds; also check rows 35–37 **on your phone** | The rules page opens at "Odds per resident" with the three severity levels; "Limitations" names the two jails. On the phone, the table fits the screen without sideways scrolling | Not tested | |
+| 39 | **Trends (added 2026-10-08, [01-03-trends.md](01-03-trends.md)):** once deployed, search `100 Queen St W` | Under the odds: "Trend in Yonge-Bay Corridor, per 1,000 residents", a chart with a solid line, a dashed trendline and a faint Toronto line, and the summary "Violent crime: falling, −38% over 2016–2025 (Toronto: rising, +10%)" and "Property crime: falling, −35% … (Toronto: roughly flat, +5%)". Is it clear to you? | Not tested | (your judgement) |
+| 40 | Click **5 years**, then **Property** | Violent changes to "rising, +31% over 2021–2025 (Toronto: rising, +17%)"; the chart redraws for 2021–2025 and then shows property crime | Not tested | |
+| 41 | Open **By offence** and **Yearly figures** | 9 offences with their 2025 counts (small ones say "too few to call a trend"); a year-by-year table for the neighbourhood and Toronto | Not tested | |
+| 42 | Click a neighbourhood on the map, e.g. Guildwood; then **How this is worked out**; check rows 39–41 **on your phone** | Guildwood shows its own trend ("roughly flat"), with its line below Toronto's. The rules page opens at "Trends over time". On the phone, the chart and buttons fit without sideways scrolling | Not tested | |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".
