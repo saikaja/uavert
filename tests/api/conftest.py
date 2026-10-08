@@ -3,6 +3,7 @@ their H3 cells, stored crime scores, one AQHI reading and one warning covering T
 
 import json
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -10,6 +11,8 @@ import pytest
 from uavert.ingest.reference import build_cells
 from uavert.ingest.runs import ensure_reference_rows
 from uavert.scoring.odds import odds
+from uavert.scoring.trends import trends
+from uavert.sources.tps import parse_crime_years
 
 SQUARES = {  # external_id: (name, min_lon, min_lat, crime_score)
     "T1": ("Test Centre", -79.390, 43.650, 80),
@@ -19,6 +22,11 @@ SQUARES = {  # external_id: (name, min_lon, min_lat, crime_score)
 # T1's odds: 20 serious violent, 50 assault, 130 property incidents among 10,000 residents; T2 and T3 have none stored
 T1_ODDS = odds({"high": 20, "medium": 50, "low": 130, "any": 200}, 10_000,
                {"high": 60, "medium": 150, "low": 390, "any": 600}, 30_000, 2025)
+# T1's trend: the real Yonge-Bay Corridor figures (tests/fixtures/tps/ncr_years_one.json); T2 and T3 have none stored
+_YEARS = parse_crime_years(json.loads((Path(__file__).parents[1] / "fixtures" / "tps" / "ncr_years_one.json")
+                                      .read_text())["attributes"], 2014, 2025)
+_HOOD, _TORONTO = trends(_YEARS, 2025)
+T1_TREND = _HOOD["170"] | {"toronto": _TORONTO, "source_key": "tps_ncr", "collected_at": "2026-10-08T15:32:17+00:00"}
 SIZE = 0.01
 STANDS_OUT = {"T1": 2.5, "T2": 1.0}  # vs_surroundings for each square's cells; T3: none (quiet surroundings)
 
@@ -57,7 +65,7 @@ async def seeded(test_pool):
             await c.execute(
                 "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used)"
                 " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, '{}')", ids[ext], crime * 10.0, crime, json.dumps([reason]),
-                json.dumps({"groups": {}} | ({"odds": T1_ODDS} if ext == "T1" else {})))
+                json.dumps({"groups": {}} | ({"odds": T1_ODDS, "trend": T1_TREND} if ext == "T1" else {})))
             await c.execute(
                 "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons,"
                 " sources_used, foot_traffic_per_hour, foot_traffic_counts_used, foot_traffic_first_date,"

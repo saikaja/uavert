@@ -35,6 +35,15 @@ async def test_neighbourhood_detail_reasons_carry_source_and_dates(client, seede
         assert reason["source_key"] and "as_of" in reason and "collected_at" in reason
 
 
+async def test_neighbourhood_detail_has_trend(client, seeded):
+    d = (await client.get(f"/api/v1/neighbourhoods/{seeded['T1']}")).json()["data"]
+    violent = d["trend"]["windows"]["10"]["groups"]["violent"]
+    assert (violent["change_pct"], violent["direction"]) == (-38, "falling")
+    assert [p["year"] for p in d["trend"]["series"]["violent"]] == list(range(2016, 2026))
+    assert d["trend"]["toronto"]["windows"]["5"]["first_year"] == 2021 and d["trend"]["source_key"] == "tps_ncr"
+    assert (await client.get(f"/api/v1/neighbourhoods/{seeded['T2']}")).json()["data"]["trend"] is None
+
+
 async def test_neighbourhood_detail_has_odds(client, seeded):
     d = (await client.get(f"/api/v1/neighbourhoods/{seeded['T1']}")).json()["data"]
     assert d["odds"]["levels"]["high"] == {"incidents": 20, "one_in": 500, "toronto_incidents": 60, "toronto_one_in": 500}
