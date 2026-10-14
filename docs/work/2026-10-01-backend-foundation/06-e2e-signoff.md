@@ -163,6 +163,8 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 
 **Merged (2026-10-14 13:07).** With Sai's approval ("yes sounds good i approve both"), `feature/trends` was merged into `main` (`c6b6084`). 238 tests passed; the push deployed production, and `acceptance_check.py` against https://uavert.vercel.app passed **33 of 33**. The daily refresh now keeps the trends.
 
+**Odds percentage and "Risk score" label merged (2026-10-14 13:13).** With Sai's approval ("merge and i approve"), `feature/odds-percent` was merged into `main` (`3ac9994`). 238 tests passed; production redeployed and serves the new page code; `acceptance_check.py` against https://uavert.vercel.app passed **33 of 33**. Row 43 covers it.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
