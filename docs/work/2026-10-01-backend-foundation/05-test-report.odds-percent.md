@@ -1,6 +1,6 @@
 # Phase 5 (addition): Test report: Odds as a percentage, and a "Risk score" label
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-14  ·  **Status:** Pending approval  ·  **Build:** [04-implementation.odds-percent.md](04-implementation.odds-percent.md)
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-14  ·  **Status:** Approved  ·  **Build:** [04-implementation.odds-percent.md](04-implementation.odds-percent.md)
 
 ## What this step is
 Evidence that the change does what [01-03-odds-percent.md](01-03-odds-percent.md) says, and nothing else.
@@ -34,8 +34,8 @@ Evidence that the change does what [01-03-odds-percent.md](01-03-odds-percent.md
 Once approved: end-to-end row 43 is in [06-e2e-signoff.md](06-e2e-signoff.md). Then I'll ask before merging `feature/odds-percent` to `main`, which deploys production.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-14 13:13
+- **User's response:** "merge and i approve"
 - **Revisions before approval:** none

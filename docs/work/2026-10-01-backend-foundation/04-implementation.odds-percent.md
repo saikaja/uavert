@@ -1,6 +1,6 @@
 # Phase 4 (addition): Odds as a percentage, and a "Risk score" label
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-14  ·  **Status:** Pending approval  ·  **Plan:** [01-03-odds-percent.md](01-03-odds-percent.md)
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-14  ·  **Status:** Approved  ·  **Plan:** [01-03-odds-percent.md](01-03-odds-percent.md)
 
 ## What this step is
 The build record for the approved plan: each odds cell shows a percentage after the "1 in N", and the score badge is labelled.
@@ -36,8 +36,8 @@ The two helpers sit next to the existing `oneIn`, in the same one-line style. No
 Once approved: [05-test-report.odds-percent.md](05-test-report.odds-percent.md), then end-to-end row 43, then ask before merging to `main`.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-14 13:13
+- **User's response:** "merge and i approve"
 - **Revisions before approval:** none
