@@ -1,6 +1,6 @@
 # Phases 1–3 (addition): Odds as a percentage as well as "1 in N"
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-14  ·  **Status:** Pending approval  ·  **Builds on:** [01-03-odds.md](01-03-odds.md), [01-03-odds.r2.md](01-03-odds.r2.md)
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-14  ·  **Status:** Approved  ·  **Builds on:** [01-03-odds.md](01-03-odds.md), [01-03-odds.r2.md](01-03-odds.r2.md)
 
 ## What this step is
 A small addition: Sai asked (in chat, 2026-10-14) for the odds table to show a percentage next to each "1 in N" figure. This document combines the definition, design and plan for one approval.
@@ -49,8 +49,8 @@ Then `04-implementation.odds-percent.md` and `05-test-report.odds-percent.md` fo
 Once approved and `feature/trends` is merged, build P1–P3 on `feature/odds-percent`.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
-- **Revisions before approval:** none
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-14 13:07
+- **User's response:** "yes sounds good i approve both" (after being offered a label for the score badge)
+- **Revisions before approval:** Added at Sai's prompt, after asking "is the 15 the safety score or the odds score": criterion 6, the score badge carries a small label "Risk score (0–100, higher = riskier)" on search results and neighbourhood clicks, so it isn't mistaken for a safety score or the odds. Built in slice P1 (`web/app.js`, `web/index.html`, `web/style.css`). Walks get the same label.
