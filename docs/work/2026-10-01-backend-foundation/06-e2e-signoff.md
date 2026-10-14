@@ -111,6 +111,10 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 36 | Click any neighbourhood on the map (zoomed out) | The same odds table appears for that neighbourhood, after its reasons | Not tested | |
 | 37 | Search `150 Horner Ave` (Mimico-Queensway, near the jail) | Neighbourhood score **24 (lower reported risk)**, not 40; odds Medium about 1 in 310, not 1 in 28 | Not tested | |
 | 38 | Click **How this is worked out** under the odds; also check rows 35–37 **on your phone** | The rules page opens at "Odds per resident" with the three severity levels; "Limitations" names the two jails. On the phone, the table fits the screen without sideways scrolling | Not tested | |
+| 39 | **Trends (added 2026-10-08, [01-03-trends.md](01-03-trends.md)):** once deployed, search `100 Queen St W` | Under the odds: "Trend in Yonge-Bay Corridor, per 1,000 residents", a chart with a solid line, a dashed trendline and a faint Toronto line, and the summary "Violent crime: falling, −38% over 2016–2025 (Toronto: rising, +10%)" and "Property crime: falling, −35% … (Toronto: roughly flat, +5%)". Is it clear to you? | Not tested | (your judgement) |
+| 40 | Click **5 years**, then **Property** | Violent changes to "rising, +31% over 2021–2025 (Toronto: rising, +17%)"; the chart redraws for 2021–2025 and then shows property crime | Not tested | |
+| 41 | Open **By offence** and **Yearly figures** | 9 offences with their 2025 counts (small ones say "too few to call a trend"); a year-by-year table for the neighbourhood and Toronto | Not tested | |
+| 42 | Click a neighbourhood on the map, e.g. Guildwood; then **How this is worked out**; check rows 39–41 **on your phone** | Guildwood shows its own trend ("roughly flat"), with its line below Toronto's. The rules page opens at "Trends over time". On the phone, the chart and buttons fit without sideways scrolling | Not tested | |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".
@@ -147,6 +151,14 @@ On 2026-10-07, Sai asked to merge `feature/backend-foundation` into `main` ("mer
 Also on 2026-10-07, with Sai's approval ("yes"), the GitHub Actions variable `DATA_BRANCH` was deleted, so the data refresh now runs from `main`. The first run afterwards (`37678808823`) checked out `refs/heads/main` and succeeded. The feature branch is kept on GitHub for reference.
 
 **Fix after Sai's first look (2026-10-07):** Sai reported "i cannot see the odds score". The odds were rendering, but at the bottom of the results panel, below every reason, which is out of view on a laptop without scrolling. The approved definition said "under the score". They were moved directly under the score badge (`f213c23`, [screenshot](screenshots/12-odds-under-score.png)) and deployed from `main`; the hosted acceptance check passed 30 of 30. Walks show no odds, as designed.
+
+## Trends: hosted preview check (2026-10-14)
+Sai added `DATABASE_URL` and `DB_POOL_MAX` to Vercel's Preview environment. `build-scores` was re-run from `feature/trends` ("Scored 158 neighbourhoods and 5748 street cells"), and a preview was deployed: https://uavert-pyu1rerod-sai-project.vercel.app (protected: open it while signed in to Vercel).
+
+The preview sits behind Vercel's login, so `acceptance_check.py` ran through a local proxy that forwards each request with `vercel curl`:
+- **Passed on the preview:** setup, 3, 4, 10, 10b, 11, odds-r2, odds-1, odds-3, odds-1b, **trends-2** (Yonge-Bay Corridor violent −38%, property −35%), **trends-3** (Toronto violent +10%, property +5%), **trends-2b**.
+- **12** failed only on time (3.8 s against 2 s); the proxy adds about 3–4 s per request because it starts the Vercel CLI each time. Timed directly with `vercel curl`, the server answered in 0.22 s.
+- The proxy then dropped the walking-route request, so the rest were checked directly: walk Union Station → Kensington 200 in 0.61 s (LineString, 2,840 m, 1 stand-out stretch); Mississauga 422 `outside_coverage`; "zzqqxx nowhere 12345" 404 `address_not_found`; Scarborough walk 422 `route_too_long` ("Those places are 17.6 km apart…"); `/rules.html` has the "Trends over time" section. Checks 15–51 (time of day, walks, rules) weren't re-run on the preview: that code is unchanged by trends and passed 33 of 33 locally on 2026-10-08.
 
 ## Approval
 - **Status:** Pending approval

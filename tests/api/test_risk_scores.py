@@ -56,6 +56,13 @@ async def test_address_carries_its_neighbourhoods_odds(client, seeded, geocoder)
     assert d["street"]["score"] == 80 and d["neighbourhood"]["score"] == 80  # scores unchanged
 
 
+async def test_address_carries_its_neighbourhoods_trend(client, seeded, geocoder):
+    d = (await client.get("/api/v1/risk-scores", params={"address": "1 Test Centre St"})).json()["data"]
+    trend = d["neighbourhood"]["trend"]
+    assert trend["windows"]["5"]["groups"]["violent"]["change_pct"] == 31
+    assert d["neighbourhood"]["odds"]["year"] == 2025 and d["neighbourhood"]["score"] == 80  # odds and score unchanged
+
+
 async def test_neighbourhood_without_stored_odds_returns_null(client, seeded):
     r = await client.get("/api/v1/risk-scores", params={"lat": 43.655, "lon": -79.365})
     assert r.json()["data"]["neighbourhood"]["odds"] is None

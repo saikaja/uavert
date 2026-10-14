@@ -118,3 +118,26 @@ def parse_neighbourhood(feature: dict, year: int) -> NeighbourhoodRecord:
 
 def ncr_fields(year: int) -> str:
     return ",".join(["AREA_NAME", "HOOD_ID", f"POPULATION_{year}"] + [f"{k}_{year}" for k in NCR_ALL_COUNTS])
+
+
+@dataclass(frozen=True)
+class CrimeYear:
+    hood_external_id: str
+    year: int
+    offence: str  # Toronto Police field name, e.g. ASSAULT
+    count: int
+    rate_per_100k: float
+
+
+def ncr_year_fields(first: int, last: int) -> str:
+    return ",".join(f"{k}{s}_{y}" for y in range(first, last + 1) for k in NCR_ALL_COUNTS for s in ("", "_RATE"))
+
+
+def parse_crime_years(p: dict, first: int, last: int) -> list[CrimeYear]:
+    """Published yearly counts and rates per 100,000 residents (01-03-trends.md). A gap stops the load."""
+    missing = [f for f in ncr_year_fields(first, last).split(",") if p.get(f) is None]
+    if missing:
+        raise ValueError(f"neighbourhood {p.get('HOOD_ID')}: no published figure for {', '.join(missing[:5])}")
+    hood = hood_id(p["HOOD_ID"])
+    return [CrimeYear(hood, y, k, int(p[f"{k}_{y}"]), float(p[f"{k}_RATE_{y}"]))
+            for y in range(first, last + 1) for k in NCR_ALL_COUNTS]

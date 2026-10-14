@@ -52,7 +52,7 @@ async def neighbourhood_at(pool: asyncpg.Pool, place: Place) -> asyncpg.Record:
     """The neighbourhood containing the place; 422 outside_coverage when it's outside Toronto."""
     row = await pool.fetchrow(
         "SELECT n.id, n.name, ST_X(ST_PointOnSurface(n.geom)) AS lon, ST_Y(ST_PointOnSurface(n.geom)) AS lat,"
-        " s.crime_score, s.reasons, s.details->'odds' AS odds FROM neighbourhoods n JOIN neighbourhood_scores s ON s.neighbourhood_id = n.id"
+        " s.crime_score, s.reasons, s.details->'odds' AS odds, s.details->'trend' AS trend FROM neighbourhoods n JOIN neighbourhood_scores s ON s.neighbourhood_id = n.id"
         " WHERE ST_Covers(n.geom, ST_SetSRID(ST_MakePoint($1, $2), 4326)) LIMIT 1",
         place.lon, place.lat,
     )
@@ -97,6 +97,7 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place, hour: 
         "location": {"display_name": place.display_name, "lon": place.lon, "lat": place.lat},
         "street": street,
         "neighbourhood": {"id": hood["id"], "name": hood["name"], **hood_score.to_dict(),
-                          "odds": json.loads(hood["odds"]) if hood["odds"] else None},
+                          "odds": json.loads(hood["odds"]) if hood["odds"] else None,
+                          "trend": json.loads(hood["trend"]) if hood["trend"] else None},
         "time": time_info(hour),
     }

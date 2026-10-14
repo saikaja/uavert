@@ -15,6 +15,7 @@ from uavert.sources import arcgis, tps
 
 DATA_DIR = PROJECT_ROOT / "data"
 NCR_YEAR = 2025
+NCR_FIRST_YEAR = 2014  # first year of the published yearly figures (01-03-trends.md)
 H3_RESOLUTION = 9
 SEVERITIES = ("high", "medium", "low")
 
@@ -126,11 +127,11 @@ async def load_csi_and_offence_map(conn: asyncpg.Connection) -> int:
 
 
 async def load_neighbourhoods(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> int:
-    records = []
-    async for page in arcgis.query_pages(
-        client, tps.LAYERS["tps_ncr"], "1=1", tps.ncr_fields(NCR_YEAR), fmt="geojson", order_by=None
-    ):
+    records, years = [], []
+    # All fields: listing the 216 yearly ones makes the URL too long (HTTP 404). The parsers check what they need.
+    async for page in arcgis.query_pages(client, tps.LAYERS["tps_ncr"], "1=1", "*", fmt="geojson", order_by=None):
         records += [tps.parse_neighbourhood(f, NCR_YEAR) for f in page]
+        years += [y for f in page for y in tps.parse_crime_years(f["properties"], NCR_FIRST_YEAR, NCR_YEAR)]
     if len(records) != 158:
         raise ValueError(f"expected 158 Toronto neighbourhoods, got {len(records)}")
     async with conn.transaction():
@@ -142,7 +143,31 @@ async def load_neighbourhoods(conn: asyncpg.Connection, client: httpx.AsyncClien
                 " counts = $6::jsonb, geom = EXCLUDED.geom, last_seen_at = now()",
                 region_id, n.external_id, n.name, n.population, n.valid_year, json.dumps(n.counts), n.geom.wkt,
             )
+        await store_crime_years(conn, region_id, years)
     return len(records)
+
+
+async def store_crime_years(conn: asyncpg.Connection, region_id: int, years: list[tps.CrimeYear]) -> int:
+    """Upsert the yearly figures by neighbourhood, year and offence. Re-runs keep collected_at."""
+    await conn.execute(
+        "CREATE TEMP TABLE crime_years_load (hood text, year integer, offence text, count integer,"
+        " rate double precision) ON COMMIT DROP"
+    )
+    await conn.copy_records_to_table(
+        "crime_years_load", records=[(y.hood_external_id, y.year, y.offence, y.count, y.rate_per_100k) for y in years]
+    )
+    result = await conn.execute(
+        "INSERT INTO neighbourhood_crime_years (neighbourhood_id, year, offence, count, rate_per_100k, source_key)"
+        " SELECT n.id, l.year, l.offence, l.count, l.rate, 'tps_ncr' FROM crime_years_load l"
+        " JOIN neighbourhoods n ON n.region_id = $1 AND n.external_id = l.hood"
+        " ON CONFLICT (neighbourhood_id, year, offence) DO UPDATE SET count = EXCLUDED.count,"
+        " rate_per_100k = EXCLUDED.rate_per_100k, last_seen_at = now()",
+        region_id,
+    )
+    stored = int(result.split()[-1])
+    if stored != len(years):
+        raise ValueError(f"stored {stored} of {len(years)} yearly crime figures: a neighbourhood didn't match")
+    return stored
 
 
 async def build_cells(conn: asyncpg.Connection, region_id: int) -> int:

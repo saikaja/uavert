@@ -50,6 +50,28 @@ def test_parse_neighbourhood():
     assert n.geom.geom_type == "MultiPolygon" and n.geom.is_valid
 
 
+def test_parse_crime_years():
+    # 01-03-trends.md: every offence, every year 2014-2025, count and rate as published
+    rows = tps.parse_crime_years(load("ncr_years_one.json")["attributes"], 2014, 2025)
+    assert len(rows) == 9 * 12
+    by = {(r.year, r.offence): r for r in rows}
+    assert {r.hood_external_id for r in rows} == {"170"}
+    assert by[(2014, "ASSAULT")].count == 387 and by[(2014, "ASSAULT")].rate_per_100k == 3750
+    assert by[(2025, "ASSAULT")].count == 560
+
+
+def test_parse_crime_years_refuses_a_missing_year():
+    attrs = load("ncr_years_one.json")["attributes"]
+    del attrs["ROBBERY_RATE_2019"]
+    with pytest.raises(ValueError, match="ROBBERY_RATE_2019"):
+        tps.parse_crime_years(attrs, 2014, 2025)
+
+
+def test_ncr_year_fields_cover_counts_and_rates():
+    fields = tps.ncr_year_fields(2014, 2025).split(",")
+    assert len(fields) == 9 * 12 * 2 and "THEFTOVER_RATE_2025" in fields and "ASSAULT_2014" in fields
+
+
 @respx.mock
 async def test_query_pages_follows_transfer_limit():
     url = "https://example.test/layer"

@@ -44,5 +44,6 @@ async def get_neighbourhood(request: Request, neighbourhood_id: int = Path(ge=1)
         "id": r["id"], "name": r["name"], "population": r["population"], "population_year": r["valid_year"],
         "centre": {"lon": r["lon"], "lat": r["lat"]},
         "crime_details": details, "crime_computed_at": r["computed_at"].isoformat(), "odds": details.get("odds"),
+        "trend": details.get("trend"),
         **score.to_dict(),
     }, ctx)

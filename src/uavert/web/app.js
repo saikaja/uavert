@@ -119,7 +119,7 @@ async function loadCells() {
 map.on("moveend", scheduleCells);
 
 // ---- details panel -----------------------------------------------------
-function showScore(title, sub, score, extraNodes = [], oddsNodes = []) {
+function showScore(title, sub, score, extraNodes = [], oddsNodes = [], trendNodes = []) {
   $("details").hidden = false;
   const badge = $("score-badge");
   badge.textContent = score.score;
@@ -128,6 +128,7 @@ function showScore(title, sub, score, extraNodes = [], oddsNodes = []) {
   $("score-title").textContent = title;
   $("score-sub").textContent = sub || "";
   $("odds").replaceChildren(...oddsNodes); // directly under the score (01-03-odds.md)
+  $("trend").replaceChildren(...trendNodes); // under the odds (01-03-trends.md)
 
   const cats = $("cats"); cats.replaceChildren();
   Object.entries(score.categories).forEach(([k, v]) => {
@@ -176,6 +177,132 @@ function oddsNodes(odds, name) {
   return [el("h3", null, `Odds in ${name} (${odds.year}), per resident`), table, note];
 }
 
+// ---- crime trends (01-03-trends.md) ------------------------------------------
+const TREND_GROUPS = [["violent", "Violent"], ["property", "Property"], ["all", "All"]];
+const TREND_WINDOWS = [["10", "10 years"], ["5", "5 years"]];
+const OFFENCE_NAMES = { ASSAULT: "Assaults", ROBBERY: "Robberies", HOMICIDE: "Homicides", SHOOTING: "Shootings",
+  BREAKENTER: "Break-ins", AUTOTHEFT: "Auto thefts", THEFTOVER: "Thefts over $5,000", THEFTFROMMV: "Thefts from vehicles",
+  BIKETHEFT: "Bicycle thefts" };
+const trendView = { window: "10", group: "violent" }; // kept between places
+const svgEl = (tag, attrs) => {
+  const e = document.createElementNS("http://www.w3.org/2000/svg", tag);
+  Object.entries(attrs).forEach(([k, v]) => e.setAttribute(k, v));
+  return e;
+};
+const signedPct = (n) => `${n > 0 ? "+" : n < 0 ? "−" : ""}${Math.abs(n)}%`;
+
+function trendWords(s) {
+  if (s.direction === "too_few") return "too few to call a trend";
+  return `${{ rising: "rising", falling: "falling", flat: "roughly flat" }[s.direction]}, ${signedPct(s.change_pct)}`;
+}
+
+// The least-squares line through the points, as drawn: the same fit the server uses for the % change.
+function fitted(values) {
+  const n = values.length, mx = (n - 1) / 2, my = values.reduce((a, b) => a + b, 0) / n;
+  let num = 0, den = 0;
+  values.forEach((v, x) => { num += (x - mx) * (v - my); den += (x - mx) ** 2; });
+  return [my - (num / den) * mx, my + (num / den) * mx];
+}
+
+function trendChart(here, toronto, label) {
+  const W = 320, H = 150, L = 34, R = 8, T = 8, B = 20;
+  const top = Math.max(...here.map((p) => p.rate_per_1000), ...toronto.map((p) => p.rate_per_1000)) * 1.1 || 1;
+  const x = (i) => L + (i * (W - L - R)) / (here.length - 1);
+  const y = (v) => T + (H - T - B) * (1 - v / top);
+  const svg = svgEl("svg", { viewBox: `0 0 ${W} ${H}`, class: "trend-chart", role: "img", "aria-label": label });
+  [0, top / 2, top].forEach((v) => {
+    svg.append(svgEl("line", { x1: L, x2: W - R, y1: y(v), y2: y(v), class: "t-grid" }));
+    const t = svgEl("text", { x: L - 4, y: y(v) + 3, class: "t-axis", "text-anchor": "end" });
+    t.textContent = v.toFixed(top < 10 ? 1 : 0); svg.append(t);
+  });
+  [0, here.length - 1].forEach((i) => {
+    const t = svgEl("text", { x: x(i), y: H - 5, class: "t-axis", "text-anchor": i ? "end" : "start" });
+    t.textContent = here[i].year; svg.append(t);
+  });
+  const line = (pts, cls) => svg.append(svgEl("polyline", { points: pts.map((p, i) => `${x(i)},${y(p.rate_per_1000)}`).join(" "), class: cls }));
+  line(toronto, "t-toronto");
+  line(here, "t-here");
+  const [a, b] = fitted(here.map((p) => p.rate_per_1000));
+  svg.append(svgEl("line", { x1: x(0), y1: y(a), x2: x(here.length - 1), y2: y(b), class: "t-fit" }));
+  here.forEach((p, i) => svg.append(svgEl("circle", { cx: x(i), cy: y(p.rate_per_1000), r: 2.5, class: "t-dot" })));
+  return svg;
+}
+
+function segmented(options, current, label, onPick) {
+  const box = el("div", "seg"); box.setAttribute("role", "group"); box.setAttribute("aria-label", label);
+  options.forEach(([k, text]) => {
+    const btn = el("button", null, text); btn.type = "button"; btn.dataset.key = `${label}:${k}`;
+    btn.setAttribute("aria-pressed", String(k === current));
+    btn.addEventListener("click", () => onPick(k, btn.dataset.key));
+    box.append(btn);
+  });
+  return box;
+}
+
+function figuresTable(headings, rows) {
+  const table = el("table", "odds");
+  const head = el("tr"); head.append(...headings.map((t) => Object.assign(el("th", null, t), { scope: "col" })));
+  table.append(head);
+  rows.forEach(([first, ...cells]) => {
+    const row = el("tr");
+    row.append(Object.assign(el("th", null, first), { scope: "row" }), ...cells.map((c) => el("td", null, c)));
+    table.append(row);
+  });
+  return table;
+}
+
+function trendNodes(trend, name) {
+  if (!trend) return [];
+  const wrap = el("div", "trend");
+  const render = (focusKey) => {
+    const w = trend.windows[trendView.window], tw = trend.toronto.windows[trendView.window];
+    const cut = (pts) => pts.filter((p) => p.year >= w.first_year);
+    const here = cut(trend.series[trendView.group]), toronto = cut(trend.toronto.series[trendView.group]);
+    const years = `${w.first_year}–${w.last_year}`;
+
+    const controls = el("div", "trend-controls");
+    controls.append(
+      segmented(TREND_WINDOWS, trendView.window, "Period", (k, key) => { trendView.window = k; render(key); }),
+      segmented(TREND_GROUPS, trendView.group, "Crime type", (k, key) => { trendView.group = k; render(key); }));
+
+    const legend = el("div", "trend-legend");
+    [["t-key-here", name], ["t-key-fit", "Trendline"], ["t-key-toronto", "Toronto"]].forEach(([cls, text]) => {
+      const item = el("span"); item.append(el("i", cls), document.createTextNode(text)); legend.append(item);
+    });
+
+    const summary = el("ul", "trend-summary");
+    [["violent", "Violent crime"], ["property", "Property crime"]].forEach(([g, label]) => {
+      const li = el("li");
+      li.append(el("b", null, `${label}: `),
+        document.createTextNode(`${trendWords(w.groups[g])} over ${years} (Toronto: ${trendWords(tw.groups[g])})`));
+      summary.append(li);
+    });
+
+    const byOffence = el("details");
+    byOffence.append(el("summary", null, "By offence"), figuresTable(["Offence", String(w.last_year), `Trend ${years}`],
+      Object.entries(w.offences).map(([k, s]) => [OFFENCE_NAMES[k] || k, s.count_last_year.toLocaleString("en-CA"), trendWords(s)])));
+
+    const yearly = el("details");
+    yearly.append(el("summary", null, "Yearly figures"),
+      el("p", "meta", "Reported incidents per 1,000 residents (count in brackets)."),
+      figuresTable(["Year", name, "Toronto"], here.map((p, i) => [String(p.year),
+        `${p.rate_per_1000.toFixed(1)} (${p.count.toLocaleString("en-CA")})`, toronto[i].rate_per_1000.toFixed(1)])));
+
+    const note = el("p", "meta", "Per resident, so places with many visitors look higher. Reported incidents only. "
+      + "2020 and 2021 were pandemic years with less activity. Source: Toronto Police Service, Neighbourhood Crime Rates. ");
+    const how = el("a", null, "How this is worked out"); how.href = "/rules.html#trends"; note.append(how);
+
+    const groupName = TREND_GROUPS.find(([k]) => k === trendView.group)[1];
+    const chartLabel = `${groupName} crime per 1,000 residents in ${name}, ${years}: ${trendWords(w.groups[trendView.group])}; `
+      + `Toronto ${trendWords(tw.groups[trendView.group])}. The yearly figures are in the table below.`;
+    wrap.replaceChildren(el("h3", null, `Trend in ${name}, per 1,000 residents`), controls,
+      trendChart(here, toronto, chartLabel), legend, summary, byOffence, yearly, note);
+    if (focusKey) wrap.querySelector(`[data-key="${focusKey}"]`)?.focus();
+  };
+  render();
+  return [wrap];
+}
+
 const bandFor = (s) => (s >= 75 ? "high" : s >= 50 ? "elevated" : s >= 25 ? "moderate" : "lower");
 
 async function showNeighbourhood(id) {
@@ -183,7 +310,7 @@ async function showNeighbourhood(id) {
   try {
     const d = (await api(`/api/v1/neighbourhoods/${id}`)).data;
     showScore(d.name, `Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d,
-      [], oddsNodes(d.odds, d.name));
+      [], oddsNodes(d.odds, d.name), trendNodes(d.trend, d.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
@@ -208,7 +335,7 @@ async function runDestination(path, label) {
         + (s.vs_surroundings != null ? ` · ${timesAround(s.vs_surroundings)} the reported street crime of the surrounding 1 km, per person` : "")
       : "Street level unavailable here; showing the neighbourhood";
     showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street,
-      [hood], oddsNodes(d.neighbourhood.odds, d.neighbourhood.name));
+      [hood], oddsNodes(d.neighbourhood.odds, d.neighbourhood.name), trendNodes(d.neighbourhood.trend, d.neighbourhood.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
