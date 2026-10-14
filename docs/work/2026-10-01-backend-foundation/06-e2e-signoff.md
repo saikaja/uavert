@@ -152,6 +152,14 @@ Also on 2026-10-07, with Sai's approval ("yes"), the GitHub Actions variable `DA
 
 **Fix after Sai's first look (2026-10-07):** Sai reported "i cannot see the odds score". The odds were rendering, but at the bottom of the results panel, below every reason, which is out of view on a laptop without scrolling. The approved definition said "under the score". They were moved directly under the score badge (`f213c23`, [screenshot](screenshots/12-odds-under-score.png)) and deployed from `main`; the hosted acceptance check passed 30 of 30. Walks show no odds, as designed.
 
+## Trends: hosted preview check (2026-10-14)
+Sai added `DATABASE_URL` and `DB_POOL_MAX` to Vercel's Preview environment. `build-scores` was re-run from `feature/trends` ("Scored 158 neighbourhoods and 5748 street cells"), and a preview was deployed: https://uavert-pyu1rerod-sai-project.vercel.app (protected: open it while signed in to Vercel).
+
+The preview sits behind Vercel's login, so `acceptance_check.py` ran through a local proxy that forwards each request with `vercel curl`:
+- **Passed on the preview:** setup, 3, 4, 10, 10b, 11, odds-r2, odds-1, odds-3, odds-1b, **trends-2** (Yonge-Bay Corridor violent −38%, property −35%), **trends-3** (Toronto violent +10%, property +5%), **trends-2b**.
+- **12** failed only on time (3.8 s against 2 s); the proxy adds about 3–4 s per request because it starts the Vercel CLI each time. Timed directly with `vercel curl`, the server answered in 0.22 s.
+- The proxy then dropped the walking-route request, so the rest were checked directly: walk Union Station → Kensington 200 in 0.61 s (LineString, 2,840 m, 1 stand-out stretch); Mississauga 422 `outside_coverage`; "zzqqxx nowhere 12345" 404 `address_not_found`; Scarborough walk 422 `route_too_long` ("Those places are 17.6 km apart…"); `/rules.html` has the "Trends over time" section. Checks 15–51 (time of day, walks, rules) weren't re-run on the preview: that code is unchanged by trends and passed 33 of 33 locally on 2026-10-08.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
