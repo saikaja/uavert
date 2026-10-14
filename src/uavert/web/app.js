@@ -159,6 +159,9 @@ const peoplePerHour = (n) => (n == null ? "unknown" : `about ${Math.round(n).toL
 // ---- odds per resident (01-03-odds.md) -----------------------------------
 const ODDS_LEVELS = [["high", "High: serious violence"], ["medium", "Medium: assault"], ["low", "Low: property crime"], ["any", "Any"]];
 const oneIn = (n) => (n == null ? "None reported" : `1 in ${n.toLocaleString("en-CA")}`);
+// incidents as a share of residents, two significant figures (01-03-odds-percent.md)
+const pct = (incidents, population) => `${Number((100 * incidents / population).toPrecision(2))}%`;
+const oddsCell = (n, incidents, population) => (n == null ? oneIn(n) : `${oneIn(n)} (${pct(incidents, population)})`);
 
 function oddsNodes(odds, name) {
   if (!odds) return [];
@@ -168,10 +171,11 @@ function oddsNodes(odds, name) {
   table.append(head);
   ODDS_LEVELS.forEach(([k, label]) => {
     const l = odds.levels[k]; const row = el("tr");
-    row.append(Object.assign(el("th", null, label), { scope: "row" }), el("td", null, oneIn(l.one_in)), el("td", null, oneIn(l.toronto_one_in)));
+    row.append(Object.assign(el("th", null, label), { scope: "row" }), el("td", null, oddsCell(l.one_in, l.incidents, odds.population)),
+      el("td", null, oddsCell(l.toronto_one_in, l.toronto_incidents, odds.toronto_population)));
     table.append(row);
   });
-  const note = el("p", "meta", "One reported incident a year for every N residents. Not a personal prediction: many incidents involve visitors, "
+  const note = el("p", "meta", "One reported incident a year for every N residents (P% of the population). Not a personal prediction: many incidents involve visitors, "
     + "some aren't reported, and property crimes affect cars and homes rather than people. ");
   const how = el("a", null, "How this is worked out"); how.href = "/rules.html#odds"; note.append(how);
   return [el("h3", null, `Odds in ${name} (${odds.year}), per resident`), table, note];
