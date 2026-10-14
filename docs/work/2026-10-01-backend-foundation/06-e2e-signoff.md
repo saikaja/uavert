@@ -115,6 +115,7 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 40 | Click **5 years**, then **Property** | Violent changes to "rising, +31% over 2021–2025 (Toronto: rising, +17%)"; the chart redraws for 2021–2025 and then shows property crime | Not tested | |
 | 41 | Open **By offence** and **Yearly figures** | 9 offences with their 2025 counts (small ones say "too few to call a trend"); a year-by-year table for the neighbourhood and Toronto | Not tested | |
 | 42 | Click a neighbourhood on the map, e.g. Guildwood; then **How this is worked out**; check rows 39–41 **on your phone** | Guildwood shows its own trend ("roughly flat"), with its line below Toronto's. The rules page opens at "Trends over time". On the phone, the chart and buttons fit without sideways scrolling | Not tested | |
+| 43 | **Odds % and score label (added 2026-10-14, [01-03-odds-percent.md](01-03-odds-percent.md)):** once deployed, search `100 Queen St W`, then click Kingsview Village-The Westway; check both **on your phone** | Above the band: "Risk score (0–100, higher = riskier)". Odds cells read e.g. "1 in 110 (0.94%)" and "1 in 470 (0.21%)"; the note says "(P% of the population)". The table fits the phone screen. Are the percentages clear, and does the label answer "is this a safety score"? | Not tested | (your judgement) |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".
@@ -159,6 +160,8 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 - **Passed on the preview:** setup, 3, 4, 10, 10b, 11, odds-r2, odds-1, odds-3, odds-1b, **trends-2** (Yonge-Bay Corridor violent −38%, property −35%), **trends-3** (Toronto violent +10%, property +5%), **trends-2b**.
 - **12** failed only on time (3.8 s against 2 s); the proxy adds about 3–4 s per request because it starts the Vercel CLI each time. Timed directly with `vercel curl`, the server answered in 0.22 s.
 - The proxy then dropped the walking-route request, so the rest were checked directly: walk Union Station → Kensington 200 in 0.61 s (LineString, 2,840 m, 1 stand-out stretch); Mississauga 422 `outside_coverage`; "zzqqxx nowhere 12345" 404 `address_not_found`; Scarborough walk 422 `route_too_long` ("Those places are 17.6 km apart…"); `/rules.html` has the "Trends over time" section. Checks 15–51 (time of day, walks, rules) weren't re-run on the preview: that code is unchanged by trends and passed 33 of 33 locally on 2026-10-08.
+
+**Merged (2026-10-14 13:07).** With Sai's approval ("yes sounds good i approve both"), `feature/trends` was merged into `main` (`c6b6084`). 238 tests passed; the push deployed production, and `acceptance_check.py` against https://uavert.vercel.app passed **33 of 33**. The daily refresh now keeps the trends.
 
 ## Approval
 - **Status:** Pending approval
