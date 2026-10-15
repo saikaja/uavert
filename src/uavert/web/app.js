@@ -416,7 +416,7 @@ async function runRoute(from, to, btn) {
     const d = (await api(`/api/v1/route-risks?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${hourParam()}`)).data;
     setStatus("");
     if (routeLayer) map.removeLayer(routeLayer);
-    routeLayer = L.layerGroup().addTo(map);
+    routeLayer = L.featureGroup().addTo(map); // a featureGroup, so loadCells can bring the walk to the front
     const line = L.geoJSON(d.geometry, { style: { color: "#1f4e79", weight: 5, opacity: 0.85 } }).addTo(routeLayer);
     d.riskiest_segments.forEach((s, i) => L.geoJSON(s.geometry, { style: { color: BANDS[s.band].colour, weight: 9, opacity: 0.95 } })
       .bindTooltip(`Stands out ${i + 1}: ${timesAround(s.vs_surroundings)} its surroundings`).addTo(routeLayer));
