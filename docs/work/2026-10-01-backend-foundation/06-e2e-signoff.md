@@ -171,6 +171,8 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 
 **Odds percentage and "Risk score" label merged (2026-10-14 13:13).** With Sai's approval ("merge and i approve"), `feature/odds-percent` was merged into `main` (`3ac9994`). 238 tests passed; production redeployed and serves the new page code; `acceptance_check.py` against https://uavert.vercel.app passed **33 of 33**. Row 43 covers it.
 
+**Time on the map, removed search, new colours merged (2026-10-15).** With Sai's approval ("yes"), migration 009 and `build-scores` ran on Neon `main` first ("Scored 158 neighbourhoods and 5748 street cells from 62,719 distinct crime events"; the site kept answering 200). Then `feature/time-map` was merged into `main` (`47970f8`). 250 tests passed; production redeployed and serves the new colours; `acceptance_check.py` against https://uavert.vercel.app passed **38 of 38**. The temporary Neon branch `time-map-check` was deleted. Rows 44–47 cover it.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
