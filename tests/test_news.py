@@ -53,6 +53,39 @@ def test_classify_and_extract_place(headline, summary, label, place):
         assert news.extract_place(f"{headline}. {summary}", HOODS) == place
 
 
+# ---- Types of event (01-03-news.md, criterion 36): real headlines from 2026-10-04 to 2026-10-15 ----
+@pytest.mark.parametrize("headline,label", [
+    ("Second Harvest theft: Arrest made as Toronto police seek second suspect", "property_crime"),
+    ("Police arrest man in connection with Second Harvest thefts over Thanksgiving weekend", "property_crime"),
+    ("Where North York home break-ins were reported this week", "property_crime"),
+    ("Man facing arson charge week after hundreds of Israeli flags torched at North York church: police", "property_crime"),
+    ("Two people arrested as protest disrupts Bloor Street bike lane removal in Etobicoke", "protest"),
+    ("Cyclists continue protest as bike lane removal work underway in Etobicoke", "protest"),
+    ("Police investigate man's death in North York as homicide", "violent_incident"),
+    ("Seven charged in Toronto kidnapping investigation, ammo stolen from Canadian military, police say", "violent_incident"),
+    # sport, and an event from an earlier year: not current incidents
+    ("Toronto Sixers rally past Vancouver Warriors to repeat as Canada Super60 women's cricket champions", None),
+    ("Memorial held for Toronto boy shot and killed by stray bullet in 2025", None),
+])
+def test_types_of_event_from_real_headlines(headline, label):
+    assert news.classify(headline, "", year=2026) == label
+
+
+def test_an_earlier_year_only_counts_against_the_story_year():
+    assert news.classify("Man shot near Jane and Finch in 2025", "", year=2025) == "violent_incident"
+
+
+def test_property_words_never_outrank_violence():
+    assert news.classify("Man stabbed during break-in at Annex home", "") == "violent_incident"
+
+
+def test_property_crime_news_is_listed_but_never_scored():
+    # Criterion 41: a fresh property-crime story right on the cell changes nothing
+    cell = h3.latlng_to_cell(43.6536, -79.3840, 9)
+    assert news_score([signal(1, "property_crime", cell)], NOW, cell=cell) == (0, [])
+    assert news_score([signal(1, "property_crime", cell)], NOW, neighbourhood_id=76) == (0, [])
+
+
 def signal(hours_ago, category="violent_incident", cell=None):
     return NewsSignal("Man injured in shooting", "https://example.test/a", "CBC News", category,
                       NOW - timedelta(hours=hours_ago), cell or h3.latlng_to_cell(43.6536, -79.3840, 9), 76)
@@ -110,12 +143,18 @@ async def test_store_locates_toronto_stories_and_skips_unlabelled(test_db_url):
             news.NewsItem("news_cbc", "CBC News", "Protest planned downtown", "", "https://example.test/2", NOW - timedelta(hours=1)),
             news.NewsItem("news_cbc", "CBC News", "Protesters gather near Bloor and Spadina", "", "https://example.test/3", NOW - timedelta(hours=1)),
             news.NewsItem("news_cbc", "CBC News", "Board of trade urges reform", "", "https://example.test/4", NOW - timedelta(hours=1)),
-            news.NewsItem("news_cbc", "CBC News", "Shooting near Jane and Finch", "", "https://example.test/5", NOW - timedelta(hours=60)),
+            # windows by type (01-03-news.md): violent 7 days, protest 2 days, property crime 60 days
+            news.NewsItem("news_cbc", "CBC News", "Shooting near Jane and Finch", "", "https://example.test/5", NOW - timedelta(days=8)),
+            news.NewsItem("news_star", "Toronto Star", "Protest planned downtown again", "", "https://example.test/6", NOW - timedelta(days=3)),
+            news.NewsItem("news_star", "Toronto Star", "Where Etobicoke home break-ins were reported this week", "",
+                          "https://example.test/7", NOW - timedelta(days=50)),
         ]
         stored = await news_ingest.store(conn, region_id, items, FakeGeocoder(), now=NOW)
         rows = {r["url"]: r for r in await conn.fetch(
             "SELECT url, category, location_text, h3::text AS h3, collected_at FROM news_events WHERE url LIKE 'https://example.test/%'")}
-        assert stored == 2  # 3 is outside every test neighbourhood, 4 isn't labelled, 5 is too old
+        # 3 is outside every test neighbourhood, 4 isn't labelled, 5 and 6 are past their type's window
+        assert stored == 3 and set(rows) == {"https://example.test/1", "https://example.test/2", "https://example.test/7"}
+        assert rows["https://example.test/7"]["category"] == "property_crime"
         assert rows["https://example.test/1"]["h3"] and rows["https://example.test/1"]["location_text"] == "Jane and Finch"
         assert rows["https://example.test/2"]["h3"] is None  # citywide: listed, changes no score
         assert all(r["collected_at"] for r in rows.values())

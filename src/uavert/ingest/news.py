@@ -7,24 +7,23 @@ import httpx
 
 from uavert.config import get_settings
 from uavert.ingest.runs import ingest_run
+from uavert.scoring.news import DISPLAY_DAYS
 from uavert.sources import news
 from uavert.sources.geocode import Geocoder
 from uavert.sources.http import SourceUnavailable
 
-MAX_AGE = timedelta(hours=48)
-
-
 async def store(conn: asyncpg.Connection, region_id: int, items: list[news.NewsItem], geocoder: Geocoder,
                 now: datetime | None = None) -> int:
-    """Store labelled stories from the last 48 hours. Located outside Toronto -> skipped;
-    no usable location -> stored as citywide (listed, but never changes a score)."""
+    """Store labelled stories still inside their type's listing window (DISPLAY_DAYS). Located outside Toronto ->
+    skipped; no usable location -> stored as citywide (listed, but never changes a score)."""
     now = now or datetime.now(UTC)
     names = [r["name"] for r in await conn.fetch("SELECT name FROM neighbourhoods WHERE region_id = $1", region_id)]
     located = {r["url"] for r in await conn.fetch("SELECT url FROM news_events WHERE geom IS NOT NULL")}
     stored = 0
     for item in items:
-        category = news.classify(item.headline, item.summary)
-        if category is None or now - item.published_at > MAX_AGE or not item.url.startswith(("https://", "http://")):
+        category = news.classify(item.headline, item.summary, year=item.published_at.year)
+        if (category is None or now - item.published_at > timedelta(days=DISPLAY_DAYS[category])
+                or not item.url.startswith(("https://", "http://"))):
             continue
         place_text = news.extract_place(f"{item.headline}. {item.summary}", names)
         lon = lat = None

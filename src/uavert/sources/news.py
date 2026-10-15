@@ -32,14 +32,19 @@ def _words(*terms: str) -> re.Pattern:
 
 VIOLENT = _words(r"shootings?", r"shot", r"shots fired", r"gunfire", r"gunshots?", r"stabbings?", r"stabbed",
                  r"homicides?", r"murder(?:ed)?", r"assault(?:ed)?", r"robbery", r"robbed", r"carjack(?:ing|ed)",
-                 r"swarming", r"armed (?:man|suspect)")
+                 r"swarming", r"armed (?:man|suspect)", r"kidnapp(?:ing|ed)")
 PROTEST = _words(r"protests?", r"protesters?", r"protestors?", r"demonstrations?", r"demonstrators?", r"rally",
                  r"rallies", r"marchers", r"marched", r"blockades?", r"encampment clearing")
+# Property crime (01-03-news.md): shown for 60 days, never scored.
+PROPERTY = _words(r"break-ins?", r"break and enters?", r"burglar(?:y|ies|s)?", r"thefts?", r"thie(?:f|ves)", r"stolen",
+                  r"catalytic converters?", r"arson", r"vandali[sz](?:m|ed)", r"shoplift(?:ing|ers?)")
 NEGATIVE = _words(r"feel safe", r"mayoral", r"election", r"candidates?", r"debates?", r"trial", r"sentenc(?:ed|ing)",
                   r"verdict", r"anniversary", r"inquest", r"years ago", r"years after", r"cold case", r"documentary",
                   r"NHL", r"NBA", r"MLB", r"Leafs", r"Blue Jays", r"Jays", r"Raptors", r"Argonauts", r"TFC", r"goal",
                   r"season", r"playoffs?", r"overtime",
-                  r"flu shot", r"vaccine")
+                  r"flu shot", r"vaccine", r"rall(?:y|ies|ied) past", r"champions?(?:hip)?", r"cricket", r"tournament",
+                  r"memorial")
+EARLIER_YEAR = re.compile(r"\b(?:in|since|from) ((?:19|20)\d\d)\b")
 OTHER_REGIONS = _words(r"Mississauga", r"Brampton", r"Peel", r"York Region", r"York police", r"Durham", r"Vaughan",
                        r"Markham", r"Richmond Hill", r"Ajax", r"Pickering", r"Oshawa", r"Hamilton", r"Halton",
                        r"Oakville", r"Burlington", r"OPP", r"Ontario Provincial Police")
@@ -48,15 +53,21 @@ INTERSECTION = re.compile(
     r"\b(?:near|at|in the|around|close to)\s+((?:[A-Z][\w'-]*\s){0,3}[A-Z][\w'-]*)\s+and\s+((?:[A-Z][\w'-]*\s){0,3}[A-Z][\w'-]*)")
 
 
-def classify(headline: str, summary: str = "") -> str | None:
-    """'violent_incident', 'protest' or None. Headline and summary are both read."""
+def classify(headline: str, summary: str = "", year: int | None = None) -> str | None:
+    """'violent_incident', 'protest', 'property_crime' or None. Headline and summary are both read.
+    `year` (the story's year, default this year): a story about an event "in" an earlier year is skipped."""
     text = f"{headline}. {summary}"
     if NEGATIVE.search(text) or OTHER_REGIONS.search(text):
+        return None
+    year = year or datetime.now(UTC).year
+    if any(int(y) < year for y in EARLIER_YEAR.findall(text)):
         return None
     if VIOLENT.search(text):
         return "violent_incident"
     if PROTEST.search(text):
         return "protest"
+    if PROPERTY.search(text):
+        return "property_crime"
     return None
 
 

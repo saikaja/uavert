@@ -90,12 +90,15 @@ async def load(pool: asyncpg.Pool, now: datetime | None = None) -> LiveContext:
                               r["expires_at"], iso(r["collected_at"]))
         ctx.alerts.append((a, shape(json.loads(r["g"]))))
     for r in await pool.fetch(
-        "SELECT e.headline, e.url, e.publisher, e.category, e.published_at, e.h3::text AS h3, e.collected_at,"
+        "SELECT e.headline, e.url, e.publisher, e.source_key, e.category, e.published_at, e.h3::text AS h3, e.collected_at,"
         " c.neighbourhood_id FROM news_events e LEFT JOIN cells c ON c.h3 = e.h3"
-        " WHERE e.h3 IS NOT NULL AND e.published_at > $1", now - timedelta(hours=news_rules.WINDOW_HOURS)
+        # Only the scored types; property crime is shown but never scored (01-03-news.md).
+        " WHERE e.h3 IS NOT NULL AND e.published_at > $1 AND e.category = ANY($2::text[])",
+        now - timedelta(hours=news_rules.WINDOW_HOURS), list(news_rules.CAPS)
     ):
         ctx.news.append(news_rules.NewsSignal(r["headline"], r["url"], r["publisher"], r["category"],
-                                              r["published_at"], r["h3"], r["neighbourhood_id"], iso(r["collected_at"])))
+                                              r["published_at"], r["h3"], r["neighbourhood_id"], iso(r["collected_at"]),
+                                              r["source_key"]))
     ctx.activity = [(float(r["factor_used"]), r["basis"])
                     for r in await pool.fetch("SELECT factor_used, basis FROM activity_by_hour ORDER BY hour")]
     today = now.astimezone(TORONTO_TZ).date()
