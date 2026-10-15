@@ -40,6 +40,7 @@ This document agrees how the "When" setting will change the neighbourhood scores
 - **Map:** changing "When" recolours the neighbourhoods. Clicking a neighbourhood shows its score at that hour, with a reason that explains the change.
 - **Remove "Where I'm going":** the search box and its form handler. Clicking a hexagon still shows that spot's street score at the chosen hour.
 - **Wording:** update the "When" note, the rules page and the README.
+- **New band colours** (Sai, 2026-10-15): green for lower, yellow for moderate, blue for elevated and red for high. They apply to the neighbourhoods, hexagons, score badge, category bars, legend and route stretches.
 
 ### Out of scope
 These are follow-ups:
@@ -68,8 +69,27 @@ These are follow-ups:
     - the section is gone, and nothing on the page or in the browser console errors
     - clicking a hexagon still shows the street score at the chosen hour
     - "Where I'm walking" works as before
+35. **Colours:**
+    - every band colour on the map, legend, badge, bars and walk stretches is the new green, yellow, blue or red
+    - the walk's own line is no longer blue, so it can't be mistaken for an elevated stretch
+    - badge text stays readable on each colour (contrast at least 3:1 for the large badge number), in light and dark mode
+    - the bands keep their labels: "Lower reported risk", never "safe"
 
 ## Design
+
+### Colours
+
+| Band (score) | Old | New | Badge text |
+|---|---|---|---|
+| Lower reported risk (0–24) | pale yellow `#f7e3a3` | green `#2e9e57` | white |
+| Moderate risk (25–49) | orange `#f3a65a` | yellow `#f2c230` | dark `#3a2e00` |
+| Elevated risk (50–74) | red-orange `#d9562f` | blue `#2f6db5` | white |
+| High risk (75–100) | dark red `#9e1b2c` | red `#c62828` | white |
+
+- **One source of truth:** the colours are in `BANDS` in `app.js` and the `--band-*` variables in `style.css`. Both change together.
+- **Walking route line:** changes from blue `#1f4e79` to dark grey `#3b3f45`, so the blue now used for "elevated" is unambiguous.
+- **Error text:** uses the `--band-elevated` colour today. It changes to the new red, so errors don't turn blue.
+- **Buttons and links:** keep the dark blue accent. They aren't on the map.
 
 ### Scoring (in `uavert build-scores`)
 For each neighbourhood N and hour h:
@@ -127,6 +147,8 @@ For each neighbourhood N and hour h:
 |---|---|
 | Night foot traffic is estimated from Bike Share trips (as for streets). | The reason says "estimated from Bike Share trips". This is already on the rules page. |
 | Downtown neighbourhoods reach 100 at night. This is a strong message. | It agrees with the street hexagons. The reason explains why. The rules page shows the method. |
+| Blue for "elevated" breaks the warm-to-hot order. People often read blue as calm, and on the map it sits between yellow and red. Someone glancing without the legend could take a blue area as low risk. | This is Sai's choice. The legend stays visible, and the panel names the band in words. Changing to orange later is one line in each of two files. |
+| Green can read as "safe". | The label stays "Lower reported risk", and the disclaimer stays. |
 | Removing "Where I'm going" takes away typing an address to check one spot. | Without the search box, the way to check one spot is to zoom in and click it. **Your call:** if you'd rather keep typed lookups, I can let "Where I'm walking" accept just a "To". Not planned unless you ask. |
 
 ## Plan
@@ -136,7 +158,7 @@ Branch `feature/time-map` from `main`. Each step has tests and a commit.
 |---|---|---|---|---|
 | T1 | Neighbourhood scores by hour: pure function, build step, migration | `scoring/crime.py`, `scoring/build.py`, `db/migrations/009_neighbourhood_by_hour.sql` | Criterion 30, with hand-worked numbers | `build-scores` on the Neon `test` branch stores 24 scores per neighbourhood; criterion 31 holds there |
 | T2 | API `hour` on both neighbourhood routes; reason; `time` object; scoring rules line | `api/routes/neighbourhoods.py`, `api/timeofday.py`, `api/routes/sources.py` (rules) | Criteria 29 and 32 (API tests: unchanged without hour, 422, score and reason at an hour) | Tests pass |
-| T3 | Web: recolour on time change, panel re-runs, "(yearly)" labels; remove "Where I'm going"; note text | `web/index.html`, `web/app.js`, `web/rules.html` | Criteria 33–34 in headless Edge, with screenshots and a console-error check | Checks pass locally |
+| T3 | Web: recolour on time change, panel re-runs, "(yearly)" labels; remove "Where I'm going"; note text; new band colours and route line colour | `web/index.html`, `web/app.js`, `web/style.css`, `web/rules.html` | Criteria 33–35 in headless Edge, with screenshots (light and dark), a console-error check and a contrast calculation | Checks pass locally |
 | T4 | README, acceptance check (Yonge-Bay 2 am > 2 pm), E2E rows: rows 5, 8, 15 and 16 change to use a map click or the walk, plus new rows 44–47 | `README.md`, `scripts/acceptance_check.py`, `06-e2e-signoff.md` | Full test suite; acceptance check against local | Everything passes |
 | T5 | Production: run migration 009 and `build-scores` on Neon `main`, then merge and deploy after your approval of phases 4–5 | — | Acceptance check against https://uavert.vercel.app | All checks pass in production |
 
@@ -148,4 +170,5 @@ Once this is approved, I build T1–T4 on `feature/time-map` and write `04-imple
 - **Approved by:**
 - **Date:**
 - **User's response:**
-- **Revisions before approval:** none
+- **Revisions before approval:**
+  1. 2026-10-15: Sai: "no i want the neighbourhood colors to change as well based on the time / and i also want to change the color scheme i want it to be green for lower risk, yellow for moderate, blue for elevated and red for the high risk". The neighbourhood colours by time were already the plan (criteria 29–33). Added the new band colours (scope, criterion 35, the "Colours" design section, risks, T3).
