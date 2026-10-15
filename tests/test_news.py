@@ -2,7 +2,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import h3
+import httpx
 import pytest
+import respx
 
 from uavert import db
 from uavert.ingest import news as news_ingest
@@ -51,6 +53,39 @@ def test_classify_and_extract_place(headline, summary, label, place):
     assert news.classify(headline, summary) == label
     if label:
         assert news.extract_place(f"{headline}. {summary}", HOODS) == place
+
+
+# ---- Types of event (01-03-news.md, criterion 36): real headlines from 2026-10-04 to 2026-10-15 ----
+@pytest.mark.parametrize("headline,label", [
+    ("Second Harvest theft: Arrest made as Toronto police seek second suspect", "property_crime"),
+    ("Police arrest man in connection with Second Harvest thefts over Thanksgiving weekend", "property_crime"),
+    ("Where North York home break-ins were reported this week", "property_crime"),
+    ("Man facing arson charge week after hundreds of Israeli flags torched at North York church: police", "property_crime"),
+    ("Two people arrested as protest disrupts Bloor Street bike lane removal in Etobicoke", "protest"),
+    ("Cyclists continue protest as bike lane removal work underway in Etobicoke", "protest"),
+    ("Police investigate man's death in North York as homicide", "violent_incident"),
+    ("Seven charged in Toronto kidnapping investigation, ammo stolen from Canadian military, police say", "violent_incident"),
+    # sport, and an event from an earlier year: not current incidents
+    ("Toronto Sixers rally past Vancouver Warriors to repeat as Canada Super60 women's cricket champions", None),
+    ("Memorial held for Toronto boy shot and killed by stray bullet in 2025", None),
+])
+def test_types_of_event_from_real_headlines(headline, label):
+    assert news.classify(headline, "", year=2026) == label
+
+
+def test_an_earlier_year_only_counts_against_the_story_year():
+    assert news.classify("Man shot near Jane and Finch in 2025", "", year=2025) == "violent_incident"
+
+
+def test_property_words_never_outrank_violence():
+    assert news.classify("Man stabbed during break-in at Annex home", "") == "violent_incident"
+
+
+def test_property_crime_news_is_listed_but_never_scored():
+    # Criterion 41: a fresh property-crime story right on the cell changes nothing
+    cell = h3.latlng_to_cell(43.6536, -79.3840, 9)
+    assert news_score([signal(1, "property_crime", cell)], NOW, cell=cell) == (0, [])
+    assert news_score([signal(1, "property_crime", cell)], NOW, neighbourhood_id=76) == (0, [])
 
 
 def signal(hours_ago, category="violent_incident", cell=None):
@@ -110,16 +145,104 @@ async def test_store_locates_toronto_stories_and_skips_unlabelled(test_db_url):
             news.NewsItem("news_cbc", "CBC News", "Protest planned downtown", "", "https://example.test/2", NOW - timedelta(hours=1)),
             news.NewsItem("news_cbc", "CBC News", "Protesters gather near Bloor and Spadina", "", "https://example.test/3", NOW - timedelta(hours=1)),
             news.NewsItem("news_cbc", "CBC News", "Board of trade urges reform", "", "https://example.test/4", NOW - timedelta(hours=1)),
-            news.NewsItem("news_cbc", "CBC News", "Shooting near Jane and Finch", "", "https://example.test/5", NOW - timedelta(hours=60)),
+            # windows by type (01-03-news.md): violent 7 days, protest 2 days, property crime 60 days
+            news.NewsItem("news_cbc", "CBC News", "Shooting near Jane and Finch", "", "https://example.test/5", NOW - timedelta(days=8)),
+            news.NewsItem("news_star", "Toronto Star", "Protest planned downtown again", "", "https://example.test/6", NOW - timedelta(days=3)),
+            news.NewsItem("news_star", "Toronto Star", "Where Etobicoke home break-ins were reported this week", "",
+                          "https://example.test/7", NOW - timedelta(days=50)),
         ]
         stored = await news_ingest.store(conn, region_id, items, FakeGeocoder(), now=NOW)
         rows = {r["url"]: r for r in await conn.fetch(
             "SELECT url, category, location_text, h3::text AS h3, collected_at FROM news_events WHERE url LIKE 'https://example.test/%'")}
-        assert stored == 2  # 3 is outside every test neighbourhood, 4 isn't labelled, 5 is too old
+        # 3 is outside every test neighbourhood, 4 isn't labelled, 5 and 6 are past their type's window
+        assert stored == 3 and set(rows) == {"https://example.test/1", "https://example.test/2", "https://example.test/7"}
+        assert rows["https://example.test/7"]["category"] == "property_crime"
         assert rows["https://example.test/1"]["h3"] and rows["https://example.test/1"]["location_text"] == "Jane and Finch"
         assert rows["https://example.test/2"]["h3"] is None  # citywide: listed, changes no score
         assert all(r["collected_at"] for r in rows.values())
     finally:
         await conn.execute("DELETE FROM news_events WHERE url LIKE 'https://example.test/%'")
         await conn.execute("DELETE FROM neighbourhoods WHERE external_id = 'JF'")
+        await conn.close()
+
+
+# ---- More feeds (01-03-news.md, criterion 38): the real feeds saved on 2026-10-15 ----
+FEEDS_1015 = {"news_cbc": "cbc_toronto_2026-10-15.xml", "news_citynews": "citynews_toronto_2026-10-15.xml",
+              "news_global": "global_toronto_2026-10-15.xml", "news_star": "star_gta_2026-10-15.xml"}
+NOW_1015 = datetime(2026, 10, 15, 19, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("key,count,publisher", [("news_cbc", 20, "CBC News"), ("news_citynews", 15, "CityNews"),
+                                                 ("news_global", 10, "Global News"), ("news_star", 50, "Toronto Star")])
+def test_each_real_feed_parses(key, count, publisher):
+    items = news.parse_rss((FIX / FEEDS_1015[key]).read_text(encoding="utf-8"), key)
+    assert len(items) == count and all(i.source_key == key and i.publisher == publisher for i in items)
+    assert all(i.url.startswith("https://") and i.published_at.tzinfo for i in items)
+
+
+def test_real_feeds_label_the_days_events():
+    labelled = {}
+    for key, name in FEEDS_1015.items():
+        for i in news.parse_rss((FIX / name).read_text(encoding="utf-8"), key):
+            if c := news.classify(i.headline, i.summary, year=i.published_at.year):
+                labelled.setdefault(c, []).append(i.headline)
+    assert sum("bike lane" in h for h in labelled["protest"]) >= 4
+    assert sum("Second Harvest" in h for h in labelled["property_crime"]) >= 4
+    assert not any("Sixers" in h for hs in labelled.values() for h in hs)
+
+
+@pytest.mark.db
+@respx.mock
+async def test_one_feed_failing_leaves_the_others(test_db_url, monkeypatch):
+    from functools import partial
+
+    from uavert.config import get_settings
+    from uavert.ingest.steps import run_steps
+
+    monkeypatch.setattr("uavert.sources.http.asyncio.sleep", _no_sleep)
+    monkeypatch.setattr(news_ingest, "store", partial(news_ingest.store, now=NOW_1015))
+    s = get_settings()
+    respx.get(s.citynews_rss_url).mock(side_effect=httpx.ConnectTimeout("down"))
+    respx.get(s.global_rss_url).mock(return_value=httpx.Response(200, text=(FIX / FEEDS_1015["news_global"]).read_text(encoding="utf-8")))
+    respx.get(url__startswith=s.nominatim_url).mock(return_value=httpx.Response(200, json=[]))
+    conn = await db.connect(test_db_url)
+    try:
+        await conn.execute("DELETE FROM news_events WHERE source_key = 'news_global'")
+        failures = await run_steps(conn, ["news_citynews", "news_global"], report=lambda _: None)
+        assert failures == ["news_citynews"]
+        stored = await conn.fetch("SELECT category, headline FROM news_events WHERE source_key = 'news_global'")
+        assert any(r["category"] == "property_crime" and "Second Harvest" in r["headline"] for r in stored)
+        status = {r["key"]: r["last_status"] for r in await conn.fetch(
+            "SELECT key, last_status FROM sources WHERE key IN ('news_citynews', 'news_global')")}
+        assert status == {"news_citynews": "failed", "news_global": "ok"}
+    finally:
+        await conn.execute("DELETE FROM news_events WHERE source_key = 'news_global'")
+        await conn.close()
+
+
+async def _no_sleep(_):
+    return None
+
+
+@pytest.mark.db
+async def test_relabel_removes_stored_stories_the_rules_now_exclude(test_db_url):
+    conn = await db.connect(test_db_url)
+    try:
+        region_id = await ensure_reference_rows(conn)
+        now = datetime.now(UTC)
+        for url, headline, category in [
+            ("sixers", "Toronto Sixers rally past Vancouver Warriors to repeat as Canada Super60 women's cricket champions", "protest"),
+            ("memorial", f"Memorial held for Toronto boy shot and killed by stray bullet in {now.year - 1}", "violent_incident"),
+            ("keep", "Man facing arson charge week after hundreds of Israeli flags torched at North York church: police", "protest"),
+        ]:
+            await conn.execute(
+                "INSERT INTO news_events (region_id, source_key, url, headline, publisher, category, published_at)"
+                " VALUES ($1, 'news_cbc', $2, $3, 'CBC News', $4, $5)",
+                region_id, f"https://example.test/{url}", headline, category, now - timedelta(days=2))
+        await news_ingest.relabel(conn)
+        left = {r["url"]: r["category"] for r in await conn.fetch(
+            "SELECT url, category FROM news_events WHERE url LIKE 'https://example.test/%'")}
+        assert left == {"https://example.test/keep": "protest"}  # types aren't changed from headlines alone
+    finally:
+        await conn.execute("DELETE FROM news_events WHERE url LIKE 'https://example.test/%'")
         await conn.close()

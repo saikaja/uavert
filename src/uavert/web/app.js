@@ -9,6 +9,7 @@ const BANDS = {
 };
 const CATEGORY_NAMES = { crime: "Crime", environment: "Air quality", alert: "Official alerts", news: "News", crowds: "Crowds" };
 const SOURCE_NAMES = {};
+const SOURCE_DATES = {}; // source key -> the newest date its data refers to
 const CELL_ZOOM = 14;
 const TZ = "America/Toronto";
 
@@ -336,7 +337,7 @@ async function showNeighbourhood(id) {
   try {
     const d = (await api(`/api/v1/neighbourhoods/${id}?${hourParam().slice(1)}`)).data;
     showScore(d.name, `Showing: ${timeText()} · Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d,
-      [], oddsNodes(d.odds, d.name), trendNodes(d.trend, d.name));
+      patternNodes(d.patterns), oddsNodes(d.odds, d.name), trendNodes(d.trend, d.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
@@ -408,19 +409,94 @@ $("when").addEventListener("change", () => {
 });
 
 // ---- news and sources --------------------------------------------------
+// News by type of event, trending stories and patterns in police reports (01-03-news.md).
+const NEWS_TYPES = [["protest", "Protests", "Protest"], ["violent_incident", "Violent incidents", "Violent incident"],
+  ["property_crime", "Property crime", "Property crime"]];
+const NEWS_SHOWN = 5;
+const headlineLink = (text, url) => {
+  const href = safeUrl(url);
+  return href ? Object.assign(el("a", null, text), { href, target: "_blank", rel: "noopener" }) : el("span", null, text);
+};
+const where = (n) => (n.category === "property_crime" ? (n.location_text || "location unknown")
+  : n.citywide ? "location unknown (not scored)" : n.location_text);
+
+function newsGroup(label, days, items) {
+  const wrap = el("div", "news-group");
+  wrap.append(el("h4", null, `${label} (last ${days} days)`));
+  const list = el("ul", "news");
+  if (!items.length) list.append(el("li", "muted", `None in Toronto news in the last ${days} days.`));
+  items.forEach((n, i) => {
+    const li = el("li");
+    li.append(headlineLink(n.headline, n.url), el("span", "meta", `${where(n)} · ${n.publisher} · ${fmtDate(n.published_at)}`));
+    li.hidden = i >= NEWS_SHOWN;
+    list.append(li);
+  });
+  wrap.append(list);
+  if (items.length > NEWS_SHOWN) {
+    const more = el("button", "linkish", `Show all ${items.length}`);
+    more.type = "button";
+    more.addEventListener("click", () => { list.querySelectorAll("li").forEach((li) => { li.hidden = false; }); more.remove(); });
+    wrap.append(more);
+  }
+  return wrap;
+}
+
+function trendingItem(t) {
+  const li = el("li");
+  const type = NEWS_TYPES.find(([k]) => k === t.category)?.[2] || t.category;
+  li.append(headlineLink(t.headline, t.url),
+    el("span", "meta", `${type} · ${t.story_count} stories from ${t.outlet_count} outlets since ${fmtDate(t.first_published_at)}`));
+  const all = el("details");
+  const list = el("ul", "news");
+  t.stories.forEach((s) => {
+    const item = el("li"); item.append(headlineLink(s.headline, s.url), el("span", "meta", `${s.publisher} · ${fmtDate(s.published_at)}`));
+    list.append(item);
+  });
+  all.append(el("summary", null, `All ${t.story_count} stories`), list);
+  li.append(all);
+  return li;
+}
+
+const patternText = (p) => `${p.recent} ${p.offence_label} reported in ${p.neighbourhood} between ${fmtDate(p.first_date)} and `
+  + `${fmtDate(p.last_date)}, about ${p.times_usual}× the usual for this area`;
+
 async function loadNews() {
-  const list = $("news");
-  try {
-    const items = (await api("/api/v1/news-events?since_hours=24")).data;
-    list.replaceChildren();
-    if (!items.length) list.append(el("li", "muted", "No protest or violent-incident reports in Toronto news in the last 24 hours."));
-    items.forEach((n) => {
-      const li = el("li"); const href = safeUrl(n.url);
-      const a = href ? Object.assign(el("a", null, n.headline), { href, target: "_blank", rel: "noopener" }) : el("span", null, n.headline);
-      li.append(a, el("span", "meta", `${n.category === "protest" ? "Protest" : "Violent incident"} · ${n.citywide ? "location unknown (not scored)" : n.location_text} · ${n.publisher} · ${fmtDate(n.published_at)}`));
-      list.append(li);
-    });
-  } catch (e) { list.replaceChildren(el("li", "muted", e.message)); }
+  const [news, trending, patterns] = await Promise.allSettled([
+    api("/api/v1/news-events?window=by_type&limit=100"), api("/api/v1/news-trending"), api("/api/v1/crime-patterns")]);
+
+  const trendList = $("trending");
+  if (trending.status === "fulfilled") {
+    trendList.replaceChildren(...trending.value.data.slice(0, 3).map(trendingItem));
+    if (!trending.value.data.length) trendList.append(el("li", "muted", "No story is being covered by several outlets right now."));
+  } else trendList.replaceChildren(el("li", "muted", trending.reason.message));
+
+  if (news.status === "fulfilled") {
+    const items = news.value.data;
+    $("news").replaceChildren(...NEWS_TYPES.map(([k, label]) => {
+      const mine = items.filter((n) => n.category === k);
+      return newsGroup(label, mine[0]?.window_days ?? { protest: 2, violent_incident: 7, property_crime: 60 }[k], mine);
+    }));
+  } else $("news").replaceChildren(el("p", "muted", news.reason.message));
+
+  const patternList = $("patterns");
+  if (patterns.status === "fulfilled") {
+    const found = patterns.value.data;
+    patternList.replaceChildren(...found.map((p) => {
+      const li = el("li"); const open = el("button", "linkish", patternText(p));
+      open.type = "button";
+      open.addEventListener("click", () => showNeighbourhood(p.neighbourhood_id));
+      li.append(open); return li;
+    }));
+    if (!found.length) patternList.append(el("li", "muted", "No unusual break-in or auto-theft patterns in the latest 30 days of police data."));
+    const asOf = found[0]?.data_as_of || SOURCE_DATES.tps_mci;
+    $("patterns-note").textContent = `Toronto Police data${asOf ? ` up to ${fmtDate(asOf)}` : ""}: neighbourhoods with at least `
+      + "5 reports in their latest 30 days, at least twice their usual, and unlikely to be chance. Reported incidents only; not a prediction.";
+  } else patternList.replaceChildren(el("li", "muted", patterns.reason.message));
+}
+
+function patternNodes(found) {
+  if (!found?.length) return [];
+  return [el("h3", null, "Pattern in police reports"), ...found.map((p) => el("p", "muted", patternText(p)))];
 }
 
 async function loadSources() {
@@ -430,6 +506,7 @@ async function loadSources() {
     list.replaceChildren();
     items.forEach((s) => {
       SOURCE_NAMES[s.key] = s.name;
+      SOURCE_DATES[s.key] = s.as_of;
       const li = el("li", null, s.name);
       let text;
       if (!s.collected_at) text = s.last_status === "failed" ? "not collected yet: the service didn't respond" : "not collected yet";

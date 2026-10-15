@@ -14,7 +14,7 @@ from uavert.config import get_settings
 from uavert.ingest.steps import LIVE, run_steps
 from uavert.api import errors
 from uavert.api.errors import error_response
-from uavert.api.routes import cells, neighbourhoods, news, risk_scores, route_risks, sources
+from uavert.api.routes import cells, neighbourhoods, news, patterns, risk_scores, route_risks, sources
 
 
 log = logging.getLogger("uavert.api")
@@ -93,7 +93,7 @@ async def health(request: Request):
     return {"data": {"status": "ok", "database": "ok"}}
 
 
-for module in (neighbourhoods, cells, risk_scores, route_risks, news, sources):
+for module in (neighbourhoods, cells, risk_scores, route_risks, news, patterns, sources):
     v1.include_router(module.router)
 app.include_router(v1)
 app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "web", html=True), name="web")

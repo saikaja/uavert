@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     nominatim_url: str = "https://nominatim.openstreetmap.org"
     osrm_url: str = "https://routing.openstreetmap.de/routed-foot"
     cbc_rss_url: str = "https://www.cbc.ca/webfeed/rss/rss-canada-toronto"
+    citynews_rss_url: str = "https://toronto.citynews.ca/feed/"
+    global_rss_url: str = "https://globalnews.ca/toronto/feed/"
+    star_rss_url: str = "https://www.thestar.com/search/?f=rss&t=article&c=news/gta*&l=50&s=start_time&sd=desc"
     gdelt_url: str = "https://api.gdeltproject.org/api/v2/doc/doc"
 
     # Database connections per app instance (hosted functions use a small number).

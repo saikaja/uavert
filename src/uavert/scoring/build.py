@@ -13,7 +13,7 @@ import h3
 from uavert.config import get_settings
 from uavert.freshness import source_dates
 from uavert.ingest.reference import load_excluded_places, load_offence_map
-from uavert.scoring import crime, fairness, odds, trends
+from uavert.scoring import crime, fairness, odds, patterns, trends
 from uavert.scoring.combine import Reason
 from uavert.scoring.events import count_once
 from uavert.sources.tps import CrimeYear
@@ -158,6 +158,16 @@ def add_trends(hood_rows: dict[int, dict], rows: list[CrimeYear], used: dict) ->
     for hid, r in hood_rows.items():
         if t := per_hood.get(str(hid)):
             r["details"]["trend"] = t | {"toronto": toronto} | source
+
+
+def crime_patterns(events: list[Event], hood_ids: dict[str, int]) -> list[patterns.Pattern]:
+    """Patterns in police reports by neighbourhood id (01-03-news.md); information only."""
+    mci = [e for e in events if e.source_key == "tps_mci"]
+    if not mci:
+        return []
+    newest = max(e.occurred_at for e in mci).astimezone(TORONTO_TZ).date()
+    return patterns.find([(str(hood_ids[e.hood_external_id]), e.csi_offence_key, e.occurred_at.astimezone(TORONTO_TZ).date())
+                          for e in mci if e.hood_external_id in hood_ids], newest)
 
 
 def add_hours(hood_rows: dict[int, dict], cells: dict[str, int], cell_rows: dict[str, dict]) -> None:
@@ -334,6 +344,7 @@ async def build(conn: asyncpg.Connection) -> dict:
     cell_rows = cell_scores(events, cells, {h["id"]: h["name"] for h in hoods}, used, traffic,
                             activity if len(activity) == 24 else None)
     add_hours(hood_rows, cells, cell_rows)
+    found = crime_patterns(events, {h["external_id"]: h["id"] for h in hoods})
 
     async with conn.transaction():
         if paired:
@@ -375,4 +386,9 @@ async def build(conn: asyncpg.Connection) -> dict:
             " sources_used = EXCLUDED.sources_used, computed_at = now()",
             used_json,
         )
-    return {"events": len(events), "neighbourhoods": len(hood_rows), "cells": len(cell_rows)}
+        await conn.execute("DELETE FROM crime_patterns")
+        await conn.executemany(
+            "INSERT INTO crime_patterns (neighbourhood_id, offence, recent, usual_per_30_days, chance, first_date, last_date,"
+            " source_key) VALUES ($1, $2, $3, $4, $5, $6, $7, 'tps_mci')",
+            [(int(p.area), p.offence, p.recent, p.usual_per_30_days, p.chance, p.first_date, p.last_date) for p in found])
+    return {"events": len(events), "neighbourhoods": len(hood_rows), "cells": len(cell_rows), "patterns": len(found)}

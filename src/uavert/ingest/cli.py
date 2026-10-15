@@ -42,7 +42,7 @@ async def _build_scores() -> int:
     finally:
         await conn.close()
     print(f"Scored {result['neighbourhoods']} neighbourhoods and {result['cells']} street cells "
-          f"from {result['events']:,} distinct crime events.")
+          f"from {result['events']:,} distinct crime events; {result['patterns']} pattern(s) in police reports.")
     return 0
 
 

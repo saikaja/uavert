@@ -63,5 +63,15 @@ SOURCES = [
                "CBC News"),
     SourceInfo("news_gdelt", "The GDELT Project (DOC API)", "https://www.gdeltproject.org/",
                "GDELT Project terms of use (free, with attribution)", "The GDELT Project"),
+    # 01-03-news.md: terms checked 2026-10-15; headlines and links only, as for CBC.
+    SourceInfo("news_citynews", "CityNews Toronto (RSS)", "https://toronto.citynews.ca/",
+               "Rogers Media terms of service: personal, non-commercial use. Headlines and links only; needs permission or a licensed feed before public launch",
+               "CityNews Toronto"),
+    SourceInfo("news_global", "Global News Toronto (RSS)", "https://globalnews.ca/toronto/",
+               "Corus terms of use: non-commercial use only. Headlines and links only; needs permission or a licensed feed before public launch",
+               "Global News"),
+    SourceInfo("news_star", "Toronto Star GTA news (RSS)", "https://www.thestar.com/news/gta/",
+               "Torstar terms (torstar.ca/terms): use approved by the project owner on 2026-10-15 for internal use. Headlines and links only; needs permission or a licensed feed before public launch",
+               "Toronto Star"),
 ]
 SOURCE_KEYS = {s.key for s in SOURCES}

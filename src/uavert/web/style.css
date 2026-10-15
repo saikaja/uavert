@@ -78,6 +78,14 @@ button:disabled { opacity: .6; cursor: wait; }
 .muted { color: var(--muted); }
 .tag { font-size: 11px; text-transform: none; letter-spacing: 0; padding: 1px 6px; border-radius: 999px; background: var(--line); color: var(--muted); }
 .ok { color: #2f7d4f; } .failed { color: var(--error); }
+.news-group h4 { font-size: 13px; margin: 10px 0 2px; }
+.news details { font-size: 13px; margin-top: 4px; }
+.news details summary { cursor: pointer; color: var(--accent); }
+.news details li { font-size: 13px; }
+.linkish { background: none; border: 0; padding: 0; color: var(--accent); font: inherit; font-weight: 400; text-align: left;
+  text-decoration: underline; cursor: pointer; white-space: normal; }
+:root[data-theme="dark"] .linkish { color: var(--accent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .linkish { color: var(--accent); } }
 .segments li { font-size: 14px; }
 #odds h3 { margin-top: 12px; }
 .odds { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 4px; }

@@ -1,0 +1,530 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+	xmlns:atom="http://www.w3.org/2005/Atom"
+	xmlns:georss="http://www.georss.org/georss"
+	xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>www.thestar.com - RSS Results in news/gta* of type article</title>
+        <link>https://www.thestar.com/search/?f=rss&amp;t=article&amp;c=news/gta*&amp;l=50&amp;s=start_time&amp;sd=desc</link>
+        <atom:link href="https://www.thestar.com/search/?f=rss&amp;t=article&amp;c=news/gta*&amp;l=50&amp;s=start_time&amp;sd=desc" rel="self" type="application/rss+xml" />
+        <description>
+		www.thestar.com - RSS Results
+		in section(s) news/gta*
+		only for asset type(s) of article
+	</description>
+        <generator>TNCMS 1.96.2</generator>
+        <docs>http://www.rssboard.org/rss-specification</docs>
+        <ttl>30</ttl>
+
+        <item>
+            <title>Police arrest man in connection with Second Harvest thefts over Thanksgiving weekend</title>
+            <description>Police are still seeking at least one other suspect in connection to the incident, he said.</description>
+            <pubDate>Thu, 15 Oct 2026 12:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/97712c69-a305-4595-91ef-1b8973c611aa</guid>
+            <link>https://www.thestar.com/news/gta/police-arrest-man-in-connection-with-second-harvest-thefts-over-thanksgiving-weekend/article_97712c69-a305-4595-91ef-1b8973c611aa.html</link>
+            <author>joshuasmith@thestar.ca (Joshua Smith)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/5/68/56826432-a1b3-5028-a6d9-9de216efd9c5/6ad0ee31a86bc.image.jpg?resize=300%2C200" length="346337" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>After closing their beloved restaurant, this Toronto couple is back and betting everything on one dish</title>
+            <description>Kiss The Beast opens on College Street as a streamlined takeout shop built around Hainanese chicken.</description>
+            <pubDate>Thu, 15 Oct 2026 11:45:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/33b1b096-3bfc-4cfd-8379-7fa87b487e32</guid>
+            <link>https://www.thestar.com/life/food-and-drink/after-closing-kiss-my-pans-this-toronto-couple-is-betting-everything-on-one-dish/article_33b1b096-3bfc-4cfd-8379-7fa87b487e32.html</link>
+            <author>karonliu@thestar.ca (Karon Liu)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/18/61891902-6452-54e3-b970-05c0c9ac0825/6acfa4e659d85.image.jpg?resize=300%2C200" length="182760" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Canadian military needs better ammo safeguards following kidnapping arrests, officials say</title>
+            <description>The CAF declined to comment on whether the military noticed thousands of rounds of ammunition were missing before police presented them with the seized weapons.</description>
+            <pubDate>Thu, 15 Oct 2026 11:30:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/749410eb-6a31-44a4-a230-bd45509d6345</guid>
+            <link>https://www.thestar.com/news/gta/canadian-military-needs-better-ammo-safeguards-following-kidnapping-arrests-officials-say/article_749410eb-6a31-44a4-a230-bd45509d6345.html</link>
+            <author>emendes@thestar.ca (Elissa Mendes)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/e/be/ebec9647-5626-5732-a734-8ae1f1e4a31e/6ad0d73a87e91.image.jpg?resize=300%2C225" length="310685" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Lotto Max jackpot for tomorrow climbs to record $90 million</title>
+            <description>It would be the largest prize in Canadian history, according to OLG.</description>
+            <pubDate>Thu, 15 Oct 2026 10:21:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/41bd8c00-89e7-490f-999e-c63fe0e7f6da</guid>
+            <link>https://www.thestar.com/news/gta/lotto-max-jackpot-for-friday-climbs-to-record-90-million/article_41bd8c00-89e7-490f-999e-c63fe0e7f6da.html</link>
+            <author>joshuasmith@thestar.ca (Joshua Smith)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/b/8e/b8e8ef88-8768-5462-9b7c-225847275e20/6ad0e5c32d1c7.image.jpg?resize=300%2C150" length="60716" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Fire tears through abandoned building near DVP, police investigating as suspicious</title>
+            <description>The fire is now being investigated as suspicious, police confirmed Thursday morning.</description>
+            <pubDate>Thu, 15 Oct 2026 10:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/28d74794-9c1e-49af-876c-303fbb957adc</guid>
+            <link>https://www.thestar.com/news/gta/fire-tears-through-abandoned-building-near-dvp-police-investigating-as-suspicious/article_28d74794-9c1e-49af-876c-303fbb957adc.html</link>
+            <author>mdaldalian@thestar.ca (Matthew Daldalian)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/7/cb/7cb54013-52c8-5316-be9f-f1840ba61e1c/6ad0ce8ea2324.image.jpg?resize=300%2C255" length="225118" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Second Harvest receives $60,000 donation to repair trucks damaged over Thanksgiving weekend</title>
+            <description>"The theft has disrupted our operations, but the response from our community has been incredible," said Second Harvest CEO Lori Nikkel.</description>
+            <pubDate>Thu, 15 Oct 2026 08:15:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/13acb97b-ee9b-4270-821f-4027f22665db</guid>
+            <link>https://www.thestar.com/news/gta/second-harvest-receives-60-000-donation-to-repair-trucks-damaged-over-thanksgiving-weekend/article_13acb97b-ee9b-4270-821f-4027f22665db.html</link>
+            <author>mmillsdevoe@thestar.ca (Megan Mills Devoe)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/6a/66a63fa8-52a7-58ff-8f6a-c2096d3d338e/6acc552a4d013.image.jpg?resize=300%2C200" length="346363" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>An iconic Toronto peameal sandwich is hiding on one of downtown’s quietest streets</title>
+            <description>Cabano’s Comfort Food sears its new $12.50 peameal bacon stack in beef tallow on St. Nicholas.</description>
+            <pubDate>Thu, 15 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/ddd077ff-5dce-4d21-82c9-190b1bf14fa4</guid>
+            <link>https://www.thestar.com/news/gta/an-iconic-toronto-peameal-sandwich-is-hiding-on-one-of-downtown-s-quietest-streets/article_ddd077ff-5dce-4d21-82c9-190b1bf14fa4.html</link>
+            <author>karonliu@thestar.ca (Karon Liu)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/9/b2/9b2284be-a5fb-5908-95c1-f80abbe4cf06/6ac3d2abe36f1.image.jpg?resize=300%2C200" length="185655" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>He fled Toronto for El Salvador after killing his wife and evaded capture for 20 years. Now he faces her family in court</title>
+            <description>On Wednesday, Juan Antonio Avalos, 65, was convicted in Superior Court of manslaughter.</description>
+            <pubDate>Thu, 15 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/067eea31-eeba-4a1f-9b84-9937b6dfaae0</guid>
+            <link>https://www.thestar.com/news/gta/he-fled-toronto-for-el-salvador-after-killing-his-wife-and-evaded-capture-for-20-years-now-he-faces-her-family-in-court/article_067eea31-eeba-4a1f-9b84-9937b6dfaae0.html</link>
+            <author>jgallant@thestar.ca (Jacques Gallant)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/5/ce/5ce82ddb-83c8-54d8-abb1-5bd4445be6c1/6acf99e3e4b39.image.jpg?resize=300%2C200" length="124783" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>A real estate developer told jurors he trusted the 'Crypto King’ with $3.6M. Then he secretly recorded their calls</title>
+            <description>Sacha Singh told jurors Wednesday he funnelled more than $3.6 million into Aiden Pleterski’s purported crypto and foreign‑exchange enterprise.</description>
+            <pubDate>Thu, 15 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/c055eb6f-e889-49de-9e64-a91d983137d7</guid>
+            <link>https://www.thestar.com/news/gta/a-real-estate-developer-told-jurors-he-trusted-the-crypto-king-with-3-6m-then-he-secretly-recorded-their-calls/article_c055eb6f-e889-49de-9e64-a91d983137d7.html</link>
+            <author>bpowell@thestar.ca (Betsy Powell)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/d/bb/dbb7d783-0926-5b14-9019-5b73888325f5/6acfc62ea35fc.image.jpg?resize=300%2C200" length="268222" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Toronto says its garden and laneway suite plans are a success. Only 3 applications used them</title>
+            <description>Limited uptake shows free plans aren't enough by themselves to speed up housing densification, developers say.</description>
+            <pubDate>Thu, 15 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/cdd69c41-1ca1-4c27-8233-1af5fae43a60</guid>
+            <link>https://www.thestar.com/real-estate/toronto-offered-free-pre-approved-plans-for-garden-and-laneway-suites-has-anyone-used-them/article_cdd69c41-1ca1-4c27-8233-1af5fae43a60.html</link>
+            <author>mtustonic@thestar.ca (Maia Tustonic)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/c/2a/c2aba129-6b91-5354-8856-e0077adbd933/6acf8d3b92644.image.jpg?resize=300%2C169" length="477729" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Why Olivia Chow and Brad Bradford supporters see Toronto as 'two different cities'</title>
+            <description>Vote Compass data shows Toronto voters divided on housing and property taxes, in what feels like 'two different cities.'</description>
+            <pubDate>Thu, 15 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/18a06e44-86a6-4015-b444-e65f0fbe6f73</guid>
+            <link>https://www.thestar.com/news/gta/why-olivia-chow-and-brad-bradford-supporters-see-toronto-as-two-different-cities/article_18a06e44-86a6-4015-b444-e65f0fbe6f73.html</link>
+            <author>drider@thestar.ca (David Rider)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/5/55/55541fc2-2b8f-5978-9d0d-80a1fd815243/6ac956fec5890.image.jpg?resize=300%2C200" length="357719" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Chow and Bradford each faced Star questions for an hour straight. Here's how they answered the tough ones</title>
+            <description>Toronto's leading candidates to be mayor talk to the Star's editorial board about the most difficult matters facing the city and their campaigns.</description>
+            <pubDate>Thu, 15 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/27995550-f4c1-460f-9f4b-cb681227645e</guid>
+            <link>https://www.thestar.com/news/gta/chow-and-bradford-faced-star-questions-for-an-hour-straight-here-s-how-they-answered-the-tough-ones/article_27995550-f4c1-460f-9f4b-cb681227645e.html</link>
+            <author>bspurr@thestar.ca (Ben Spurr)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/1/b0/1b013442-4e58-5c07-88ac-9c8671a57394/6ad02a7e7aec3.image.jpg?resize=300%2C205" length="132610" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Toronto's Oct. 15 forecast: Cloudy</title>
+            <description>The daytime high is expected to reach 13 C</description>
+            <pubDate>Thu, 15 Oct 2026 04:54:36 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/34b1dd24-16e5-5175-ad56-c096261c2577</guid>
+            <link>https://www.thestar.com/news/gta/torontos-oct-15-forecast-cloudy/article_34b1dd24-16e5-5175-ad56-c096261c2577.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/f/24/f24b3eb5-a73c-5002-974c-de312dc0cc2d/6827592a30110.image.jpg?resize=300%2C200" length="172200" type="image/jpeg" />
+            <georss:point>43.652981 -79.385094</georss:point>
+        </item>
+
+        <item>
+            <title>Toronto highway closures for planned roadwork on Oct. 15</title>
+            <description>Highway 400, Highway 401, Highway 427 and Queen Elizabeth Way are affected</description>
+            <pubDate>Thu, 15 Oct 2026 04:56:45 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/f75d4d60-1bfb-5748-ad75-6fa43572db58</guid>
+            <link>https://www.thestar.com/news/gta/highway-closures/toronto-highway-closures-for-planned-roadwork-on-oct-15/article_f75d4d60-1bfb-5748-ad75-6fa43572db58.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/1/b1/1b1cb060-5453-59cb-9a2c-1587b7880ee6/64b9593cf3051.image.jpg?resize=300%2C138" length="106445" type="image/jpeg" />
+            <georss:point>43.652981 -79.385094</georss:point>
+        </item>
+
+        <item>
+            <title>Two people arrested as protest disrupts Bloor Street bike lane removal in Etobicoke</title>
+            <description>Workers began removing the controversial Bloor Street bike lanes near Islington Wednesday morning, after protests the day before delayed their removal.</description>
+            <pubDate>Wed, 14 Oct 2026 16:30:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/cdd265da-ea47-4d9b-b9b3-8c0da8fc5e4a</guid>
+            <link>https://www.thestar.com/news/gta/tempers-flare-as-bloor-street-bike-lane-removal-begins-in-etobicoke/article_cdd265da-ea47-4d9b-b9b3-8c0da8fc5e4a.html</link>
+            <author>atakagi@thestar.ca (Andy Takagi)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/2/75/275e0531-eddb-5e4d-8527-da9e4688b8eb/6acfe73a71f0b.image.jpg?resize=300%2C200" length="236126" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Inquest into Regis Korchinski-Paquet's deadly fall continues with neighbour testimony, expert opinion on seizures</title>
+            <description>A next-door neighbour's testimony to Ontario's police watchdog provided new information to jurors probing the final moments before Korchinski-Paquet fell to her death during a police call to her apartment.</description>
+            <pubDate>Wed, 14 Oct 2026 11:30:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/5c693fa4-73dc-4e04-ae7f-d1a95abff089</guid>
+            <link>https://www.thestar.com/news/gta/inquest-into-regis-korchinski-paquet-s-deadly-fall-continues-with-her-history-of-epilepsy-and-seizures/article_5c693fa4-73dc-4e04-ae7f-d1a95abff089.html</link>
+            <author>ghilty@thestar.ca (Gabriel Hilty)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/c6/0c6c9287-1eba-5774-9af8-a9f20ce2fef8/6acf845271608.image.jpg?resize=300%2C212" length="401573" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Seven charged in Toronto kidnapping investigation, ammo stolen from Canadian military, police say</title>
+            <description>Police seized more than 2,700 rounds of ammunition, including approximately 2,500 allegedly stolen from the military, following the abduction of a cryptocurrency exchange owner.</description>
+            <pubDate>Wed, 14 Oct 2026 10:15:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/1e7334fd-6917-49c7-a173-7ba2e6d4ffed</guid>
+            <link>https://www.thestar.com/news/gta/toronto-police-to-provide-update-on-abduction-investigation-involving-canadian-armed-forces-members/article_1e7334fd-6917-49c7-a173-7ba2e6d4ffed.html</link>
+            <author>emendes@thestar.ca (Elissa Mendes)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/f/06/f0671fea-6553-5256-bc52-74a621ae5a59/6acf9b4cde44a.image.jpg?resize=300%2C225" length="286851" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>An unwanted Rogers wire hung over this Toronto man’s yard for 13 years. Removing it was an ordeal</title>
+            <description>Not even a customer service clerk at a Rogers store could figure out how to file a report about a wire that ran across a homeowner’s yard.</description>
+            <pubDate>Wed, 14 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/4870cf71-456d-4b12-a00a-6b031df29301</guid>
+            <link>https://www.thestar.com/news/gta/the-fixer/an-unwanted-rogers-wire-hung-over-this-toronto-man-s-yard-for-13-years-removing-it-was-an-ordeal/article_4870cf71-456d-4b12-a00a-6b031df29301.html</link>
+            <author>the_fixer@dontdisplay.me (Jack Lakey)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/a/64/a6475ecb-d709-519c-9fd7-415d78225151/6ace6e9d59a7f.image.jpg?resize=300%2C239" length="400232" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>A dental hygienist told court how she trusted the 'Crypto King' with her savings. Then he went 'cold turkey'</title>
+            <description>A dental hygienist described soaring 'returns,' as a Durham officer showed how easily numbers can be faked at the Crypto King fraud trial Tuesday.</description>
+            <pubDate>Wed, 14 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/637fef41-42d2-4a84-a0f5-de6c024c4d9b</guid>
+            <link>https://www.thestar.com/news/gta/a-dental-hygienist-told-court-how-she-trusted-the-crypto-king-with-her-savings-then-he-went-cold-turkey/article_637fef41-42d2-4a84-a0f5-de6c024c4d9b.html</link>
+            <author>bpowell@thestar.ca (Betsy Powell)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/d6/6d6e727f-aadd-53dd-a966-8bafae5aa609/6ace939f8c608.image.jpg?resize=300%2C200" length="261541" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>He was kidnapped at gunpoint in Jamaica. Why his Toronto mom suspects he was set up</title>
+            <description>Jamaican police say Trevon Bryan was kidnapped at gunpoint by four masked men on a local roadway in August.</description>
+            <pubDate>Wed, 14 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/628ea01a-5d6c-4baa-bf52-58d1ced5302c</guid>
+            <link>https://www.thestar.com/news/gta/he-was-kidnapped-at-gunpoint-in-jamaica-why-his-toronto-mom-suspects-he-was-set-up/article_628ea01a-5d6c-4baa-bf52-58d1ced5302c.html</link>
+            <author>jasonmiller@thestar.ca (Jason Miller)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/c/2b/c2bd5a4b-d618-5356-8c84-d48db6c48443/6ac52cd329af0.image.jpg?resize=300%2C200" length="234940" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Barrie Sketchley, TDSB's longest-serving principal, dies at 85</title>
+            <description>He spent decades greeting students each morning — and when the school board tried to move him elsewhere, they fought to keep him.</description>
+            <pubDate>Wed, 14 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/7c2d7e24-ee47-4fdd-ab9a-0aa54a16cb12</guid>
+            <link>https://www.thestar.com/news/gta/barrie-sketchley-tdsb-s-longest-serving-principal-dies-at-85/article_7c2d7e24-ee47-4fdd-ab9a-0aa54a16cb12.html</link>
+            <author>sparadkar@thestar.ca (Shree Paradkar)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/9f/09f119cd-169f-585b-88bf-3ca77ee822a8/689a21ba8fd01.image.jpg?crop=1067%2C801%2C55%2C307&amp;resize=300%2C225&amp;order=crop%2Cresize" length="344965" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Toronto's Oct. 14 forecast: Chance of showers</title>
+            <description>The daytime high is expected to reach 17 C</description>
+            <pubDate>Wed, 14 Oct 2026 04:54:36 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/36ccc199-89f0-5d81-963f-f31df879ca04</guid>
+            <link>https://www.thestar.com/news/gta/torontos-oct-14-forecast-chance-of-showers/article_36ccc199-89f0-5d81-963f-f31df879ca04.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/f/24/f24b3eb5-a73c-5002-974c-de312dc0cc2d/6827592a30110.image.jpg?resize=300%2C200" length="172200" type="image/jpeg" />
+            <georss:point>43.652981 -79.385094</georss:point>
+        </item>
+
+        <item>
+            <title>Toronto highway closures for planned roadwork on Oct. 14</title>
+            <description>Highway 400, Highway 401, Highway 427 and Queen Elizabeth Way are affected</description>
+            <pubDate>Wed, 14 Oct 2026 04:56:45 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/4be460d2-2102-5b2a-b2c6-ebe80cccfb5b</guid>
+            <link>https://www.thestar.com/news/gta/highway-closures/toronto-highway-closures-for-planned-roadwork-on-oct-14/article_4be460d2-2102-5b2a-b2c6-ebe80cccfb5b.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/8/97/897bd1c5-b0b2-589a-a725-5e0080329a08/64b95937f2e77.image.jpg?resize=300%2C150" length="52077" type="image/jpeg" />
+            <georss:point>43.652981 -79.385094</georss:point>
+        </item>
+
+        <item>
+            <title>Protesters block Ford government's removal of Bloor Street bike lanes in Etobicoke</title>
+            <description>Publicly posted construction notices from the Ministry of Transportation said road work was set for Tuesday between Clissold and Royal York roads.</description>
+            <pubDate>Tue, 13 Oct 2026 20:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/9340bd34-ab52-4007-b541-0dc27314a0bb</guid>
+            <link>https://www.thestar.com/news/gta/ford-government-begins-removing-bike-lanes-in-etobicoke/article_9340bd34-ab52-4007-b541-0dc27314a0bb.html</link>
+            <author>atakagi@thestar.ca (Andy Takagi)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/7/b5/7b545212-ced6-5578-b914-71ae30f14db5/6aceceec4da56.image.jpg?resize=300%2C200" length="372086" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Ontario to change how people get safer-supply opioids, in bid to stop drugs being diverted to street</title>
+            <description>It will mark a big shift in how people with opioid addictions access potent pharmaceutical opioids from a safe source.</description>
+            <pubDate>Tue, 13 Oct 2026 18:05:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/fd216f8a-560f-4a9b-a4b1-64be0177cdd8</guid>
+            <link>https://www.thestar.com/news/gta/ontario-to-change-how-people-get-safer-supply-opioids-in-bid-to-stop-drugs-being-diverted-to-street/article_fd216f8a-560f-4a9b-a4b1-64be0177cdd8.html</link>
+            <author>omarmosleh@thestar.ca (Omar Mosleh)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/1a/01a7984c-6fce-572b-b039-012103d81339/6ace6b4fb9230.image.jpg?resize=300%2C200" length="128435" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Toronto advance voting turnout hits a record high. Here's where voters cast the most ballots</title>
+            <description>A record 222,550 Torontonians cast early ballots, marking the highest advance voting turnout in more than 10 years.</description>
+            <pubDate>Tue, 13 Oct 2026 15:30:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/dd3f1c90-fd71-4cdd-b681-db3902e650fa</guid>
+            <link>https://www.thestar.com/news/gta/advance-voting-in-toronto-hit-record-numbers-with-over-200-000-casting-their-ballots-early/article_dd3f1c90-fd71-4cdd-b681-db3902e650fa.html</link>
+            <author>emendes@thestar.ca (Elissa Mendes)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/b/28/b28ab112-be89-5acb-acb2-d612265046d3/6ace244a8bdf7.image.jpg?resize=300%2C200" length="330757" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Toronto election sees highest advance voting turnout in more than a decade</title>
+            <description>TORONTO - Toronto has recorded the highest advance voting turnout in municipal elections held since 2010, with more than 222,000 people casting their ballots early.</description>
+            <pubDate>Tue, 13 Oct 2026 14:02:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/26fe5255-1ebf-5c67-b54a-ffa65b0f4f38</guid>
+            <link>https://www.thestar.com/news/gta/city-hall/toronto-election-sees-highest-advance-voting-turnout-in-more-than-a-decade/article_26fe5255-1ebf-5c67-b54a-ffa65b0f4f38.html</link>
+            <dc:creator>The Canadian Press</dc:creator>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/7/3b/73b1d7e1-fdd7-5d69-a83f-75406fe2c221/69f45feb94d2d.image.jpg?resize=300%2C200" length="135947" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Regis Korchinski-Paquet's epilepsy, history of seizures central to inquest into her deadly fall: 'Her life ended much too early'</title>
+            <description>Korchinski-Paquet had a long-standing medical history of seizures and "often experienced symptoms of confusion, irritability, physically and verbally abusive behaviour, and episodic amnesia following a seizure."</description>
+            <pubDate>Tue, 13 Oct 2026 14:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/00f1e906-3d34-4ebb-999b-f11dad7b8144</guid>
+            <link>https://www.thestar.com/news/gta/regis-korchinski-paquet-s-epilepsy-history-of-seizures-central-to-inquest-into-her-death-her-life-ended-much-too-early/article_00f1e906-3d34-4ebb-999b-f11dad7b8144.html</link>
+            <author>wgillis@thestar.ca (Wendy Gillis)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/8/90/890cfa4f-e6d2-5f94-9f20-ff1d2e1e2bfd/6aa871a9f2997.image.jpg?resize=300%2C398" length="58872" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Toronto cycling advocates seek to take the fight over bike lanes to the Supreme Court of Canada</title>
+            <description>Cycling advocates are seeking leave to appeal to the Supreme Court of Canada to save Toronto's downtown bike lanes.</description>
+            <pubDate>Tue, 13 Oct 2026 13:45:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/41ab77f6-78fa-45c7-a52d-2d0cb28ae4ab</guid>
+            <link>https://www.thestar.com/news/gta/toronto-cycling-advocates-seek-to-take-the-fight-over-bike-lanes-to-the-supreme-court-of-canada/article_41ab77f6-78fa-45c7-a52d-2d0cb28ae4ab.html</link>
+            <author>atakagi@thestar.ca (Andy Takagi)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/9/4b/94b3e101-466a-522a-9637-01101e3735f7/6acd3fc8a95d4.image.jpg?resize=300%2C200" length="300286" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Why Ontario’s fall colours are so special — and how to catch them before they’re gone</title>
+            <description>Park experts and foresters break down the secret to tracking autumn’s best red.</description>
+            <pubDate>Tue, 13 Oct 2026 13:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/32e7b8bc-06fc-4fa1-a676-391b1576665e</guid>
+            <link>https://www.thestar.com/news/gta/li-fallcolours-trees/article_32e7b8bc-06fc-4fa1-a676-391b1576665e.html</link>
+            <dc:creator>Liisa Ladouceur Special to The Star</dc:creator>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/8/31/831b5413-4366-5572-92e2-063ceb87897f/6ac7dc3f7baed.image.jpg?resize=300%2C200" length="512941" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>The last ride of Canada's Polka King: 91-year-old accordion star brought joy for decades</title>
+            <description>Order of Canada recipient Walter Ostanek reflects on knowing when to fold ‘em.</description>
+            <pubDate>Tue, 13 Oct 2026 13:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/a870352d-0746-4065-b99d-219a39df3c01</guid>
+            <link>https://www.thestar.com/news/gta/canada-s-polka-king-plays-oktoberfest-one-last-time-even-at-91-i-ll-make-you-happy-a-little-bit/article_a870352d-0746-4065-b99d-219a39df3c01.html</link>
+            <author>brionysmith@thestar.ca (Briony Smith)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/44/644fdd95-b31c-5810-b6c2-795c2eca40bf/6aca464bdb6e2.image.jpg?resize=300%2C200" length="301482" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Police charge suspect after Israeli flags burned near North York church on Oct. 7 anniversary</title>
+            <description>Toronto police have arrest and charged a 29-year-old male suspect with arson after Israeli flags burned near North York church on Oct. 7 anniversary.</description>
+            <pubDate>Tue, 13 Oct 2026 12:15:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/9e34518a-44dd-4b95-b2ad-1e3b6840fefa</guid>
+            <link>https://www.thestar.com/news/gta/police-arrest-male-suspect-after-israeli-flags-burned-near-north-york-church-on-oct-7-anniversary/article_9e34518a-44dd-4b95-b2ad-1e3b6840fefa.html</link>
+            <author>bbaleeiro@torstar.ca (Beatriz Baleeiro)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/8/5c/85c250b8-87e3-5b81-bbb3-afdc0e340bdc/6ac6963a92f15.image.jpg?resize=300%2C225" length="446826" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Where York home break-ins were reported this week</title>
+            <description>There were four residential break and enters reported in the district from Oct. 6 to Oct. 12</description>
+            <pubDate>Tue, 13 Oct 2026 11:30:47 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/427cfca0-2f9d-530e-b568-000b722def60</guid>
+            <link>https://www.thestar.com/news/gta/local-crime/where-york-home-break-ins-were-reported-this-week/article_427cfca0-2f9d-530e-b568-000b722def60.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/2/18/218b7b3c-1087-517b-ac72-2e6f125095bb/64b95923ef599.image.jpg?resize=300%2C200" length="95427" type="image/jpeg" />
+            <georss:point>43.6529798 -79.3850915</georss:point>
+        </item>
+
+        <item>
+            <title>Where North York home break-ins were reported this week</title>
+            <description>There were 13 residential break and enters reported in the district from Oct. 6 to Oct. 12</description>
+            <pubDate>Tue, 13 Oct 2026 11:30:49 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/e32e8832-55e6-595a-8b9f-a866419fc0a0</guid>
+            <link>https://www.thestar.com/news/gta/local-crime/where-north-york-home-break-ins-were-reported-this-week/article_e32e8832-55e6-595a-8b9f-a866419fc0a0.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/e/65/e65ae9d9-9f36-55c8-a79f-08044d5e3829/64b95932f37e6.image.jpg?resize=300%2C200" length="105215" type="image/jpeg" />
+            <georss:point>43.6529798 -79.3850915</georss:point>
+        </item>
+
+        <item>
+            <title>Where East York home break-ins were reported this week</title>
+            <description>There was one residential break and enter reported in the district from Oct. 6 to Oct. 12</description>
+            <pubDate>Tue, 13 Oct 2026 11:30:51 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/20b4aae8-e08a-5a76-b8ee-494b636fdd50</guid>
+            <link>https://www.thestar.com/news/gta/local-crime/where-east-york-home-break-ins-were-reported-this-week/article_20b4aae8-e08a-5a76-b8ee-494b636fdd50.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/e/65/e65ae9d9-9f36-55c8-a79f-08044d5e3829/64b95932f37e6.image.jpg?resize=300%2C200" length="105215" type="image/jpeg" />
+            <georss:point>43.6529798 -79.3850915</georss:point>
+        </item>
+
+        <item>
+            <title>Where Scarborough home break-ins were reported this week</title>
+            <description>There were eight residential break and enters reported in the district from Oct. 6 to Oct. 12</description>
+            <pubDate>Tue, 13 Oct 2026 11:30:52 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/ed718d64-2a6d-5a31-94ba-aed0795e5661</guid>
+            <link>https://www.thestar.com/news/gta/local-crime/where-scarborough-home-break-ins-were-reported-this-week/article_ed718d64-2a6d-5a31-94ba-aed0795e5661.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/f8/0f8aa2cb-0737-5bfd-bd90-512a400dc1ea/64b9592df2533.image.jpg?resize=300%2C200" length="115360" type="image/jpeg" />
+            <georss:point>43.6529798 -79.3850915</georss:point>
+        </item>
+
+        <item>
+            <title>Where Etobicoke home break-ins were reported this week</title>
+            <description>There were seven residential break and enters reported in the district from Oct. 6 to Oct. 12</description>
+            <pubDate>Tue, 13 Oct 2026 11:30:53 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/a985e0ce-9d22-5f92-892e-9dcb2fda2ad8</guid>
+            <link>https://www.thestar.com/news/gta/local-crime/where-etobicoke-home-break-ins-were-reported-this-week/article_a985e0ce-9d22-5f92-892e-9dcb2fda2ad8.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/a/ce/ace16169-f8c7-5d27-9f6d-763975a5d5a7/64b9592910ef8.image.jpg?resize=300%2C200" length="85775" type="image/jpeg" />
+            <georss:point>43.6529798 -79.3850915</georss:point>
+        </item>
+
+        <item>
+            <title>Where Old Toronto home break-ins were reported this week</title>
+            <description>There were 23 residential break and enters reported in the district from Oct. 6 to Oct. 12</description>
+            <pubDate>Tue, 13 Oct 2026 11:30:43 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/fd05e15e-1d57-534d-b6fb-0d6a9445ece8</guid>
+            <link>https://www.thestar.com/news/gta/local-crime/where-old-toronto-home-break-ins-were-reported-this-week/article_fd05e15e-1d57-534d-b6fb-0d6a9445ece8.html</link>
+            <author>opendata@torstar.ca (Torstar Open Data Team)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/f8/0f8aa2cb-0737-5bfd-bd90-512a400dc1ea/64b9592df2533.image.jpg?resize=300%2C200" length="115360" type="image/jpeg" />
+            <georss:point>43.6529798 -79.3850915</georss:point>
+        </item>
+
+        <item>
+            <title>Toronto cyclists ask Canada's top court to weigh in on Ford's bike lane removal plan</title>
+            <description>TORONTO - Cyclists challenging Ontario's plan to tear up Toronto bike lanes will ask the Supreme Court of Canada to weigh in, the groups backing the case said Tuesday, as more removal work was slated to begin.</description>
+            <pubDate>Tue, 13 Oct 2026 11:25:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/bc87cbc9-4775-5606-b190-07be6db72384</guid>
+            <link>https://www.thestar.com/news/ontario/toronto-cyclists-ask-canada-s-top-court-to-weigh-in-on-ford-s-bike-lane-removal-plan/article_bc87cbc9-4775-5606-b190-07be6db72384.html</link>
+            <dc:creator>Jordan Omstead The Canadian Press</dc:creator>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/b6/0b69bc02-9850-5bcb-b9fb-59ac7918e5f2/67ffc6036f690.image.jpg?resize=300%2C199" length="225322" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Durham police warn of online exploitation group targeting children, teenagers</title>
+            <description>Police say they have responded to many incidents, some as recently as last week.</description>
+            <pubDate>Tue, 13 Oct 2026 10:45:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/a2a9445d-6d6d-4eb2-9fdd-ab0a33b36c14</guid>
+            <link>https://www.thestar.com/news/gta/durham-police-warn-of-online-exploitation-group-targeting-children-teenagers/article_a2a9445d-6d6d-4eb2-9fdd-ab0a33b36c14.html</link>
+            <author>mmillsdevoe@thestar.ca (Megan Mills Devoe)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/8/ed/8edf54dc-59d0-577f-91b4-57636b3f46ad/6ace3fb643e13.image.jpg?resize=300%2C169" length="298351" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Rides closed at Canadian theme parks after deadly fall from Six Flags coaster in U.S.</title>
+            <description>Rides at two Canadian theme parks were closed after a man in the United States fell to this death from a Six Flags roller-coaster in Georgia.</description>
+            <pubDate>Tue, 13 Oct 2026 10:16:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/27dc1efc-1cda-5be2-889f-885fe478ff0d</guid>
+            <link>https://www.thestar.com/news/canada/rides-closed-at-canadian-theme-parks-after-deadly-u-s-fall-from-six-flags-coaster/article_27dc1efc-1cda-5be2-889f-885fe478ff0d.html</link>
+            <dc:creator>The Canadian Press</dc:creator>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/44/64432a4b-1fed-5b24-8eb3-e02ed87b366a/68193e45b6ee0.image.jpg?resize=300%2C169" length="99890" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Only a few days left to cash in on $7.5-million settlement approved in Silk and Great Value listeria case</title>
+            <description>Consumers in Ontario can apply for compensation related to the listeria outbreak linked to Silk beverages following a recent settlement approval.</description>
+            <pubDate>Tue, 13 Oct 2026 09:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/77e6a80f-e49f-501a-8da9-a8ccc68d75b9</guid>
+            <link>https://www.thestar.com/news/silk-beverage-listeria-settlement-ontario/article_77e6a80f-e49f-501a-8da9-a8ccc68d75b9.html</link>
+            <author>jramsay@simcoe.com (Janis Ramsay)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/a/b3/ab3946c1-8696-5440-a2e6-c8ba8d50ecd1/6a66166c3f66e.preview.jpg?resize=300%2C158" length="200830" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Canada's Wonderland closes two roller coasters following fatal incident in Georgia</title>
+            <description>At least eight other roller-coasters at amusement parks in the U.S. have also been closed.</description>
+            <pubDate>Tue, 13 Oct 2026 07:50:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/c8cd4484-4ebc-43cb-adbc-5cf8b76ebd5d</guid>
+            <link>https://www.thestar.com/news/gta/canada-s-wonderland-closes-two-roller-coasters-following-fatal-incident-in-georgia/article_c8cd4484-4ebc-43cb-adbc-5cf8b76ebd5d.html</link>
+            <author>jross@thestar.ca (Jake Ross)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/f7/6f714b12-4048-522c-9451-7726038d8850/6ace1e6f9a54f.image.jpg?resize=300%2C200" length="283538" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>The Campaign Pitch: How a new program could give us clean parks, clear winter sidewalks and youth jobs</title>
+            <description>The idea from the U of T School of Cities includes connecting young people with mentoring and leadership development.</description>
+            <pubDate>Tue, 13 Oct 2026 07:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/2c20bc8f-48aa-4933-8cc4-5ab4bb35bcae</guid>
+            <link>https://www.thestar.com/news/gta/city-hall/the-campaign-pitch-how-a-new-program-could-give-us-clean-parks-clear-winter-sidewalks-and-youth-jobs/article_2c20bc8f-48aa-4933-8cc4-5ab4bb35bcae.html</link>
+            <author>bbaleeiro@torstar.ca (Beatriz Baleeiro)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/a/98/a9851040-9914-547e-8ea0-2174aa7a1a3c/67b622791f3fd.image.jpg?resize=300%2C210" length="171579" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>How a former firefighter with a prybar saved a driver from a burning car in Waterford</title>
+            <description>Victim of ‘horrific’ Waterford crash airlifted to hospital; man saved from fiery wreckage charged with impaired driving</description>
+            <pubDate>Tue, 13 Oct 2026 06:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/cd6b8e62-79c2-56f7-8e1c-c8e1cb373375</guid>
+            <link>https://www.thestar.com/news/gta/burning-car-rescue/article_cd6b8e62-79c2-56f7-8e1c-c8e1cb373375.html</link>
+            <author>jpantonacci@metroland.com (J.P. Antonacci)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/b/bf/bbf23288-e644-5daf-9349-9dfde9e5db8e/6ace31943ae24.image.jpg?resize=300%2C224" length="616075" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Why a veterinary tranquilizer with no antidote is sending Hamilton drug withdrawal patients to the ICU</title>
+            <description>“Tranq dope” in Hamilton's street drugs is causing heavy sedation and severe withdrawal symptoms, says MPP Dr. Robin Lennox.</description>
+            <pubDate>Tue, 13 Oct 2026 06:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/6ece2859-700e-5dbf-8da7-7753fe3e8b2a</guid>
+            <link>https://www.thestar.com/news/gta/opioids-icu-veterinary-overdose/article_6ece2859-700e-5dbf-8da7-7753fe3e8b2a.html</link>
+            <author>jfrketich@thespec.com (Joanna Frketich)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/9/f1/9f1b9693-3913-521e-beba-118b3deb2592/6ace31a3e9904.image.jpg?resize=300%2C200" length="117706" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Court orders new trial for man acquitted in Lake Ontario boat crash that killed two</title>
+            <description>Eyewitness at last year’s trial were unable to say who was driving when the boat struck rocks and flipped near Tommy Thompson Park.</description>
+            <pubDate>Tue, 13 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/ae21d1d7-2a46-4903-8b56-28180b257593</guid>
+            <link>https://www.thestar.com/news/gta/court-orders-new-trial-for-man-acquitted-in-lake-ontario-boat-crash-that-killed-two/article_ae21d1d7-2a46-4903-8b56-28180b257593.html</link>
+            <author>bpowell@thestar.ca (Betsy Powell)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/7/1a/71a4731c-2e7b-53c6-a708-31d4791e96c2/6ac97d8160f58.image.jpg?resize=300%2C197" length="215758" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Olivia Chow has a strong pro-police record — why isn’t she running on it?</title>
+            <description>For better or worse, Chow has given police officers nearly everything they've asked for during her tenure as mayor.</description>
+            <pubDate>Tue, 13 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/e379a6bf-e9b4-47f6-a8e7-427656dab777</guid>
+            <link>https://www.thestar.com/opinion/olivia-chow-has-a-strong-pro-police-record-why-isn-t-she-running-on-it/article_e379a6bf-e9b4-47f6-a8e7-427656dab777.html</link>
+            <author>mattelliott@dontdisplay.me (Matt Elliott)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/6/bf/6bf137cb-9743-562d-b1c7-acda8e17ba35/6ace9813a3b4d.image.jpg?resize=300%2C200" length="256155" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Etobicoke bike lanes start coming out today. Here's how readers are reacting</title>
+            <description>The first round of the Ford government’s promised bike lane removals starts today. From welcoming the move to critiquing it, readers are split.</description>
+            <pubDate>Tue, 13 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/cf11cd60-3af8-4fd7-96e8-a22156d309e9</guid>
+            <link>https://www.thestar.com/news/gta/etobicoke-bike-lanes-start-coming-out-today-here-s-how-readers-are-reacting/article_cf11cd60-3af8-4fd7-96e8-a22156d309e9.html</link>
+            <author>adasoo@thestar.ca (Aaliyah Dasoo)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/0/ca/0ca3b365-aa44-5544-81c4-e5629aa766df/6ac7e43680807.image.jpg?resize=300%2C200" length="298271" type="image/jpeg" />
+        </item>
+
+        <item>
+            <title>Tight Toronto mayoral race could come down to turnout, poll suggests</title>
+            <description>Liaison Strategies survey finds the incumbent holding a four-point edge among all voters, but undecided votes could still shift the outcome.</description>
+            <pubDate>Tue, 13 Oct 2026 05:00:00 -0400</pubDate>
+            <guid isPermaLink="false">http://www.thestar.com/tncms/asset/editorial/4c852cc0-2ad5-40f3-a061-10fb85a6fb35</guid>
+            <link>https://www.thestar.com/news/gta/tight-toronto-mayoral-race-could-come-down-to-turnout-poll-suggests/article_4c852cc0-2ad5-40f3-a061-10fb85a6fb35.html</link>
+            <author>omarmosleh@thestar.ca (Omar Mosleh)</author>
+            <enclosure url="https://bloximages.chicago2.vip.townnews.com/thestar.com/content/tncms/assets/v3/editorial/7/6e/76ef3027-b3dd-43fb-ab2f-5fd217aeb11e/6ac8dd30f16cc.image.jpg?resize=300%2C206" length="181280" type="image/jpeg" />
+        </item>
+
+    </channel>
+</rss>

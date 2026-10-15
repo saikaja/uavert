@@ -9,6 +9,9 @@ from uavert.scoring.combine import Reason
 
 CAPS = {"violent_incident": 74, "protest": 60}  # 74 is the top of "elevated"; only official alerts reach "high"
 WINDOW_HOURS = 24.0
+# How long each type of story is listed (01-03-news.md). Listing never changes a score: only the types in CAPS
+# are scored, and only for WINDOW_HOURS.
+DISPLAY_DAYS = {"protest": 2, "violent_incident": 7, "property_crime": 60}
 RING = 2  # cells within 2 rings, about 500 m
 
 
@@ -22,9 +25,12 @@ class NewsSignal:
     h3: str
     neighbourhood_id: int | None = None
     collected_at: str | None = None
+    source_key: str | None = None
 
 
 def signal_strength(s: NewsSignal, now: datetime) -> float:
+    if s.category not in CAPS:  # listed only, never scored
+        return 0.0
     hours = (now - s.published_at).total_seconds() / 3600
     if hours < 0:
         hours = 0.0
@@ -53,7 +59,7 @@ def news_score(signals: list[NewsSignal], now: datetime, cell: str | None = None
     reasons = [
         Reason("news", f"Unverified news report: {s.headline} ({s.publisher}, "
                f"{max(0, int((now - s.published_at).total_seconds() // 3600))} h ago)",
-               "news_cbc" if s.publisher == "CBC News" else "news_gdelt", value=s.category,
+               s.source_key or ("news_cbc" if s.publisher == "CBC News" else "news_gdelt"), value=s.category,
                as_of=s.published_at.isoformat(), collected_at=s.collected_at, url=s.url)
         for _, s in hits
     ]
