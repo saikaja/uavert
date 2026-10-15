@@ -1,6 +1,6 @@
 # 1–3. Define, design and plan: rate limits, edge caching and a read-only database user
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Adds to:** [01-03-solidify.md](01-03-solidify.md) (hosting) and the security review in [02-design.md](02-design.md). This document covers phases 1–3 in one, as the workflow allows for a contained addition.
 
 ## What this step is
@@ -138,8 +138,8 @@ Branch `feature/security` from `main`. Each step has tests and a commit.
 Once this is approved, I build T1–T3, including creating `uavert_web` on the test branch and on Neon `main`. Creating the role on `main` changes nothing until the website uses it. Then I write `04-implementation.security.md` and `05-test-report.security.md` for your approval, before the production steps in T4.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:17
+- **User's response:** "approve"
 - **Revisions before approval:** none
