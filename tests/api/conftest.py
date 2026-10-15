@@ -63,9 +63,14 @@ async def seeded(test_pool):
             reason = {"category": "crime", "text": f"{name} crime reason", "source_key": "tps_mci", "value": 3,
                       "as_of": "2025", "collected_at": now.isoformat()}
             await c.execute(
-                "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used)"
-                " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, '{}')", ids[ext], crime * 10.0, crime, json.dumps([reason]),
-                json.dumps({"groups": {}} | ({"odds": T1_ODDS, "trend": T1_TREND} if ext == "T1" else {})))
+                "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used,"
+                " crime_score_by_hour, move_by_hour)"
+                " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, '{}', $6, $7)", ids[ext], crime * 10.0, crime, json.dumps([reason]),
+                json.dumps({"groups": {}} | ({"odds": T1_ODDS, "trend": T1_TREND} if ext == "T1" else {})),
+                # T1 follows its cells: +15 in the small hours, -12 at 8 am; T2 never moves; T3 has no hourly scores
+                *(([crime + {1: 15, 2: 15, 3: 15, 8: -12}.get(h, 0) for h in range(24)],
+                   [float({1: 15, 2: 15, 3: 15, 8: -12}.get(h, 0)) for h in range(24)]) if ext == "T1" else
+                  ([crime] * 24, [0.0] * 24) if ext == "T2" else (None, None)))
             await c.execute(
                 "INSERT INTO cell_scores (h3, incident_count, own_value, local_value, smoothed_value, crime_score, reasons,"
                 " sources_used, foot_traffic_per_hour, foot_traffic_counts_used, foot_traffic_first_date,"
