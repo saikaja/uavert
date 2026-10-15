@@ -1,6 +1,6 @@
 # 4. Do the work: time of day on the neighbourhood map; remove "Where I'm going"; new band colours
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Builds:** [01-03-time-map.md](01-03-time-map.md) (approved 2026-10-15 14:15, "approve use orange").
 
 ## What this step is
@@ -70,8 +70,8 @@ Once you approve, the test report ([05-test-report.time-map.md](05-test-report.t
 3. re-run the acceptance check against https://uavert.vercel.app
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 14:33
+- **User's response:** "yes" (to: approve the build and test records, and delete the temporary Neon branch once live)
 - **Revisions before approval:** none
