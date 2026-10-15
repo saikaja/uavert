@@ -141,12 +141,48 @@ async function loadCells() {
 }
 map.on("moveend", scheduleCells);
 
+// ---- risk score gauge (01-03-gauge.md) -------------------------------------
+// A half-circle dial, 0 on the left to 100 on the right, in the map's band colours; the needle points at the score.
+const GAUGE = { cx: 66, cy: 70, r: 54, width: 12 };
+const BAND_RANGES = [["lower", 0, 25], ["moderate", 25, 50], ["elevated", 50, 75], ["high", 75, 100]]; // as bandFor
+const gaugePoint = (s, r = GAUGE.r) => {
+  const a = Math.PI * (1 - s / 100);
+  return [GAUGE.cx + r * Math.cos(a), GAUGE.cy - r * Math.sin(a)].map((v) => v.toFixed(2)).join(" ");
+};
+
+function gaugeSvg() {
+  const svg = svgEl("svg", { viewBox: "0 0 132 80", width: 132, height: 80, "aria-hidden": "true", class: "gauge-dial" });
+  BAND_RANGES.forEach(([band, from, to]) => {
+    // a hair of space between sections, none at the ends
+    const a = from === 0 ? 0 : from + 0.6, b = to === 100 ? 100 : to - 0.6;
+    svg.append(svgEl("path", { d: `M ${gaugePoint(a)} A ${GAUGE.r} ${GAUGE.r} 0 0 1 ${gaugePoint(b)}`, fill: "none",
+      stroke: BANDS[band].colour, "stroke-width": GAUGE.width, "data-band": band }));
+  });
+  [0, 25, 50, 75, 100].forEach((s) => svg.append(svgEl("path", {
+    d: `M ${gaugePoint(s, GAUGE.r - GAUGE.width / 2 - 2)} L ${gaugePoint(s, GAUGE.r - GAUGE.width / 2 - 7)}`, class: "gauge-tick" })));
+  // drawn pointing at 0 (left); turned to the score with a CSS rotation so it can swing
+  svg.append(svgEl("line", { x1: GAUGE.cx, y1: GAUGE.cy, x2: GAUGE.cx - (GAUGE.r - 10), y2: GAUGE.cy, class: "gauge-needle" }),
+    svgEl("circle", { cx: GAUGE.cx, cy: GAUGE.cy, r: 5, class: "gauge-hub" }));
+  return svg;
+}
+
+function setGauge(score, band) {
+  const box = $("score-badge");
+  if (!box.querySelector("svg")) {
+    box.replaceChildren(gaugeSvg(), el("span", "gauge-num"));
+    box.className = "gauge";
+    box.setAttribute("role", "img");
+  }
+  box.querySelector(".gauge-num").textContent = score;
+  box.setAttribute("aria-label", `Risk score ${score} out of 100: ${BANDS[band].label.toLowerCase()}`);
+  const needle = box.querySelector(".gauge-needle");
+  requestAnimationFrame(() => { needle.style.transform = `rotate(${(Math.max(0, Math.min(100, score)) / 100) * 180}deg)`; });
+}
+
 // ---- details panel -----------------------------------------------------
 function showScore(title, sub, score, extraNodes = [], oddsNodes = [], trendNodes = []) {
   $("details").hidden = false;
-  const badge = $("score-badge");
-  badge.textContent = score.score;
-  badge.className = `score-badge b-${score.band}`;
+  setGauge(score.score, score.band);
   $("score-band").textContent = BANDS[score.band].label;
   $("score-title").textContent = title;
   $("score-sub").textContent = sub || "";
