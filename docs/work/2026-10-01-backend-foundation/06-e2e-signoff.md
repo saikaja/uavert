@@ -177,6 +177,8 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 
 **Time on the map, removed search, new colours merged (2026-10-15).** With Sai's approval ("yes"), migration 009 and `build-scores` ran on Neon `main` first ("Scored 158 neighbourhoods and 5748 street cells from 62,719 distinct crime events"; the site kept answering 200). Then `feature/time-map` was merged into `main` (`47970f8`). 250 tests passed; production redeployed and serves the new colours; `acceptance_check.py` against https://uavert.vercel.app passed **38 of 38**. The temporary Neon branch `time-map-check` was deleted. Rows 44–47 cover it.
 
+**News by type, trending and police patterns merged (2026-10-15).** With Sai's approval ("approve…"), migration 010, `ingest news` and `build-scores` ran on Neon `main` first ("6 pattern(s) in police reports"; the site kept answering 200), then `feature/news` was merged into `main` (`058285e`). 286 tests passed; production redeployed; `acceptance_check.py` against https://uavert.vercel.app passed **43 of 43**, with CityNews, Global and the Star all collected. The temporary Neon branch `news-check` was deleted. Rows 48–51 cover it.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
