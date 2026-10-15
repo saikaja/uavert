@@ -1,6 +1,6 @@
 # 4. Do the work: map error fix, news dropdowns, and a walk scored by its typical block
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Builds:** [01-03-panel-tidy.md](01-03-panel-tidy.md) (approved 2026-10-15, "aprove a").
 
 ## What this step is
@@ -50,8 +50,8 @@ None.
 Once you approve this and [05-test-report.panel-tidy.md](05-test-report.panel-tidy.md), I merge into `main`, which deploys, and check production.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:56
+- **User's response:** "ok approve"
 - **Revisions before approval:** none
