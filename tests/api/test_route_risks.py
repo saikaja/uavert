@@ -29,6 +29,25 @@ async def test_route_score_is_highest_along_route_with_riskiest_stretches(client
     assert segs[0]["geometry"]["type"] == "LineString" and segs[0]["length_m"] > 0
 
 
+async def test_route_gives_its_typical_block_as_well_as_the_worst(client, seeded, router):
+    # 01-03-panel-tidy.md, criterion 54: `typical` is the median block's full score; `score` stays the worst
+    router(WALK_WEST_TO_EAST)
+    d = (await client.get("/api/v1/route-risks", params={"from": WEST, "to": EAST})).json()["data"]
+    t = d["typical"]
+    assert set(t) >= {"score", "band", "categories", "reasons"}
+    assert t["score"] == d["typical_score"] and t["band"] == d["typical_band"]
+    assert d["score"] == 80 and t["score"] <= d["score"]
+
+
+async def test_a_warning_on_the_route_still_shows_through_the_worst_block(client, seeded, router):
+    # Criterion 55: mostly Test East, ending inside Test Warning (its warning scores 90)
+    router(Route([(-79.379, 43.655), (-79.367, 43.655)], 900, 650))
+    d = (await client.get("/api/v1/route-risks", params={"from": "43.655,-79.379", "to": "43.655,-79.367"})).json()["data"]
+    assert d["score"] == 90 and d["categories"]["alert"] == 90
+    assert any("test heat warning" in r["text"] for r in d["reasons"])
+    assert d["typical"]["score"] < d["score"]
+
+
 async def test_route_where_nothing_stands_out_says_so(client, seeded, router):
     router(Route([(-79.378, 43.655), (-79.372, 43.655)], 500, 360))  # inside Test East only (1.0x)
     d = (await client.get("/api/v1/route-risks", params={"from": "43.655,-79.378", "to": "43.655,-79.372"})).json()["data"]

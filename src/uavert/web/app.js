@@ -162,11 +162,21 @@ function gaugeSvg() {
     d: `M ${gaugePoint(s, GAUGE.r - GAUGE.width / 2 - 2)} L ${gaugePoint(s, GAUGE.r - GAUGE.width / 2 - 7)}`, class: "gauge-tick" })));
   // drawn pointing at 0 (left); turned to the score with a CSS rotation so it can swing
   svg.append(svgEl("line", { x1: GAUGE.cx, y1: GAUGE.cy, x2: GAUGE.cx - (GAUGE.r - 10), y2: GAUGE.cy, class: "gauge-needle" }),
-    svgEl("circle", { cx: GAUGE.cx, cy: GAUGE.cy, r: 5, class: "gauge-hub" }));
+    svgEl("circle", { cx: GAUGE.cx, cy: GAUGE.cy, r: 5, class: "gauge-hub" }),
+    // a walk's worst block: a small triangle just outside the arc, pointing in (01-03-panel-tidy.md)
+    svgEl("path", { d: "M -5.5 -4.5 L 5.5 -4.5 L 0 4.5 Z", class: "gauge-worst", hidden: "" }));
   return svg;
 }
 
-function setGauge(score, band) {
+function placeWorst(marker, worst) {
+  if (!worst) { marker.setAttribute("hidden", ""); return; }
+  const s = Math.max(0, Math.min(100, worst.score));
+  marker.removeAttribute("hidden");
+  marker.setAttribute("fill", BANDS[worst.band].colour);
+  marker.setAttribute("transform", `translate(${gaugePoint(s, GAUGE.r + GAUGE.width / 2 + 5).replace(" ", ",")}) rotate(${(s - 50) * 1.8})`);
+}
+
+function setGauge(score, band, worst = null) {
   const box = $("score-badge");
   if (!box.querySelector("svg")) {
     box.replaceChildren(gaugeSvg(), el("span", "gauge-num"));
@@ -174,17 +184,24 @@ function setGauge(score, band) {
     box.setAttribute("role", "img");
   }
   box.querySelector(".gauge-num").textContent = score;
-  box.setAttribute("aria-label", `Risk score ${score} out of 100: ${BANDS[band].label.toLowerCase()}`);
+  box.setAttribute("aria-label", `Risk score ${score} out of 100: ${BANDS[band].label.toLowerCase()}`
+    + (worst ? `, worst block ${worst.score}: ${BANDS[worst.band].label.toLowerCase()}` : ""));
+  placeWorst(box.querySelector(".gauge-worst"), worst);
   const needle = box.querySelector(".gauge-needle");
   requestAnimationFrame(() => { needle.style.transform = `rotate(${(Math.max(0, Math.min(100, score)) / 100) * 180}deg)`; });
 }
 
 // ---- details panel -----------------------------------------------------
-function showScore(title, sub, score, extraNodes = [], oddsNodes = [], trendNodes = []) {
+// `worst`: for a walk, its worst block, marked on the dial and named under the title (01-03-panel-tidy.md).
+function showScore(title, sub, score, extraNodes = [], oddsNodes = [], trendNodes = [], worst = null) {
   $("details").hidden = false;
-  setGauge(score.score, score.band);
+  const markWorst = worst && worst.score !== score.score ? worst : null;
+  setGauge(score.score, score.band, markWorst);
   $("score-band").textContent = BANDS[score.band].label;
   $("score-title").textContent = title;
+  $("score-worst").hidden = !worst;
+  $("score-worst").textContent = worst
+    ? `Worst block: ${worst.score} (${BANDS[worst.band].label.toLowerCase()}) · highlighted on the map` : "";
   $("score-sub").textContent = sub || "";
   $("odds").replaceChildren(...oddsNodes); // directly under the score (01-03-odds.md)
   $("trend").replaceChildren(...trendNodes); // under the odds (01-03-trends.md)
@@ -416,7 +433,7 @@ async function runRoute(from, to, btn) {
     const d = (await api(`/api/v1/route-risks?from=${encodeURIComponent(from)}&to=${encodeURIComponent(to)}${hourParam()}`)).data;
     setStatus("");
     if (routeLayer) map.removeLayer(routeLayer);
-    routeLayer = L.layerGroup().addTo(map);
+    routeLayer = L.featureGroup().addTo(map); // a featureGroup, so loadCells can bring the walk to the front
     const line = L.geoJSON(d.geometry, { style: { color: "#1f4e79", weight: 5, opacity: 0.85 } }).addTo(routeLayer);
     d.riskiest_segments.forEach((s, i) => L.geoJSON(s.geometry, { style: { color: BANDS[s.band].colour, weight: 9, opacity: 0.95 } })
       .bindTooltip(`Stands out ${i + 1}: ${timesAround(s.vs_surroundings)} its surroundings`).addTo(routeLayer));
@@ -430,10 +447,17 @@ async function runRoute(from, to, btn) {
     });
     const title = el("h3", null, "Stretches that stand out");
     const mins = Math.round(d.duration_s / 60);
+    // The headline is the walk's typical block; the worst block stays on the dial, under the title, on the map
+    // and with its own reasons (01-03-panel-tidy.md).
+    const headline = d.typical || d;
+    const worstReasons = el("ul", "reasons");
+    (d.reasons || []).forEach((r) => worstReasons.append(reasonItem(r)));
     showScore(`${d.from.display_name.split(",")[0]} → ${d.to.display_name.split(",")[0]}`,
       `Showing: ${timeText()} · Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · `
-        + (d.typical_score != null ? `mostly ${BANDS[d.typical_band].label.toLowerCase()} (${d.typical_score}); worst block shown` : "worst block shown"), d,
-      d.riskiest_segments.length ? [title, segs] : [title, el("p", "muted", d.segments_note)]);
+        + (d.typical ? "typical block along the walk" : "worst block shown"), headline,
+      [el("h3", null, "Worst block"), worstReasons, title,
+        ...(d.riskiest_segments.length ? [segs] : [el("p", "muted", d.segments_note)])],
+      [], [], d.typical ? { score: d.score, band: d.band } : null);
   } catch (err) { setStatus(err.message, true); }
   finally { if (btn) btn.disabled = false; }
 }
@@ -448,7 +472,6 @@ $("when").addEventListener("change", () => {
 // News by type of event, trending stories and patterns in police reports (01-03-news.md).
 const NEWS_TYPES = [["protest", "Protests", "Protest"], ["violent_incident", "Violent incidents", "Violent incident"],
   ["property_crime", "Property crime", "Property crime"]];
-const NEWS_SHOWN = 5;
 const headlineLink = (text, url) => {
   const href = safeUrl(url);
   return href ? Object.assign(el("a", null, text), { href, target: "_blank", rel: "noopener" }) : el("span", null, text);
@@ -456,25 +479,23 @@ const headlineLink = (text, url) => {
 const where = (n) => (n.category === "property_crime" ? (n.location_text || "location unknown")
   : n.citywide ? "location unknown (not scored)" : n.location_text);
 
-function newsGroup(label, days, items) {
-  const wrap = el("div", "news-group");
-  wrap.append(el("h4", null, `${label} (last ${days} days)`));
+// Each part of "News and patterns" is its own dropdown, closed until opened (01-03-panel-tidy.md).
+function newsSection(name, count, ...body) {
+  const d = el("details", "news-section");
+  d.append(el("summary", null, `${name} (${count})`), ...body);
+  return d;
+}
+const unverified = (text) => { const p = el("p", "meta"); p.append(el("span", "tag", "unverified"), document.createTextNode(` ${text}`)); return p; };
+
+function newsList(items, days) {
   const list = el("ul", "news");
   if (!items.length) list.append(el("li", "muted", `None in Toronto news in the last ${days} days.`));
-  items.forEach((n, i) => {
+  items.forEach((n) => {
     const li = el("li");
     li.append(headlineLink(n.headline, n.url), el("span", "meta", `${where(n)} · ${n.publisher} · ${fmtDate(n.published_at)}`));
-    li.hidden = i >= NEWS_SHOWN;
     list.append(li);
   });
-  wrap.append(list);
-  if (items.length > NEWS_SHOWN) {
-    const more = el("button", "linkish", `Show all ${items.length}`);
-    more.type = "button";
-    more.addEventListener("click", () => { list.querySelectorAll("li").forEach((li) => { li.hidden = false; }); more.remove(); });
-    wrap.append(more);
-  }
-  return wrap;
+  return list;
 }
 
 function trendingItem(t) {
@@ -500,34 +521,42 @@ async function loadNews() {
   const [news, trending, patterns] = await Promise.allSettled([
     api("/api/v1/news-events?window=by_type&limit=100"), api("/api/v1/news-trending"), api("/api/v1/crime-patterns")]);
 
-  const trendList = $("trending");
+  const sections = [];
   if (trending.status === "fulfilled") {
-    trendList.replaceChildren(...trending.value.data.slice(0, 3).map(trendingItem));
-    if (!trending.value.data.length) trendList.append(el("li", "muted", "No story is being covered by several outlets right now."));
-  } else trendList.replaceChildren(el("li", "muted", trending.reason.message));
+    const groups = trending.value.data;
+    const list = el("ul", "news");
+    list.append(...groups.map(trendingItem));
+    if (!groups.length) list.append(el("li", "muted", "No story is being covered by several outlets right now."));
+    sections.push(newsSection("Trending", groups.length, unverified("Stories several outlets are covering, last 3 days."), list));
+  } else sections.push(newsSection("Trending", "unavailable", el("p", "muted", trending.reason.message)));
 
-  if (news.status === "fulfilled") {
-    const items = news.value.data;
-    $("news").replaceChildren(...NEWS_TYPES.map(([k, label]) => {
-      const mine = items.filter((n) => n.category === k);
-      return newsGroup(label, mine[0]?.window_days ?? { protest: 2, violent_incident: 7, property_crime: 60 }[k], mine);
-    }));
-  } else $("news").replaceChildren(el("p", "muted", news.reason.message));
+  NEWS_TYPES.forEach(([k, label]) => {
+    const days = { protest: 2, violent_incident: 7, property_crime: 60 }[k];
+    if (news.status !== "fulfilled") {
+      sections.push(newsSection(`${label} · last ${days} days`, "unavailable", el("p", "muted", news.reason.message)));
+      return;
+    }
+    const mine = news.value.data.filter((n) => n.category === k);
+    sections.push(newsSection(`${label} · last ${days} days`, mine.length, unverified("From Toronto news; matched by keywords."), newsList(mine, days)));
+  });
 
-  const patternList = $("patterns");
   if (patterns.status === "fulfilled") {
     const found = patterns.value.data;
-    patternList.replaceChildren(...found.map((p) => {
+    const list = el("ul", "news");
+    list.append(...found.map((p) => {
       const li = el("li"); const open = el("button", "linkish", patternText(p));
       open.type = "button";
       open.addEventListener("click", () => showNeighbourhood(p.neighbourhood_id));
       li.append(open); return li;
     }));
-    if (!found.length) patternList.append(el("li", "muted", "No unusual break-in or auto-theft patterns in the latest 30 days of police data."));
+    if (!found.length) list.append(el("li", "muted", "No unusual break-in or auto-theft patterns in the latest 30 days of police data."));
     const asOf = found[0]?.data_as_of || SOURCE_DATES.tps_mci;
-    $("patterns-note").textContent = `Toronto Police data${asOf ? ` up to ${fmtDate(asOf)}` : ""}: neighbourhoods with at least `
-      + "5 reports in their latest 30 days, at least twice their usual, and unlikely to be chance. Reported incidents only; not a prediction.";
-  } else patternList.replaceChildren(el("li", "muted", patterns.reason.message));
+    const note = el("p", "meta", `Toronto Police data${asOf ? ` up to ${fmtDate(asOf)}` : ""}: neighbourhoods with at least `
+      + "5 reports in their latest 30 days, at least twice their usual, and unlikely to be chance. Reported incidents only; not a prediction.");
+    sections.push(newsSection("Patterns in police reports", found.length, list, note));
+  } else sections.push(newsSection("Patterns in police reports", "unavailable", el("p", "muted", patterns.reason.message)));
+
+  $("news-sections").replaceChildren(...sections);
 }
 
 function patternNodes(found) {

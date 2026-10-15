@@ -87,6 +87,10 @@ def main(base: str) -> int:
         check("13", r.status_code == 200 and dt < 3 and d["geometry"]["type"] == "LineString" and len(d["riskiest_segments"]) <= 3,
               f"Union Station -> Kensington: {d['distance_m']} m, score {d['score']} {d['band']}, "
               f"{len(d['riskiest_segments'])} stand-out stretch(es), {dt:.2f}s (first call in this run)")
+        t = d.get("typical") or {}
+        check("tidy-54", t.get("score") is not None and t["score"] == d.get("typical_score") and t["score"] <= d["score"]
+              and set(t) >= {"band", "categories", "reasons"},
+              f"Union Station -> Kensington: typical block {t.get('score')} {t.get('band')} (headline), worst block {d['score']} {d['band']}")
 
         for label, params, status, code in [
             ("outside", {"address": "100 City Centre Dr, Mississauga"}, 422, "outside_coverage"),
