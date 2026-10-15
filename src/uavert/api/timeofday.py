@@ -31,18 +31,37 @@ def crime_at(row, hour: int | None, ctx: LiveContext) -> tuple[int, list[dict]]:
     by_hour, intensity = row["crime_score_by_hour"], row["intensity_by_hour"]
     if hour is None or by_hour is None:
         return row["crime_score"], reasons
+    reason = _hour_reason(
+        f"At {hour_label(hour)}: incidents near here run at about {intensity[hour]:.1f}× this block's average, and ",
+        round(intensity[hour], 2), hour, ctx)
+    return by_hour[hour], [reason] + reasons
+
+
+def neighbourhood_crime_at(row, hour: int | None, ctx: LiveContext) -> tuple[int, list[dict]]:
+    """(crime score, crime reasons) for a neighbourhood row, for the whole day or one hour (01-03-time-map.md)."""
+    reasons = _reasons(row)
+    by_hour, moves = row["crime_score_by_hour"], row["move_by_hour"]
+    if hour is None or by_hour is None:
+        return row["crime_score"], reasons
+    move = round(moves[hour])
+    change = (f"about {move} points higher than" if move >= 3 else f"about {-move} points lower than" if move <= -3
+              else "about the same as")
+    reason = _hour_reason(f"At {hour_label(hour)}: street blocks here typically score {change} all day, and ",
+                          move, hour, ctx)
+    return by_hour[hour], [reason] + reasons
+
+
+def _hour_reason(start: str, value, hour: int, ctx: LiveContext) -> dict:
+    """A reason for a score at an hour, ending with how many people are out then and where that figure comes from."""
     factor, basis = ctx.activity[hour] if ctx.activity else (1.0, "estimated")
     how = "City pedestrian counts" if basis == "measured" else "estimated from Bike Share trips"
     dates = ctx.sources.get("activity_profile", {})
-    reason = Reason(
+    return Reason(
         "crime",
-        f"At {hour_label(hour)}: incidents near here run at about {intensity[hour]:.1f}× this block's average, "
-        + (f"and foot traffic is about {factor:.1f}× the daytime average ({how})" if factor >= 0.95
-           else f"and about {factor * 100:.0f}% of daytime foot traffic is out ({how})"),
-        "activity_profile", value=round(intensity[hour], 2), as_of=dates.get("as_of"),
-        collected_at=dates.get("collected_at"),
+        start + (f"foot traffic is about {factor:.1f}× the daytime average ({how})" if factor >= 0.95
+                 else f"about {factor * 100:.0f}% of daytime foot traffic is out ({how})"),
+        "activity_profile", value=value, as_of=dates.get("as_of"), collected_at=dates.get("collected_at"),
     ).to_dict()
-    return by_hour[hour], [reason] + reasons
 
 
 def _reasons(row) -> list[dict]:

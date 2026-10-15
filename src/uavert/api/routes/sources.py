@@ -83,6 +83,8 @@ async def scoring_rules(request: Request):
             "standout_min_ratio": crime.STANDOUT_MIN_RATIO,
             "time_window_hours": crime.TIME_WINDOW,
             "time_prior_weight": crime.TIME_PRIOR_WEIGHT,
+            "neighbourhood_by_hour": "all-day score moved by the median change of its street cells' scores at that hour,"
+                                     " capped to 0-100",
             "warning_score": alerts.TOP_BAND_SCORE,
             "advisory_score": alerts.ADVISORY_SCORE,
         },

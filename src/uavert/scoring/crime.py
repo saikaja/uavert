@@ -187,3 +187,14 @@ def intensity(share: float) -> float:
 
 def per_person_at_hour(value: float, hour_intensity: float, pedestrians_per_hour: float, activity: float) -> float:
     return per_person(value * hour_intensity, pedestrians_per_hour * activity)
+
+
+def neighbourhood_by_hour(score: int, cells: Iterable[tuple[int, list[int] | None]]) -> tuple[list[int], list[float]]:
+    """A neighbourhood's crime score at each hour (01-03-time-map.md): its all-day score moved by as many points as
+    its typical (median) street cell moves at that hour, capped to 0-100. Also returns the moves before capping.
+    `cells`: (all-day score, 24 hourly scores) per street cell; cells without hourly scores are left out."""
+    moves_by_cell = [[at_hour - all_day for at_hour in by_hour] for all_day, by_hour in cells if by_hour]
+    if not moves_by_cell:
+        return [score] * 24, [0.0] * 24
+    moves = [float(median(m[h] for m in moves_by_cell)) for h in range(24)]
+    return [max(0, min(100, score + round(m))) for m in moves], moves

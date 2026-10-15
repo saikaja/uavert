@@ -124,6 +124,28 @@ def main(base: str) -> int:
         check("27", bool(sources["activity_profile"]["as_of"] and sources["activity_profile"]["collected_at"]),
               f"activity_profile as_of {sources['activity_profile']['as_of']}, collected {sources['activity_profile']['collected_at']}")
 
+        # Time of day on the neighbourhood map (01-03-time-map.md)
+        bodies = {h: c.get("/api/v1/neighbourhoods", params={} if h is None else {"hour": h}).json()["data"]
+                  for h in (None, 2, 14)}
+        hoods_at = {h: {f["properties"]["name"]: f["properties"] for f in b["features"]} for h, b in bodies.items()}
+        r = c.get("/api/v1/neighbourhoods", params={"hour": 24})
+        check("29", r.status_code == 422 and bodies[None]["time"]["label"] == "All day" and bodies[2]["time"]["label"] == "2 am",
+              f"no hour -> 'All day'; hour=2 -> '2 am'; hour=24 -> {r.status_code}")
+        crime_by_hour = lambda name: [hoods_at[h][name]["categories"]["crime"] for h in (None, 2, 14)]
+        yb, gw = crime_by_hour("Yonge-Bay Corridor"), crime_by_hour("Guildwood")
+        check("31", yb[1] > yb[2] and max(gw) - min(gw) <= 10,
+              f"crime all day / 2 am / 2 pm: Yonge-Bay Corridor {yb}, Guildwood {gw}")
+        kc = hoods_at[None]["Kensington-Chinatown"]["id"]
+        kd = c.get(f"/api/v1/neighbourhoods/{kc}", params={"hour": 2}).json()["data"]
+        kr = next((x for x in kd["reasons"] if x["category"] == "crime"), {})
+        check("32", kd["time"]["label"] == "2 am" and kr.get("text", "").startswith("At 2 am: street blocks here")
+              and kr.get("source_key") == "activity_profile", f"Kensington-Chinatown {kd['score']} at 2 am: \"{kr.get('text')}\"")
+        page, js = c.get("/").text, c.get("/app.js").text
+        check("34", "dest-form" not in page and "Where I'm going" not in page and "route-form" in page,
+              "page has Where I'm walking and no Where I'm going")
+        check("35", all(colour in js for colour in ("#2e9e57", "#f2c230", "#e8792b", "#c62828")),
+              "app.js bands: green #2e9e57, yellow #f2c230, orange #e8792b, red #c62828")
+
         r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "125 Blue Jays Way, Toronto"})
         w = r.json()["data"]
         check("41", r.status_code == 200 and 45 <= w["score"] <= 60 and w["band"] != "high",

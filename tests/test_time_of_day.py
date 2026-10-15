@@ -59,3 +59,38 @@ def test_hourly_scores_rise_when_streets_empty():
     assert len(by_hour) == 24 and by_hour[2] > by_hour[14]  # same incidents at 2 am and 2 pm, far fewer people at 2 am
     # incidents cluster in both windows, well above an average 3 hours; quiet hours fall below it
     assert out[a]["intensity_by_hour"][2] > 3 and out[a]["intensity_by_hour"][14] > 3 and out[a]["intensity_by_hour"][8] < 1
+
+
+# ---- Neighbourhoods by hour (01-03-time-map.md, criterion 30) ----
+
+def test_neighbourhood_moves_with_its_typical_street_block():
+    # three cells moving +10, +20 and +40 at 2 am: the median move is +20
+    cells = [(30, [30] * 2 + [40] + [30] * 21), (50, [50] * 2 + [70] + [50] * 21), (20, [20] * 2 + [60] + [20] * 21)]
+    scores, moves = crime.neighbourhood_by_hour(45, cells)
+    assert scores[2] == 65 and moves[2] == 20
+    assert scores[14] == 45 and moves[14] == 0  # cells unchanged: the neighbourhood keeps its score
+
+
+def test_neighbourhood_by_hour_is_capped_and_keeps_the_move_before_capping():
+    scores, moves = crime.neighbourhood_by_hour(90, [(10, [10] * 23 + [40])])
+    assert scores[23] == 100 and moves[23] == 30
+    scores, _ = crime.neighbourhood_by_hour(5, [(50, [30] * 24)])
+    assert scores == [0] * 24
+
+
+def test_neighbourhood_without_cells_keeps_its_all_day_score():
+    assert crime.neighbourhood_by_hour(37, []) == ([37] * 24, [0.0] * 24)
+
+
+def test_cell_without_hourly_scores_is_left_out():
+    scores, _ = crime.neighbourhood_by_hour(40, [(10, None), (10, [20] * 24)])
+    assert scores == [50] * 24
+
+
+def test_build_adds_hours_to_each_neighbourhood_from_its_own_cells():
+    from uavert.scoring.build import add_hours
+    hood_rows = {1: {"crime_score": 40}, 2: {"crime_score": 10}}
+    cell_rows = {"a": {"crime_score": 30, "crime_score_by_hour": [30] * 2 + [50] + [30] * 21},
+                 "b": {"crime_score": 30, "crime_score_by_hour": [30] * 24}}
+    add_hours(hood_rows, {"a": 1, "b": 2}, cell_rows)
+    assert hood_rows[1]["crime_score_by_hour"][2] == 60 and hood_rows[2]["crime_score_by_hour"] == [10] * 24

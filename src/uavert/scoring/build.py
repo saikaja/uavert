@@ -160,6 +160,15 @@ def add_trends(hood_rows: dict[int, dict], rows: list[CrimeYear], used: dict) ->
             r["details"]["trend"] = t | {"toronto": toronto} | source
 
 
+def add_hours(hood_rows: dict[int, dict], cells: dict[str, int], cell_rows: dict[str, dict]) -> None:
+    """Each neighbourhood's crime score at every hour, following its street cells (01-03-time-map.md)."""
+    in_hood: dict[int, list[tuple[int, list[int]]]] = defaultdict(list)
+    for c, hood in cells.items():
+        in_hood[hood].append((cell_rows[c]["crime_score"], cell_rows[c]["crime_score_by_hour"]))
+    for hid, r in hood_rows.items():
+        r["crime_score_by_hour"], r["move_by_hour"] = crime.neighbourhood_by_hour(r["crime_score"], in_hood[hid])
+
+
 def typical_block_reason(ratio: float, f: crime.FootTraffic, busy: bool, city_median: float, as_of: str,
                          collected_at: str | None) -> dict:
     """How the block compares with a typical Toronto block, and the foot traffic the comparison allows for."""
@@ -324,6 +333,7 @@ async def build(conn: asyncpg.Connection) -> dict:
     activity = [float(r["factor_used"]) for r in await conn.fetch("SELECT factor_used FROM activity_by_hour ORDER BY hour")]
     cell_rows = cell_scores(events, cells, {h["id"]: h["name"] for h in hoods}, used, traffic,
                             activity if len(activity) == 24 else None)
+    add_hours(hood_rows, cells, cell_rows)
 
     async with conn.transaction():
         if paired:
@@ -334,11 +344,13 @@ async def build(conn: asyncpg.Connection) -> dict:
                 "INSERT INTO fairness_checks (rho_income, rho_low_income, n, label, census_year) VALUES ($1, $2, $3, $4, $5)",
                 rho_income, rho_low, len(paired), fairness.label(rho_income, rho_low), paired[0][1]["census_year"])
         await conn.executemany(
-            "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used, computed_at)"
-            " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, now()) ON CONFLICT (neighbourhood_id) DO UPDATE SET"
-            " weighted_rate = $2, crime_score = $3, reasons = $4::jsonb, details = $5::jsonb, sources_used = $6::jsonb, computed_at = now()",
-            [(hid, r["weighted_rate"], r["crime_score"], json.dumps(r["reasons"]), json.dumps(r["details"]), used_json)
-             for hid, r in hood_rows.items()],
+            "INSERT INTO neighbourhood_scores (neighbourhood_id, weighted_rate, crime_score, reasons, details, sources_used,"
+            " crime_score_by_hour, move_by_hour, computed_at)"
+            " VALUES ($1, $2, $3, $4::jsonb, $5::jsonb, $6::jsonb, $7, $8, now()) ON CONFLICT (neighbourhood_id) DO UPDATE SET"
+            " weighted_rate = $2, crime_score = $3, reasons = $4::jsonb, details = $5::jsonb, sources_used = $6::jsonb,"
+            " crime_score_by_hour = $7, move_by_hour = $8, computed_at = now()",
+            [(hid, r["weighted_rate"], r["crime_score"], json.dumps(r["reasons"]), json.dumps(r["details"]), used_json,
+              r["crime_score_by_hour"], r["move_by_hour"]) for hid, r in hood_rows.items()],
         )
         await conn.execute(
             "CREATE TEMP TABLE cell_scores_load (h3 text, incident_count int, own_value float8, local_value float8,"

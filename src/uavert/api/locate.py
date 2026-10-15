@@ -7,7 +7,7 @@ from fastapi import Request
 
 from uavert.api.errors import ApiError
 from uavert.api.live import LiveContext
-from uavert.api.timeofday import crime_at, moment, time_info
+from uavert.api.timeofday import crime_at, moment, neighbourhood_crime_at, time_info
 from uavert.config import get_settings
 from uavert.sources.geocode import Geocoder, Place, parse_latlon
 from uavert.sources.http import SourceUnavailable, make_client
@@ -52,7 +52,7 @@ async def neighbourhood_at(pool: asyncpg.Pool, place: Place) -> asyncpg.Record:
     """The neighbourhood containing the place; 422 outside_coverage when it's outside Toronto."""
     row = await pool.fetchrow(
         "SELECT n.id, n.name, ST_X(ST_PointOnSurface(n.geom)) AS lon, ST_Y(ST_PointOnSurface(n.geom)) AS lat,"
-        " s.crime_score, s.reasons, s.details->'odds' AS odds, s.details->'trend' AS trend FROM neighbourhoods n JOIN neighbourhood_scores s ON s.neighbourhood_id = n.id"
+        " s.crime_score, s.reasons, s.crime_score_by_hour, s.move_by_hour, s.details->'odds' AS odds, s.details->'trend' AS trend FROM neighbourhoods n JOIN neighbourhood_scores s ON s.neighbourhood_id = n.id"
         " WHERE ST_Covers(n.geom, ST_SetSRID(ST_MakePoint($1, $2), 4326)) LIMIT 1",
         place.lon, place.lat,
     )
@@ -81,8 +81,8 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place, hour: 
         " JOIN cells c ON c.h3 = s.h3 WHERE s.h3 = h3_lat_lng_to_cell(point($1, $2), 9)",
         place.lon, place.lat,
     )
-    hood_score = ctx.score(hood["lon"], hood["lat"], hood["crime_score"], json.loads(hood["reasons"]),
-                           neighbourhood_id=hood["id"])
+    hood_score = ctx.score(hood["lon"], hood["lat"], *neighbourhood_crime_at(hood, hour, ctx),
+                           neighbourhood_id=hood["id"], when=moment(hour, ctx))
     if cell:  # the street cell; at the city edge a point can fall in a cell whose centre is outside Toronto
         street = {"h3": cell["h3"], "incident_count": cell["incident_count"], **street_extras(cell),
                   "foot_traffic_counts_used": cell["foot_traffic_counts_used"],
@@ -91,8 +91,7 @@ async def score_place(pool: asyncpg.Pool, ctx: LiveContext, place: Place, hour: 
                               when=moment(hour, ctx)).to_dict()}
     else:
         street = {"h3": None, "incident_count": None,
-                  **ctx.score(place.lon, place.lat, hood["crime_score"], json.loads(hood["reasons"]),
-                              neighbourhood_id=hood["id"]).to_dict()}
+                  **hood_score.to_dict()}
     return {
         "location": {"display_name": place.display_name, "lon": place.lon, "lat": place.lat},
         "street": street,
