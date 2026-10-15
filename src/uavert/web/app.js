@@ -162,11 +162,21 @@ function gaugeSvg() {
     d: `M ${gaugePoint(s, GAUGE.r - GAUGE.width / 2 - 2)} L ${gaugePoint(s, GAUGE.r - GAUGE.width / 2 - 7)}`, class: "gauge-tick" })));
   // drawn pointing at 0 (left); turned to the score with a CSS rotation so it can swing
   svg.append(svgEl("line", { x1: GAUGE.cx, y1: GAUGE.cy, x2: GAUGE.cx - (GAUGE.r - 10), y2: GAUGE.cy, class: "gauge-needle" }),
-    svgEl("circle", { cx: GAUGE.cx, cy: GAUGE.cy, r: 5, class: "gauge-hub" }));
+    svgEl("circle", { cx: GAUGE.cx, cy: GAUGE.cy, r: 5, class: "gauge-hub" }),
+    // a walk's worst block: a small triangle just outside the arc, pointing in (01-03-panel-tidy.md)
+    svgEl("path", { d: "M -5.5 -4.5 L 5.5 -4.5 L 0 4.5 Z", class: "gauge-worst", hidden: "" }));
   return svg;
 }
 
-function setGauge(score, band) {
+function placeWorst(marker, worst) {
+  if (!worst) { marker.setAttribute("hidden", ""); return; }
+  const s = Math.max(0, Math.min(100, worst.score));
+  marker.removeAttribute("hidden");
+  marker.setAttribute("fill", BANDS[worst.band].colour);
+  marker.setAttribute("transform", `translate(${gaugePoint(s, GAUGE.r + GAUGE.width / 2 + 5).replace(" ", ",")}) rotate(${(s - 50) * 1.8})`);
+}
+
+function setGauge(score, band, worst = null) {
   const box = $("score-badge");
   if (!box.querySelector("svg")) {
     box.replaceChildren(gaugeSvg(), el("span", "gauge-num"));
@@ -174,17 +184,24 @@ function setGauge(score, band) {
     box.setAttribute("role", "img");
   }
   box.querySelector(".gauge-num").textContent = score;
-  box.setAttribute("aria-label", `Risk score ${score} out of 100: ${BANDS[band].label.toLowerCase()}`);
+  box.setAttribute("aria-label", `Risk score ${score} out of 100: ${BANDS[band].label.toLowerCase()}`
+    + (worst ? `, worst block ${worst.score}: ${BANDS[worst.band].label.toLowerCase()}` : ""));
+  placeWorst(box.querySelector(".gauge-worst"), worst);
   const needle = box.querySelector(".gauge-needle");
   requestAnimationFrame(() => { needle.style.transform = `rotate(${(Math.max(0, Math.min(100, score)) / 100) * 180}deg)`; });
 }
 
 // ---- details panel -----------------------------------------------------
-function showScore(title, sub, score, extraNodes = [], oddsNodes = [], trendNodes = []) {
+// `worst`: for a walk, its worst block, marked on the dial and named under the title (01-03-panel-tidy.md).
+function showScore(title, sub, score, extraNodes = [], oddsNodes = [], trendNodes = [], worst = null) {
   $("details").hidden = false;
-  setGauge(score.score, score.band);
+  const markWorst = worst && worst.score !== score.score ? worst : null;
+  setGauge(score.score, score.band, markWorst);
   $("score-band").textContent = BANDS[score.band].label;
   $("score-title").textContent = title;
+  $("score-worst").hidden = !worst;
+  $("score-worst").textContent = worst
+    ? `Worst block: ${worst.score} (${BANDS[worst.band].label.toLowerCase()}) · highlighted on the map` : "";
   $("score-sub").textContent = sub || "";
   $("odds").replaceChildren(...oddsNodes); // directly under the score (01-03-odds.md)
   $("trend").replaceChildren(...trendNodes); // under the odds (01-03-trends.md)
@@ -430,10 +447,17 @@ async function runRoute(from, to, btn) {
     });
     const title = el("h3", null, "Stretches that stand out");
     const mins = Math.round(d.duration_s / 60);
+    // The headline is the walk's typical block; the worst block stays on the dial, under the title, on the map
+    // and with its own reasons (01-03-panel-tidy.md).
+    const headline = d.typical || d;
+    const worstReasons = el("ul", "reasons");
+    (d.reasons || []).forEach((r) => worstReasons.append(reasonItem(r)));
     showScore(`${d.from.display_name.split(",")[0]} → ${d.to.display_name.split(",")[0]}`,
       `Showing: ${timeText()} · Walking route · ${(d.distance_m / 1000).toFixed(1)} km · about ${mins} min · `
-        + (d.typical_score != null ? `mostly ${BANDS[d.typical_band].label.toLowerCase()} (${d.typical_score}); worst block shown` : "worst block shown"), d,
-      d.riskiest_segments.length ? [title, segs] : [title, el("p", "muted", d.segments_note)]);
+        + (d.typical ? "typical block along the walk" : "worst block shown"), headline,
+      [el("h3", null, "Worst block"), worstReasons, title,
+        ...(d.riskiest_segments.length ? [segs] : [el("p", "muted", d.segments_note)])],
+      [], [], d.typical ? { score: d.score, band: d.band } : null);
   } catch (err) { setStatus(err.message, true); }
   finally { if (btn) btn.disabled = false; }
 }

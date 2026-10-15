@@ -49,3 +49,13 @@ def test_typical_score_is_the_length_weighted_median():
     scores[cells[3]] = 70
     assert route.typical_score(pts, scores) == 40
     assert route.typical_score(pts, {}) is None
+
+
+def test_typical_cell_is_the_block_at_the_length_weighted_median():
+    # 01-03-panel-tidy.md, criterion 54: the walk's headline is this block, not the worst one
+    pts, cells = walk()
+    scores = {c: 40 + i for i, c in enumerate(cells)}  # all different, rising along the walk
+    scores[cells[3]] = 95  # the worst block
+    cell = route.typical_cell(pts, scores)
+    assert cell != cells[3] and scores[cell] == route.typical_score(pts, scores)
+    assert route.typical_cell(pts, {}) is None

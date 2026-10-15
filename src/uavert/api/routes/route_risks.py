@@ -70,7 +70,8 @@ async def route_risks(
     if not scored:
         raise ApiError(422, "outside_coverage", "That route doesn't pass through the area we cover.")
     worst = max(scored.values(), key=lambda s: s.score)
-    typical = route_rules.typical_score(points, {c: sc.score for c, sc in scored.items()})
+    typical_cell = route_rules.typical_cell(points, {c: sc.score for c, sc in scored.items()})
+    typical = scored[typical_cell].score if typical_cell else None
     stretches = route_rules.standout_stretches(points, {c: r["vs_surroundings"] for c, r in by_cell.items()})
     segments = [{"geometry": _line(s.points), "length_m": round(s.length_m),
                  "vs_surroundings": round(s.ratio, 1),
@@ -84,6 +85,8 @@ async def route_risks(
         **worst.to_dict(),
         "typical_score": typical,
         "typical_band": band_for(typical) if typical is not None else None,
+        # the walk's headline (01-03-panel-tidy.md); `score` and the fields above stay the worst block
+        "typical": scored[typical_cell].to_dict() if typical_cell else None,
         "cells_scored": len(scored),
         "riskiest_segments": segments,
         "segments_note": None if segments else "No stretch of this walk stands out from its surroundings.",

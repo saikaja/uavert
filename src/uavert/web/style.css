@@ -63,6 +63,9 @@ button:disabled { opacity: .6; cursor: wait; }
 .gauge-needle { stroke: var(--text); stroke-width: 3.5; stroke-linecap: round; transform-box: view-box;
   transform-origin: 66px 70px; transition: transform .4s ease-out; }
 .gauge-hub { fill: var(--text); }
+.gauge-worst { stroke: var(--text); stroke-width: 1.2; stroke-linejoin: round; }
+.gauge-worst[hidden] { display: none; }
+.score-worst { font-size: 13px; font-weight: 600; margin-top: 2px; }
 .gauge-num { position: absolute; left: 0; right: 0; top: 78px; text-align: center; font-size: 22px; font-weight: 800;
   line-height: 1; color: var(--text); }
 @media (prefers-reduced-motion: reduce) { .gauge-needle { transition: none; } }
