@@ -29,8 +29,15 @@ REAL = [
     s(14, 12, "Toronto Star", "protest", "Protesters block Ford government's removal of Bloor Street bike lanes in Etobicoke"),
     *[s(13, 12, "Toronto Star", "property_crime", f"Where {d} home break-ins were reported this week")
       for d in ("Etobicoke", "Scarborough", "East York", "North York", "York", "Old Toronto")],
+    s(13, 15, "CBC News", "protest", "Man facing arson charge week after hundreds of Israeli flags torched at North York church: police"),
     s(9, 12, "CBC News", "violent_incident", "Toronto police officer who shot at man accused in Const. Marc Pinizzotto's death cleared of wrongdoing"),
 ]
+
+
+def test_sharing_only_a_place_doesnt_join_stories():
+    # Found in the browser check: with 2 shared words, "North York" joined this story to the Star's weekly round-ups
+    arson = next(g for g in groups(REAL) if any("arson" in x.headline for x in g))
+    assert len(arson) == 1
 
 
 def find(result, text):
@@ -48,7 +55,8 @@ def test_real_events_group_without_mixing():
     assert all("bike lane" not in x["headline"] for x in harvest["stories"])
     assert all("Harvest" not in x["headline"] for x in bikes["stories"])
     assert (bikes["story_count"], bikes["outlet_count"], bikes["category"]) == (4, 3, "protest")
-    assert harvest["story_count"] >= 5 and harvest["outlet_count"] == 4 and harvest["category"] == "property_crime"
+    # CityNews's version ("catalytic convertor theft from Etobicoke food charity") shares only 2 words with the others
+    assert (harvest["story_count"], harvest["outlet_count"], harvest["category"]) == (5, 3, "property_crime")
     assert result[0] is harvest  # most stories first
     assert harvest["headline"].startswith("29-year-old man arrested")  # the newest story leads
 

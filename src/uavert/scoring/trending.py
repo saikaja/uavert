@@ -6,7 +6,8 @@ from collections import Counter
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
-LINK_WORDS = 2  # stories sharing at least this many significant words are about the same event...
+LINK_WORDS = 3  # stories sharing at least this many significant words are about the same event (2 joined unrelated
+                # stories that only shared a place, "North York")...
 LINK_DAYS = 3  # ...when published within this many days of each other
 MIN_STORIES = 3  # a group is trending with this many stories in the last TRENDING_DAYS...
 MIN_OUTLETS = 2  # ...from at least this many outlets
