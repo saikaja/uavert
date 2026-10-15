@@ -1,6 +1,6 @@
 # 1–3. Define, design and plan: the risk score as a speedometer gauge
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Adds to:** the details panel from [01-definition.md](01-definition.md) and [01-03-odds-percent.md](01-03-odds-percent.md) (the "Risk score" label). This document covers phases 1–3 in one, as the workflow allows for a small addition.
 
 ## What this step is
@@ -86,8 +86,8 @@ Branch `feature/gauge` from `main`.
 Once this is approved, I build T1–T2 and write `04-implementation.gauge.md` and `05-test-report.gauge.md`, with screenshots, for your approval.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:33
+- **User's response:** "approve and we can do the sertting later" (the setting: the Vercel DATABASE_URL switch for 01-03-security.md, postponed)
 - **Revisions before approval:** none
