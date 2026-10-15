@@ -188,6 +188,8 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 - **Production acceptance check:** **45 of 45**.
 - **Still to do:** Sai switches Vercel's `DATABASE_URL` to `uavert_web`, then criterion 47 is checked in production.
 
+**Gauge merged (2026-10-15, [01-03-gauge.md](01-03-gauge.md)).** With Sai's approval ("approve"), `feature/gauge` was merged into `main` (`8fa9db9`; 311 tests passed) and deployed in about 40 seconds. Against https://uavert.vercel.app: `acceptance_check.py` **45 of 45**; gauge browser check **14 of 14** (colours, needle angles, neighbourhood, street block, walk, dark mode, phone, reduced motion). Row 53 covers it.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
