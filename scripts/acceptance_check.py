@@ -167,6 +167,16 @@ def main(base: str) -> int:
         check("news-42", "News and patterns" in page and "crime-patterns" in js and "news-trending" in js,
               "page has the News and patterns section")
 
+        # Edge caching (01-03-security.md): successful answers carry s-maxage; behind Vercel the repeat is a cache hit
+        first = c.get("/api/v1/scoring-rules")
+        again = c.get("/api/v1/scoring-rules")
+        check("sec-43", "s-maxage=300" in first.headers.get("cache-control", "")
+              and "s-maxage" not in c.get("/api/v1/health").headers.get("cache-control", ""),
+              f"Cache-Control: {first.headers.get('cache-control')}")
+        edge = again.headers.get("x-vercel-cache")
+        check("sec-44", edge is None or edge in ("HIT", "STALE"),
+              f"repeat request: X-Vercel-Cache {edge}" if edge else "no CDN in front (local run)")
+
         r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "125 Blue Jays Way, Toronto"})
         w = r.json()["data"]
         check("41", r.status_code == 200 and 45 <= w["score"] <= 60 and w["band"] != "high",
