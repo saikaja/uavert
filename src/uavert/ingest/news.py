@@ -65,6 +65,18 @@ async def _run(conn, client, region_id, source_key, fetch) -> None:
               " or property crime")
 
 
+async def relabel(conn: asyncpg.Connection, client: httpx.AsyncClient | None = None, region_id: int | None = None) -> None:
+    """Remove stored stories the current rules exclude (01-03-news.md): sport, an event in an earlier year, other
+    regions. Only headlines are stored, so types aren't changed here: the summary that set them is gone."""
+    since = datetime.now(UTC) - timedelta(days=max(DISPLAY_DAYS.values()))
+    removed = 0
+    for r in await conn.fetch("SELECT id, headline, published_at FROM news_events WHERE published_at > $1", since):
+        if news.excluded(r["headline"], r["published_at"].year):
+            await conn.execute("DELETE FROM news_events WHERE id = $1", r["id"])
+            removed += 1
+    print(f"    stored stories: {removed} removed under the current rules")
+
+
 def rss_step(source_key: str):
     """The ingest step for one RSS feed; each feed is its own source, so one failing leaves the others."""
     async def run(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> None:

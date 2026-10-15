@@ -53,14 +53,18 @@ INTERSECTION = re.compile(
     r"\b(?:near|at|in the|around|close to)\s+((?:[A-Z][\w'-]*\s){0,3}[A-Z][\w'-]*)\s+and\s+((?:[A-Z][\w'-]*\s){0,3}[A-Z][\w'-]*)")
 
 
+def excluded(text: str, year: int | None = None) -> bool:
+    """Never a current Toronto incident: sport, elections, courts, other regions, or an event in an earlier year."""
+    year = year or datetime.now(UTC).year
+    return bool(NEGATIVE.search(text) or OTHER_REGIONS.search(text)
+                or any(int(y) < year for y in EARLIER_YEAR.findall(text)))
+
+
 def classify(headline: str, summary: str = "", year: int | None = None) -> str | None:
     """'violent_incident', 'protest', 'property_crime' or None. Headline and summary are both read.
     `year` (the story's year, default this year): a story about an event "in" an earlier year is skipped."""
     text = f"{headline}. {summary}"
-    if NEGATIVE.search(text) or OTHER_REGIONS.search(text):
-        return None
-    year = year or datetime.now(UTC).year
-    if any(int(y) < year for y in EARLIER_YEAR.findall(text)):
+    if excluded(text, year):
         return None
     if VIOLENT.search(text):
         return "violent_incident"

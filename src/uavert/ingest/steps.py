@@ -12,10 +12,10 @@ log = logging.getLogger("uavert.ingest")
 
 STEPS = {
     "reference": reference.run, "cool_spaces": heat.run, "crowds": crowds.run, "crime": crime.run, "traffic": traffic.run, "aqhi": live.run_aqhi,
-    "alerts": live.run_alerts, "news_gdelt": news.run_gdelt,
+    "alerts": live.run_alerts, "news_gdelt": news.run_gdelt, "news_relabel": news.relabel,
     **{key: news.rss_step(key) for key in ("news_cbc", "news_citynews", "news_global", "news_star")},
 }
-NEWS = ["news_cbc", "news_citynews", "news_global", "news_star", "news_gdelt"]
+NEWS = ["news_relabel", "news_cbc", "news_citynews", "news_global", "news_star", "news_gdelt"]
 LIVE = ["aqhi", "alerts", *NEWS]
 # Each target runs its steps in order; a failed step is reported and the rest still run.
 TARGETS = {

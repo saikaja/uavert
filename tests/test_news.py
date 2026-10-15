@@ -222,3 +222,27 @@ async def test_one_feed_failing_leaves_the_others(test_db_url, monkeypatch):
 
 async def _no_sleep(_):
     return None
+
+
+@pytest.mark.db
+async def test_relabel_removes_stored_stories_the_rules_now_exclude(test_db_url):
+    conn = await db.connect(test_db_url)
+    try:
+        region_id = await ensure_reference_rows(conn)
+        now = datetime.now(UTC)
+        for url, headline, category in [
+            ("sixers", "Toronto Sixers rally past Vancouver Warriors to repeat as Canada Super60 women's cricket champions", "protest"),
+            ("memorial", f"Memorial held for Toronto boy shot and killed by stray bullet in {now.year - 1}", "violent_incident"),
+            ("keep", "Man facing arson charge week after hundreds of Israeli flags torched at North York church: police", "protest"),
+        ]:
+            await conn.execute(
+                "INSERT INTO news_events (region_id, source_key, url, headline, publisher, category, published_at)"
+                " VALUES ($1, 'news_cbc', $2, $3, 'CBC News', $4, $5)",
+                region_id, f"https://example.test/{url}", headline, category, now - timedelta(days=2))
+        await news_ingest.relabel(conn)
+        left = {r["url"]: r["category"] for r in await conn.fetch(
+            "SELECT url, category FROM news_events WHERE url LIKE 'https://example.test/%'")}
+        assert left == {"https://example.test/keep": "protest"}  # types aren't changed from headlines alone
+    finally:
+        await conn.execute("DELETE FROM news_events WHERE url LIKE 'https://example.test/%'")
+        await conn.close()
