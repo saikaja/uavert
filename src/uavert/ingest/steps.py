@@ -12,9 +12,11 @@ log = logging.getLogger("uavert.ingest")
 
 STEPS = {
     "reference": reference.run, "cool_spaces": heat.run, "crowds": crowds.run, "crime": crime.run, "traffic": traffic.run, "aqhi": live.run_aqhi,
-    "alerts": live.run_alerts, "news_cbc": news.run_cbc, "news_gdelt": news.run_gdelt,
+    "alerts": live.run_alerts, "news_gdelt": news.run_gdelt,
+    **{key: news.rss_step(key) for key in ("news_cbc", "news_citynews", "news_global", "news_star")},
 }
-LIVE = ["aqhi", "alerts", "news_cbc", "news_gdelt"]
+NEWS = ["news_cbc", "news_citynews", "news_global", "news_star", "news_gdelt"]
+LIVE = ["aqhi", "alerts", *NEWS]
 # Each target runs its steps in order; a failed step is reported and the rest still run.
 TARGETS = {
     "reference": ["reference", "cool_spaces"],
@@ -24,7 +26,7 @@ TARGETS = {
     "traffic": ["traffic"],
     "aqhi": ["aqhi"],
     "alerts": ["alerts"],
-    "news": ["news_cbc", "news_gdelt"],
+    "news": NEWS,
     "live": LIVE,
     "daily": ["cool_spaces", "crowds", "crime", "traffic"],  # what the scheduled daily refresh reloads
     "all": ["reference", "cool_spaces", "crowds", "crime", "traffic", *LIVE],

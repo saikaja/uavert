@@ -83,7 +83,22 @@ def extract_place(text: str, neighbourhood_names: list[str]) -> str | None:
     return None
 
 
+# RSS feeds read alike (01-03-news.md): source key -> (publisher, config field with the feed's address).
+RSS_FEEDS = {
+    "news_cbc": ("CBC News", "cbc_rss_url"),
+    "news_citynews": ("CityNews", "citynews_rss_url"),
+    "news_global": ("Global News", "global_rss_url"),
+    "news_star": ("Toronto Star", "star_rss_url"),
+}
+
+
 def parse_cbc_rss(xml_text: str) -> list[NewsItem]:
+    return parse_rss(xml_text, "news_cbc")
+
+
+def parse_rss(xml_text: str, source_key: str) -> list[NewsItem]:
+    """Standard RSS 2.0 items: title, link, publication date and description (tags removed)."""
+    publisher = RSS_FEEDS[source_key][0]
     root = ET.fromstring(xml_text)
     items = []
     for item in root.iter("item"):
@@ -93,7 +108,7 @@ def parse_cbc_rss(xml_text: str) -> list[NewsItem]:
         if not (title and link and pub):
             continue
         summary = re.sub(r"<[^>]+>", " ", item.findtext("description") or "")
-        items.append(NewsItem("news_cbc", "CBC News", title, " ".join(summary.split()), link,
+        items.append(NewsItem(source_key, publisher, title, " ".join(summary.split()), link,
                               parsedate_to_datetime(pub).astimezone(UTC)))
     return items
 
@@ -108,12 +123,17 @@ def parse_gdelt(data: dict) -> list[NewsItem]:
     return out
 
 
-async def fetch_cbc(client: httpx.AsyncClient) -> list[NewsItem]:
-    r = await get(client, get_settings().cbc_rss_url)
+async def fetch_rss(client: httpx.AsyncClient, source_key: str) -> list[NewsItem]:
+    publisher, url_field = RSS_FEEDS[source_key]
+    r = await get(client, getattr(get_settings(), url_field))
     try:
-        return parse_cbc_rss(r.text)
+        return parse_rss(r.text, source_key)
     except ET.ParseError as e:
-        raise SourceUnavailable(f"CBC RSS could not be read: {e}") from e
+        raise SourceUnavailable(f"{publisher} RSS could not be read: {e}") from e
+
+
+async def fetch_cbc(client: httpx.AsyncClient) -> list[NewsItem]:
+    return await fetch_rss(client, "news_cbc")
 
 
 async def fetch_gdelt(client: httpx.AsyncClient) -> list[NewsItem]:

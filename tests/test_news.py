@@ -2,7 +2,9 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import h3
+import httpx
 import pytest
+import respx
 
 from uavert import db
 from uavert.ingest import news as news_ingest
@@ -162,3 +164,61 @@ async def test_store_locates_toronto_stories_and_skips_unlabelled(test_db_url):
         await conn.execute("DELETE FROM news_events WHERE url LIKE 'https://example.test/%'")
         await conn.execute("DELETE FROM neighbourhoods WHERE external_id = 'JF'")
         await conn.close()
+
+
+# ---- More feeds (01-03-news.md, criterion 38): the real feeds saved on 2026-10-15 ----
+FEEDS_1015 = {"news_cbc": "cbc_toronto_2026-10-15.xml", "news_citynews": "citynews_toronto_2026-10-15.xml",
+              "news_global": "global_toronto_2026-10-15.xml", "news_star": "star_gta_2026-10-15.xml"}
+NOW_1015 = datetime(2026, 10, 15, 19, tzinfo=UTC)
+
+
+@pytest.mark.parametrize("key,count,publisher", [("news_cbc", 20, "CBC News"), ("news_citynews", 15, "CityNews"),
+                                                 ("news_global", 10, "Global News"), ("news_star", 50, "Toronto Star")])
+def test_each_real_feed_parses(key, count, publisher):
+    items = news.parse_rss((FIX / FEEDS_1015[key]).read_text(encoding="utf-8"), key)
+    assert len(items) == count and all(i.source_key == key and i.publisher == publisher for i in items)
+    assert all(i.url.startswith("https://") and i.published_at.tzinfo for i in items)
+
+
+def test_real_feeds_label_the_days_events():
+    labelled = {}
+    for key, name in FEEDS_1015.items():
+        for i in news.parse_rss((FIX / name).read_text(encoding="utf-8"), key):
+            if c := news.classify(i.headline, i.summary, year=i.published_at.year):
+                labelled.setdefault(c, []).append(i.headline)
+    assert sum("bike lane" in h for h in labelled["protest"]) >= 4
+    assert sum("Second Harvest" in h for h in labelled["property_crime"]) >= 4
+    assert not any("Sixers" in h for hs in labelled.values() for h in hs)
+
+
+@pytest.mark.db
+@respx.mock
+async def test_one_feed_failing_leaves_the_others(test_db_url, monkeypatch):
+    from functools import partial
+
+    from uavert.config import get_settings
+    from uavert.ingest.steps import run_steps
+
+    monkeypatch.setattr("uavert.sources.http.asyncio.sleep", _no_sleep)
+    monkeypatch.setattr(news_ingest, "store", partial(news_ingest.store, now=NOW_1015))
+    s = get_settings()
+    respx.get(s.citynews_rss_url).mock(side_effect=httpx.ConnectTimeout("down"))
+    respx.get(s.global_rss_url).mock(return_value=httpx.Response(200, text=(FIX / FEEDS_1015["news_global"]).read_text(encoding="utf-8")))
+    respx.get(url__startswith=s.nominatim_url).mock(return_value=httpx.Response(200, json=[]))
+    conn = await db.connect(test_db_url)
+    try:
+        await conn.execute("DELETE FROM news_events WHERE source_key = 'news_global'")
+        failures = await run_steps(conn, ["news_citynews", "news_global"], report=lambda _: None)
+        assert failures == ["news_citynews"]
+        stored = await conn.fetch("SELECT category, headline FROM news_events WHERE source_key = 'news_global'")
+        assert any(r["category"] == "property_crime" and "Second Harvest" in r["headline"] for r in stored)
+        status = {r["key"]: r["last_status"] for r in await conn.fetch(
+            "SELECT key, last_status FROM sources WHERE key IN ('news_citynews', 'news_global')")}
+        assert status == {"news_citynews": "failed", "news_global": "ok"}
+    finally:
+        await conn.execute("DELETE FROM news_events WHERE source_key = 'news_global'")
+        await conn.close()
+
+
+async def _no_sleep(_):
+    return None

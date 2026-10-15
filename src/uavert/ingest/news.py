@@ -61,11 +61,18 @@ async def _run(conn, client, region_id, source_key, fetch) -> None:
         items = await fetch(client)
         r.rows_written = await store(conn, region_id, items, Geocoder(client, get_settings().nominatim_url, db=conn))
         r.data_as_of = max((i.published_at for i in items), default=None)
-        print(f"    {source_key}: {len(items)} stories read, {r.rows_written} labelled as protest or violent incident")
+        print(f"    {source_key}: {len(items)} stories read, {r.rows_written} labelled as protest, violent incident"
+              " or property crime")
 
 
-async def run_cbc(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> None:
-    await _run(conn, client, region_id, "news_cbc", news.fetch_cbc)
+def rss_step(source_key: str):
+    """The ingest step for one RSS feed; each feed is its own source, so one failing leaves the others."""
+    async def run(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> None:
+        await _run(conn, client, region_id, source_key, lambda c: news.fetch_rss(c, source_key))
+    return run
+
+
+run_cbc = rss_step("news_cbc")
 
 
 async def run_gdelt(conn: asyncpg.Connection, client: httpx.AsyncClient, region_id: int) -> None:
