@@ -448,7 +448,6 @@ $("when").addEventListener("change", () => {
 // News by type of event, trending stories and patterns in police reports (01-03-news.md).
 const NEWS_TYPES = [["protest", "Protests", "Protest"], ["violent_incident", "Violent incidents", "Violent incident"],
   ["property_crime", "Property crime", "Property crime"]];
-const NEWS_SHOWN = 5;
 const headlineLink = (text, url) => {
   const href = safeUrl(url);
   return href ? Object.assign(el("a", null, text), { href, target: "_blank", rel: "noopener" }) : el("span", null, text);
@@ -456,25 +455,23 @@ const headlineLink = (text, url) => {
 const where = (n) => (n.category === "property_crime" ? (n.location_text || "location unknown")
   : n.citywide ? "location unknown (not scored)" : n.location_text);
 
-function newsGroup(label, days, items) {
-  const wrap = el("div", "news-group");
-  wrap.append(el("h4", null, `${label} (last ${days} days)`));
+// Each part of "News and patterns" is its own dropdown, closed until opened (01-03-panel-tidy.md).
+function newsSection(name, count, ...body) {
+  const d = el("details", "news-section");
+  d.append(el("summary", null, `${name} (${count})`), ...body);
+  return d;
+}
+const unverified = (text) => { const p = el("p", "meta"); p.append(el("span", "tag", "unverified"), document.createTextNode(` ${text}`)); return p; };
+
+function newsList(items, days) {
   const list = el("ul", "news");
   if (!items.length) list.append(el("li", "muted", `None in Toronto news in the last ${days} days.`));
-  items.forEach((n, i) => {
+  items.forEach((n) => {
     const li = el("li");
     li.append(headlineLink(n.headline, n.url), el("span", "meta", `${where(n)} · ${n.publisher} · ${fmtDate(n.published_at)}`));
-    li.hidden = i >= NEWS_SHOWN;
     list.append(li);
   });
-  wrap.append(list);
-  if (items.length > NEWS_SHOWN) {
-    const more = el("button", "linkish", `Show all ${items.length}`);
-    more.type = "button";
-    more.addEventListener("click", () => { list.querySelectorAll("li").forEach((li) => { li.hidden = false; }); more.remove(); });
-    wrap.append(more);
-  }
-  return wrap;
+  return list;
 }
 
 function trendingItem(t) {
@@ -500,34 +497,42 @@ async function loadNews() {
   const [news, trending, patterns] = await Promise.allSettled([
     api("/api/v1/news-events?window=by_type&limit=100"), api("/api/v1/news-trending"), api("/api/v1/crime-patterns")]);
 
-  const trendList = $("trending");
+  const sections = [];
   if (trending.status === "fulfilled") {
-    trendList.replaceChildren(...trending.value.data.slice(0, 3).map(trendingItem));
-    if (!trending.value.data.length) trendList.append(el("li", "muted", "No story is being covered by several outlets right now."));
-  } else trendList.replaceChildren(el("li", "muted", trending.reason.message));
+    const groups = trending.value.data;
+    const list = el("ul", "news");
+    list.append(...groups.map(trendingItem));
+    if (!groups.length) list.append(el("li", "muted", "No story is being covered by several outlets right now."));
+    sections.push(newsSection("Trending", groups.length, unverified("Stories several outlets are covering, last 3 days."), list));
+  } else sections.push(newsSection("Trending", "unavailable", el("p", "muted", trending.reason.message)));
 
-  if (news.status === "fulfilled") {
-    const items = news.value.data;
-    $("news").replaceChildren(...NEWS_TYPES.map(([k, label]) => {
-      const mine = items.filter((n) => n.category === k);
-      return newsGroup(label, mine[0]?.window_days ?? { protest: 2, violent_incident: 7, property_crime: 60 }[k], mine);
-    }));
-  } else $("news").replaceChildren(el("p", "muted", news.reason.message));
+  NEWS_TYPES.forEach(([k, label]) => {
+    const days = { protest: 2, violent_incident: 7, property_crime: 60 }[k];
+    if (news.status !== "fulfilled") {
+      sections.push(newsSection(`${label} · last ${days} days`, "unavailable", el("p", "muted", news.reason.message)));
+      return;
+    }
+    const mine = news.value.data.filter((n) => n.category === k);
+    sections.push(newsSection(`${label} · last ${days} days`, mine.length, unverified("From Toronto news; matched by keywords."), newsList(mine, days)));
+  });
 
-  const patternList = $("patterns");
   if (patterns.status === "fulfilled") {
     const found = patterns.value.data;
-    patternList.replaceChildren(...found.map((p) => {
+    const list = el("ul", "news");
+    list.append(...found.map((p) => {
       const li = el("li"); const open = el("button", "linkish", patternText(p));
       open.type = "button";
       open.addEventListener("click", () => showNeighbourhood(p.neighbourhood_id));
       li.append(open); return li;
     }));
-    if (!found.length) patternList.append(el("li", "muted", "No unusual break-in or auto-theft patterns in the latest 30 days of police data."));
+    if (!found.length) list.append(el("li", "muted", "No unusual break-in or auto-theft patterns in the latest 30 days of police data."));
     const asOf = found[0]?.data_as_of || SOURCE_DATES.tps_mci;
-    $("patterns-note").textContent = `Toronto Police data${asOf ? ` up to ${fmtDate(asOf)}` : ""}: neighbourhoods with at least `
-      + "5 reports in their latest 30 days, at least twice their usual, and unlikely to be chance. Reported incidents only; not a prediction.";
-  } else patternList.replaceChildren(el("li", "muted", patterns.reason.message));
+    const note = el("p", "meta", `Toronto Police data${asOf ? ` up to ${fmtDate(asOf)}` : ""}: neighbourhoods with at least `
+      + "5 reports in their latest 30 days, at least twice their usual, and unlikely to be chance. Reported incidents only; not a prediction.");
+    sections.push(newsSection("Patterns in police reports", found.length, list, note));
+  } else sections.push(newsSection("Patterns in police reports", "unavailable", el("p", "muted", patterns.reason.message)));
+
+  $("news-sections").replaceChildren(...sections);
 }
 
 function patternNodes(found) {

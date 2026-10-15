@@ -84,7 +84,11 @@ button:disabled { opacity: .6; cursor: wait; }
 .muted { color: var(--muted); }
 .tag { font-size: 11px; text-transform: none; letter-spacing: 0; padding: 1px 6px; border-radius: 999px; background: var(--line); color: var(--muted); }
 .ok { color: #2f7d4f; } .failed { color: var(--error); }
-.news-group h4 { font-size: 13px; margin: 10px 0 2px; }
+.news-section { border-top: 1px solid var(--line); }
+.news-section:first-of-type { border-top: 0; }
+.news-section > summary { cursor: pointer; padding: 9px 0; font-size: 14px; font-weight: 600; }
+.news-section[open] > summary { color: var(--accent); }
+.news-section > .meta { margin: 0 0 6px; }
 .news details { font-size: 13px; margin-top: 4px; }
 .news details summary { cursor: pointer; color: var(--accent); }
 .news details li { font-size: 13px; }
