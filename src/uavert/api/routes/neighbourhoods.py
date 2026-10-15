@@ -4,6 +4,7 @@ from fastapi import APIRouter, Path, Query, Request
 
 from uavert.api import live
 from uavert.api.errors import ApiError
+from uavert.api.routes.patterns import pattern_rows
 from uavert.api.timeofday import moment, neighbourhood_crime_at, time_info
 
 router = APIRouter(tags=["neighbourhoods"])
@@ -49,6 +50,6 @@ async def get_neighbourhood(request: Request, neighbourhood_id: int = Path(ge=1)
         "id": r["id"], "name": r["name"], "population": r["population"], "population_year": r["valid_year"],
         "centre": {"lon": r["lon"], "lat": r["lat"]},
         "crime_details": details, "crime_computed_at": r["computed_at"].isoformat(), "odds": details.get("odds"),
-        "trend": details.get("trend"),
+        "trend": details.get("trend"), "patterns": await pattern_rows(pool, r["id"]),
         **score.to_dict(), "time": time_info(hour),
     }, ctx)
