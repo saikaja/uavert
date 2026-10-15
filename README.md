@@ -4,7 +4,7 @@ Location risk scores for Toronto from public data: an ingestion pipeline, a scor
 
 - **Crime:** Toronto Police incidents, weighted by Statistics Canada's Crime Severity Index (CSI), scored per neighbourhood and per street block (H3 hexagons, about 0.1 km²).
 - **Foot traffic:** street scores count incidents per person on foot, using City of Toronto pedestrian counts at intersections. Walking routes highlight the stretches that stand out from their surroundings.
-- **Time of day:** pick an hour and street-level scores change with it. They allow for when incidents happen nearby and how many people are out at that hour: City pedestrian counts by day, estimated from Bike Share trips at night.
+- **Time of day:** pick an hour and the whole map changes with it: street blocks, neighbourhoods and walks. Street scores allow for when incidents happen nearby and how many people are out at that hour: City pedestrian counts by day, estimated from Bike Share trips at night. A neighbourhood moves by as many points as its typical street block does at that hour.
 - **Air quality:** live Air Quality Health Index from Environment Canada.
 - **Official alerts:** Environment Canada weather alerts, scored by their own risk colour (yellow moderate, orange elevated, red high). During a heat alert, the nearest City cool space open at that time is named.
 - **Crowds:** on the dates of large City events (Nuit Blanche, Pride, parades and others), nearby places are at least moderate. Major venues are mentioned as context.
@@ -97,13 +97,13 @@ All endpoints are read-only `GET`s and are public for now.
 | `/api/v1/neighbourhoods` | All 158 neighbourhoods with scores (GeoJSON) |
 | `/api/v1/neighbourhoods/{id}` | One neighbourhood: score, reasons, crime details |
 | `/api/v1/cells?bbox=minLon,minLat,maxLon,maxLat` | Street-level cells in an area of up to 25 km² (GeoJSON) |
-| `/api/v1/risk-scores?address=...` or `?lat=&lon=` | Where I'm going: street and neighbourhood scores |
+| `/api/v1/risk-scores?address=...` or `?lat=&lon=` | Street and neighbourhood scores for a point (the map uses it when you click a street block) |
 | `/api/v1/route-risks?from=...&to=...` | Where I'm walking: route score and up to 3 stretches that stand out from their surroundings (walks of up to 10 km) |
 | `/api/v1/news-events?since_hours=24` | Recent labelled news reports |
 | `/api/v1/sources` | Every source with licence, attribution, data date and collection time |
 | `/api/v1/scoring-rules` | Bands, CSI weights, offence mapping, parameters, hourly activity, latest fairness check |
 
-`/cells`, `/risk-scores` and `/route-risks` also take an optional `hour` (0–23, Toronto time). Without it, scores are for the whole day.
+`/neighbourhoods`, `/neighbourhoods/{id}`, `/cells`, `/risk-scores` and `/route-risks` also take an optional `hour` (0–23, Toronto time). Without it, scores are for the whole day.
 
 Address and route lookups are limited to 30 requests per minute per IP.
 

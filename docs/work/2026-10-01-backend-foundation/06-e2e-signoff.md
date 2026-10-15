@@ -71,24 +71,26 @@ It should end with `Ready.`
 ## E2E checklist
 Fill in **Result** with Passed, Failed or Not tested, and add notes for anything odd. Rows 1–14 are the ones phase 5 couldn't check in a real browser.
 
+**Changed 2026-10-15 ([01-03-time-map.md](01-03-time-map.md)):** "Where I'm going" was removed. Wherever a row says to search an address, zoom in and click that spot on the map instead (or use it as the "To" of a walk). Rows 1, 5, 10, 15 and 16 were reworded; the band colours are now green, yellow, orange and red; rows 44–47 are new.
+
 | # | Steps | Expected result | Result | Notes |
 |---|---|---|---|---|
-| 1 | Open http://localhost:8000 | A map of Toronto with 158 neighbourhoods coloured in 4 shades, a legend ("Lower reported risk" … "High risk"), and a panel on the left: When, Where I'm going, Where I'm walking, Recent news, Data collected | Not tested | |
+| 1 | Open http://localhost:8000 | A map of Toronto with 158 neighbourhoods coloured in 4 shades, a legend ("Lower reported risk" green, "Moderate risk" yellow, "Elevated risk" orange, "High risk" red), and a panel on the left: When, Where I'm walking, Recent news, Data collected | Not tested | |
 | 2 | Click any neighbourhood | The panel shows its name, a score badge (0–100) with its band, bars for Crime / Air quality / Official alerts / News, and 2–3 reasons, each with a source, a data date and a collected date | Not tested | |
 | 3 | Zoom in to downtown (about 5 clicks on +) | Neighbourhood colours fade and small hexagons (street blocks) appear. Hovering one shows "Street score …, … its surroundings, about … people an hour on foot". The "Zoom in" hint disappears | Not tested | |
 | 4 | Click a street hexagon | The panel shows the street score with reasons, "Showing: All day", the incident count, foot traffic and "× the reported street crime of the surrounding 1 km"; the neighbourhood score is below it | Not tested | |
-| 5 | **Where I'm going:** type `100 Queen St W` and press Check | Within about 2 seconds a marker appears at City Hall, the map zooms there, and the panel shows the street score (about 64, elevated) with reasons: the most common offence nearby first, then "About 3.9× the reported street crime per person of a typical Toronto block; busy area with about 1,378 people an hour on foot…" | Not tested | |
+| 5 | Zoom in to City Hall (Queen St W at Bay St) and click the street block in front of it | Within about 2 seconds a marker appears there, and the panel shows the street score (about 64, elevated) with reasons: the most common offence nearby first, then "About 3.9× the reported street crime per person of a typical Toronto block; busy area with about 1,378 people an hour on foot…" | Not tested | |
 | 6 | **Where I'm walking:** From `Union Station`, To `Kensington Market`, press Check walk | Within about 3 seconds a blue route line appears, about 2.8 km / 37 min. One thicker coloured stretch near Kensington stands out. The panel says "mostly … ; worst block shown" and lists "Stretches that stand out" with "… × the reported street crime of its surroundings, per person" | Not tested | |
 | 7 | With the walk from row 6 still shown, set **When** to `2 am` | The walk re-runs on its own. The panel says "Showing: 2 am"; the score rises; the first reason starts "At 2 am: … estimated from Bike Share trips" | Not tested | |
 | 8 | Set **When** to `2 pm`, then search `100 Queen St W` again | "Showing: 2 pm"; the street score is lower than at 2 am (about 69 against 100); the first reason starts "At 2 pm: … (City pedestrian counts)" | Not tested | |
 | 9 | Zoomed in on downtown, switch **When** quickly between a few hours, ending on `11 pm` | The hexagon colours settle on the last choice (11 pm); no flicker back to an earlier hour | Not tested | |
-| 10 | Set **When** to `All day` and click a neighbourhood | The neighbourhood score is unchanged by the time setting (neighbourhood colours are all-day) | Not tested | |
+| 10 | Zoomed out, set **When** to `2 am`, then to `2 pm` | The neighbourhood colours change: downtown (e.g. Kensington-Chinatown) turns red at 2 am and lighter at 2 pm; quiet areas like Guildwood barely change. Hovering shows "…: 91 at 2 am" | Not tested | |
 | 11 | Look at **Recent news** | Either "No protest or violent-incident reports in Toronto news in the last 24 hours", or headlines marked unverified with a type, location (or "location unknown (not scored)"), publisher and time. Clicking a headline opens the article in a new tab | Not tested | |
 | 12 | Look at **Data collected** | Every source listed with "data up to …" and "collected …" dates. Weather alerts says "nothing current" when none are active. GDELT may say "latest attempt failed, showing earlier data" | Not tested | |
 | 13 | Open the page on your **phone** or with a narrow browser window (under about 760 px) | The map sits on top and the panel below; no sideways scrolling; buttons and fields are usable | Not tested | (needs the phone on the same network, or test with a narrow desktop window) |
 | 14 | Click **How scores work** | A page explaining the five parts and the highest-score rule, "What the numbers mean" (typical block = 25, 2× = 45…), bands, street level, "Allowing for crowds", "Time of day" with a 24-hour table (measured and estimated hours), CSI weights, the offence mapping, limitations, and sources with collection dates | Not tested | |
-| 15 | **Error:** Where I'm going → `100 City Centre Dr, Mississauga` | A red message: "… is outside the area we cover. Uavert currently covers the City of Toronto." No crash | Not tested | |
-| 16 | **Error:** Where I'm going → `zzqqxx nowhere 12345` | "We couldn't find … Try adding a street number or 'Toronto'." | Not tested | |
+| 15 | **Error:** walk from `Union Station` to `100 City Centre Dr, Mississauga` | A red message: "… is outside the area we cover. Uavert currently covers the City of Toronto." No crash | Not tested | |
+| 16 | **Error:** walk from `Union Station` to `zzqqxx nowhere 12345` | "We couldn't find … Try adding a street number or 'Toronto'." | Not tested | |
 | 17 | **Error:** walk from `Union Station` to `Scarborough Town Centre` | "Those places are 17.6 km apart; walking routes are limited to 10 km." | Not tested | |
 | 18 | **Error (service offline):** stop the server (Ctrl+C in its window), click Check in the browser, then restart it with `.\.venv\Scripts\python.exe -m uavert serve` | While stopped: an error message in the panel, not a broken page. After restarting and reloading, everything works again | Not tested | |
 | 19 | Look at every score and label on the map, panels and rules page | The word "safe" never appears as a rating or band; the lowest band reads "Lower reported risk" | Not tested | |
@@ -116,6 +118,10 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 41 | Open **By offence** and **Yearly figures** | 9 offences with their 2025 counts (small ones say "too few to call a trend"); a year-by-year table for the neighbourhood and Toronto | Not tested | |
 | 42 | Click a neighbourhood on the map, e.g. Guildwood; then **How this is worked out**; check rows 39–41 **on your phone** | Guildwood shows its own trend ("roughly flat"), with its line below Toronto's. The rules page opens at "Trends over time". On the phone, the chart and buttons fit without sideways scrolling | Not tested | |
 | 43 | **Odds % and score label (added 2026-10-14, [01-03-odds-percent.md](01-03-odds-percent.md)):** once deployed, search `100 Queen St W`, then click Kingsview Village-The Westway; check both **on your phone** | Above the band: "Risk score (0–100, higher = riskier)". Odds cells read e.g. "1 in 110 (0.94%)" and "1 in 470 (0.21%)"; the note says "(P% of the population)". The table fits the phone screen. Are the percentages clear, and does the label answer "is this a safety score"? | Not tested | (your judgement) |
+| 44 | **Time on the map (added 2026-10-15, [01-03-time-map.md](01-03-time-map.md)):** set **When** to `2 am`, then click **Kensington-Chinatown** | The panel says "Showing: 2 am · Neighbourhood …", the score is about 91 (High risk, red badge), and a reason reads "At 2 am: street blocks here typically score about 36 points higher than all day, and about 11% of daytime foot traffic is out (estimated from Bike Share trips)". The odds and trend headings end with "(yearly)". Does the change make sense to you? | Not tested | (your judgement) |
+| 45 | With Kensington-Chinatown still open, change **When** to `2 pm` | The panel updates by itself to "Showing: 2 pm" with a lower score (about 43) | Not tested | |
+| 46 | Look at the panel and the map legend | No "Where I'm going" section. The legend reads green "Lower reported risk", yellow "Moderate risk", orange "Elevated risk", red "High risk", and the map, badge and bars use the same colours. Are yellow and orange easy to tell apart? | Not tested | (your judgement) |
+| 47 | Repeat rows 44 and 46 **on your phone** | Same results; the map sits above the panel with no sideways scrolling | Not tested | |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".
@@ -136,7 +142,7 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 4. **If a search is slow or fails,** it's the free address or route service (Nominatim or OSRM). Try again, or use a search you warmed up in step 1.
 
 ## Known limitations
-- **Toronto only;** neighbourhood scores are all-day; no accounts, alerts to phones, or day-of-week patterns yet.
+- **Toronto only;** no accounts, alerts to phones, or day-of-week patterns yet.
 - **Weights:** StatCan's 2009 published weights; one homicide moves a small neighbourhood a lot ([csi-vs-demo-ranking.md](csi-vs-demo-ranking.md)).
 - **Night-time foot traffic** is estimated from Bike Share trips; daytime counts are snapshots from 2015–2026.
 - **News** is keyword-matched and unverified. CBC's feed is for personal, non-commercial use (fine for an internal demo, not a public launch). GDELT often refuses requests.
