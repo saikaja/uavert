@@ -191,6 +191,8 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 
 **Gauge merged (2026-10-15, [01-03-gauge.md](01-03-gauge.md)).** With Sai's approval ("approve"), `feature/gauge` was merged into `main` (`8fa9db9`; 311 tests passed) and deployed in about 40 seconds. Against https://uavert.vercel.app: `acceptance_check.py` **45 of 45**; gauge browser check **14 of 14** (colours, needle angles, neighbourhood, street block, walk, dark mode, phone, reduced motion). Row 53 covers it.
 
+**Tidy-up merged (2026-10-15, [01-03-panel-tidy.md](01-03-panel-tidy.md)).** With Sai's approval ("ok approve"), `feature/panel-tidy` was merged into `main` (`49129b4`; 314 tests passed) and deployed. Against https://uavert.vercel.app: `acceptance_check.py` **46 of 46** ("typical block 30 moderate (headline), worst block 75 high"); browser check **13 of 13** (no error after moving the map with a walk shown; walk above the blocks; five closed news sections). Row 54 covers it.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**
