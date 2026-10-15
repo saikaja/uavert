@@ -180,6 +180,13 @@ The preview sits behind Vercel's login, so `acceptance_check.py` ran through a l
 
 **News by type, trending and police patterns merged (2026-10-15).** With Sai's approval ("approve…"), migration 010, `ingest news` and `build-scores` ran on Neon `main` first ("6 pattern(s) in police reports"; the site kept answering 200), then `feature/news` was merged into `main` (`058285e`). 286 tests passed; production redeployed; `acceptance_check.py` against https://uavert.vercel.app passed **43 of 43**, with CityNews, Global and the Star all collected. The temporary Neon branch `news-check` was deleted. Rows 48–51 cover it.
 
+**Protection merged (2026-10-15, [01-03-security.md](01-03-security.md)).** With Sai's approval ("approve"), `feature/security` was merged into `main` (`3014b51`; 311 tests passed) and deployed.
+- **Edge cache:** repeat requests return `X-Vercel-Cache: HIT` (e.g. `/api/v1/scoring-rules` with `Age: 160`). Vercel consumes `s-maxage` and passes visitors only `public, max-age=0`. Acceptance check `sec-43` was corrected to accept that (it first looked for `s-maxage` in the response).
+- **Firewall:** the rule "API rate limit" was added and published (`vercel firewall status`: "Rules 1 active"). A burst of 130 requests to `/api/v1/health` gave **120 × 200, then 10 × 429** (`X-Vercel-Mitigated: deny`).
+- **Normal use:** both full browser sessions (map, time changes, a street click, a walk, the news section) passed against production with no 429. The only console error was the long-standing missing `favicon.ico`.
+- **Production acceptance check:** **45 of 45**.
+- **Still to do:** Sai switches Vercel's `DATABASE_URL` to `uavert_web`, then criterion 47 is checked in production.
+
 ## Approval
 - **Status:** Pending approval
 - **Approved by:**

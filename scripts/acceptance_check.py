@@ -170,9 +170,12 @@ def main(base: str) -> int:
         # Edge caching (01-03-security.md): successful answers carry s-maxage; behind Vercel the repeat is a cache hit
         first = c.get("/api/v1/scoring-rules")
         again = c.get("/api/v1/scoring-rules")
-        check("sec-43", "s-maxage=300" in first.headers.get("cache-control", "")
-              and "s-maxage" not in c.get("/api/v1/health").headers.get("cache-control", ""),
-              f"Cache-Control: {first.headers.get('cache-control')}")
+        # Vercel's CDN consumes s-maxage and passes on only "public, max-age=0"; behind it, X-Vercel-Cache shows caching.
+        health = c.get("/api/v1/health").headers
+        check("sec-43", ("s-maxage=300" in first.headers.get("cache-control", "") or "x-vercel-cache" in first.headers)
+              and "s-maxage" not in health.get("cache-control", "") and health.get("x-vercel-cache") != "HIT",
+              f"Cache-Control: {first.headers.get('cache-control')}; X-Vercel-Cache: {first.headers.get('x-vercel-cache')}; "
+              f"health X-Vercel-Cache: {health.get('x-vercel-cache')}")
         edge = again.headers.get("x-vercel-cache")
         check("sec-44", edge is None or edge in ("HIT", "STALE"),
               f"repeat request: X-Vercel-Cache {edge}" if edge else "no CDN in front (local run)")
