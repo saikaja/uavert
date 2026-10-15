@@ -1,6 +1,6 @@
 # 4. Do the work: rate limits, edge caching and a read-only database user
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Builds:** [01-03-security.md](01-03-security.md) (approved 2026-10-15, "approve").
 
 ## What this step is
@@ -59,8 +59,8 @@ Once you approve this and [05-test-report.security.md](05-test-report.security.m
 4. I check criterion 47 in production: the acceptance check, plus Neon showing Vercel's connections as `uavert_web`.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:24
+- **User's response:** "approve"
 - **Revisions before approval:** none

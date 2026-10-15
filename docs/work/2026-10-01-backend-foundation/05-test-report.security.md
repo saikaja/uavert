@@ -1,6 +1,6 @@
 # 5. Verify the work: rate limits, edge caching and a read-only database user
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Verifies:** [01-03-security.md](01-03-security.md), criteria 43–47, built in [04-implementation.security.md](04-implementation.security.md).
 
 ## What this step is
@@ -46,8 +46,8 @@ These are checked in T4 and your test list:
 Once you approve this and the build record, I run T4 as described in the build record. Your one step is the Vercel `DATABASE_URL` switch.
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:24
+- **User's response:** "approve"
 - **Revisions before approval:** none
