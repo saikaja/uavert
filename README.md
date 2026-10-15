@@ -8,7 +8,7 @@ Location risk scores for Toronto from public data: an ingestion pipeline, a scor
 - **Air quality:** live Air Quality Health Index from Environment Canada.
 - **Official alerts:** Environment Canada weather alerts, scored by their own risk colour (yellow moderate, orange elevated, red high). During a heat alert, the nearest City cool space open at that time is named.
 - **Crowds:** on the dates of large City events (Nuit Blanche, Pride, parades and others), nearby places are at least moderate. Major venues are mentioned as context.
-- **News:** CBC Toronto and GDELT headlines about protests and violent incidents, labelled unverified.
+- **News and patterns:** headlines from CBC, CityNews, Global News, the Toronto Star and GDELT, labelled unverified and listed by type for as long as each is useful (protests 2 days, violent incidents 7 days, property crime 60 days). Stories several outlets cover are shown as trending. Neighbourhoods where break-ins or auto thefts ran well above their usual level in the latest police data are listed as patterns. Only located protest and violent-incident news affects a score (nearby blocks, for 24 hours).
 
 Scores run from 0 to 100; higher means more reported risk. Crime scores compare a place with a **typical Toronto block or neighbourhood** (the median): typical = 25, and each doubling adds 20. The combined score is the highest category, never an average. No place is ever labelled "safe".
 
@@ -99,7 +99,9 @@ All endpoints are read-only `GET`s and are public for now.
 | `/api/v1/cells?bbox=minLon,minLat,maxLon,maxLat` | Street-level cells in an area of up to 25 km² (GeoJSON) |
 | `/api/v1/risk-scores?address=...` or `?lat=&lon=` | Street and neighbourhood scores for a point (the map uses it when you click a street block) |
 | `/api/v1/route-risks?from=...&to=...` | Where I'm walking: route score and up to 3 stretches that stand out from their surroundings (walks of up to 10 km) |
-| `/api/v1/news-events?since_hours=24` | Recent labelled news reports |
+| `/api/v1/news-events?since_hours=24` or `?window=by_type` | Recent labelled news reports (by type: each for its own window) |
+| `/api/v1/news-trending` | Stories about the same event from several outlets in the last 3 days |
+| `/api/v1/crime-patterns` | Neighbourhoods where break-ins or auto thefts ran well above their usual level (information only) |
 | `/api/v1/sources` | Every source with licence, attribution, data date and collection time |
 | `/api/v1/scoring-rules` | Bands, CSI weights, offence mapping, parameters, hourly activity, latest fairness check |
 
@@ -132,6 +134,9 @@ tests/                    unit tests; tests/api are API tests against the Neon t
 | City of Toronto intersection traffic counts | Open Government Licence – Toronto (the dataset page says "not specified"; confirm before public launch) |
 | Environment and Climate Change Canada (MSC GeoMet) | ECCC Data Servers End-use Licence |
 | CBC News Toronto RSS | Personal, non-commercial use. Headlines and links only; needs permission or a licensed feed before public launch |
+| CityNews Toronto RSS | Rogers Media terms: personal, non-commercial use. Headlines and links only; needs permission or a licensed feed before public launch |
+| Global News Toronto RSS | Corus terms: non-commercial use only. Headlines and links only; needs permission or a licensed feed before public launch |
+| Toronto Star GTA RSS | Torstar terms (not readable automatically); use approved by the project owner on 2026-10-15 for internal use. Headlines and links only; needs permission or a licensed feed before public launch |
 | Bike Share Toronto ridership 2025 (hourly pattern at night) | Open Government Licence – Toronto |
 | City of Toronto Neighbourhood Profiles, 2021 Census (income, for the fairness check) | Open Government Licence – Toronto; source data Statistics Canada |
 | City of Toronto Heat Relief Network (cool spaces) | Open Government Licence – Toronto (confirm before public launch) |

@@ -146,6 +146,27 @@ def main(base: str) -> int:
         check("35", all(colour in js for colour in ("#2e9e57", "#f2c230", "#e8792b", "#c62828")),
               "app.js bands: green #2e9e57, yellow #f2c230, orange #e8792b, red #c62828")
 
+        # News by type, trending and police patterns (01-03-news.md); information only
+        typed = c.get("/api/v1/news-events", params={"window": "by_type", "limit": 100}).json()["data"]
+        windows = {n["category"]: n["window_days"] for n in typed}
+        check("news-37", all(windows.get(k, v) == v for k, v in {"protest": 2, "violent_incident": 7, "property_crime": 60}.items()),
+              f"{len(typed)} stories by type: " + ", ".join(f"{k} {sum(n['category'] == k for n in typed)}" for k in
+                                                          ("protest", "violent_incident", "property_crime")))
+        feeds = {k: sources.get(k, {}) for k in ("news_citynews", "news_global", "news_star")}
+        check("news-38", all(f.get("collected_at") for f in feeds.values()),
+              "; ".join(f"{k}: collected {f.get('collected_at')}, last {f.get('last_status')}" for k, f in feeds.items()))
+        trend = c.get("/api/v1/news-trending")
+        groups_ = trend.json()["data"]
+        check("news-39", trend.status_code == 200 and all(g["story_count"] >= 3 and g["outlet_count"] >= 2 for g in groups_),
+              f"{len(groups_)} trending: " + "; ".join(f"{g['story_count']} stories/{g['outlet_count']} outlets: "
+                                                      f"{g['headline'][:50]}" for g in groups_[:3]))
+        pats = c.get("/api/v1/crime-patterns").json()["data"]
+        check("news-40", all(p["recent"] >= 5 and p["times_usual"] >= 2 and p["data_as_of"] for p in pats),
+              f"{len(pats)} pattern(s): " + "; ".join(f"{p['neighbourhood']} {p['recent']} {p['offence_label']} "
+                                                     f"(usual {p['usual_per_30_days']})" for p in pats[:4]))
+        check("news-42", "News and patterns" in page and "crime-patterns" in js and "news-trending" in js,
+              "page has the News and patterns section")
+
         r, dt = timed(c, "/api/v1/route-risks", **{"from": "Union Station, Toronto", "to": "125 Blue Jays Way, Toronto"})
         w = r.json()["data"]
         check("41", r.status_code == 200 and 45 <= w["score"] <= 60 and w["band"] != "high",
