@@ -70,10 +70,6 @@ button:disabled { opacity: .6; cursor: wait; }
 .score-band { font-weight: 700; }
 .score-title { font-size: 14px; }
 .score-sub { font-size: 12px; color: var(--muted); }
-.b-lower { background: var(--band-lower); }
-.b-moderate { background: var(--band-moderate); color: #3a2e00; }
-.b-elevated { background: var(--band-elevated); color: #3a1d00; }
-.b-high { background: var(--band-high); }
 
 .cats { display: grid; gap: 4px; margin-top: 12px; }
 .cat { display: grid; grid-template-columns: 92px 1fr 28px; gap: 8px; align-items: center; font-size: 13px; }
