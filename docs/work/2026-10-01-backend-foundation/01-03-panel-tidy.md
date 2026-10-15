@@ -1,6 +1,6 @@
 # 1–3. Define, design and plan: map error fix, news sections as dropdowns, and how a walk is scored
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Adds to and revises:** [01-03-news.md](01-03-news.md) (section layout). Item 3 revises the route score in [01-definition.md](01-definition.md) ("an overall score from 0 to 100, which is the highest score along the route (one risky stretch is never averaged away)"; criterion 13). This document covers phases 1–3 in one, as the workflow allows for a small addition.
 
 ## What this step is
@@ -100,8 +100,8 @@ Branch `feature/panel-tidy` from `main`.
 - **(b)** keep the worst block as the headline, and only make the "mostly moderate (30)" line more prominent
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved (option (a) for item 3)
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:46
+- **User's response:** "aprove a"
 - **Revisions before approval:** none
