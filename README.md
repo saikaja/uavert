@@ -61,7 +61,10 @@ Each source is collected separately. If one fails, the others still run, earlier
 ## Hosting (Vercel)
 
 Vercel runs the FastAPI app from `index.py`, as one function in region `cle1`, next to the Neon database in Ohio.
-- **Production settings:** `DATABASE_URL` (direct Neon host) and `DB_POOL_MAX=2`.
+- **Production settings:** `DATABASE_URL` (direct Neon host) and `DB_POOL_MAX=2`. The website connects as `uavert_web`, a read-only user that may only save address and route answers. Create it, or give it a new password, with `python scripts/create_web_role.py --owner-env DATABASE_URL --out <file>`, and put the file's contents in Vercel. GitHub Actions and the command line keep the owner's connection, because they load data.
+- **Protection** (01-03-security.md):
+  - successful API answers are cached at Vercel's edge for 5 minutes (`s-maxage=300`)
+  - a Vercel Firewall rule allows 120 API requests per minute per IP (`vercel firewall status`)
 - **Deploy by hand:** `vercel deploy --prod`.
 - **Deploy from Git:** the project is connected to the GitHub repository. `main` carries a `vercel.json` that turns off Git deploys from `main` until the app is merged there. At the merge, keep the branch's `vercel.json`, and pushes to `main` will then deploy to production.
 - **Refresh:** Vercel's free plan only allows scheduled jobs once a day, so the hosted data refresh runs on GitHub Actions instead (see above).
@@ -107,7 +110,7 @@ All endpoints are read-only `GET`s and are public for now.
 
 `/neighbourhoods`, `/neighbourhoods/{id}`, `/cells`, `/risk-scores` and `/route-risks` also take an optional `hour` (0–23, Toronto time). Without it, scores are for the whole day.
 
-Address and route lookups are limited to 30 requests per minute per IP.
+Address and route lookups are limited to 30 requests per minute per IP (per app instance). On the hosted site, all API requests are also limited to 120 per minute per IP by the Vercel Firewall, and successful answers may be up to about 10 minutes old (edge cache).
 
 ## Layout
 

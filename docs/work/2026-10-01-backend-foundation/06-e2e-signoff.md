@@ -126,6 +126,7 @@ Fill in **Result** with Passed, Failed or Not tested, and add notes for anything
 | 49 | Look at **Patterns in police reports**, then click the first one | Lines like "7 break-ins reported in Broadview North between Sep 1 and Sep 30, about 6.1× the usual for this area", with "Toronto Police data up to …" underneath. Clicking opens that neighbourhood, whose panel shows "Pattern in police reports". Its score is the same as before this change | Not tested | |
 | 50 | In **Recent**, find a list with more than 5 stories and click **Show all** | The rest of that list appears | Not tested | |
 | 51 | Repeat rows 48–50 **on your phone**, and open **How scores work → News and patterns** | Everything fits without sideways scrolling; the rules page explains the windows, trending and patterns, and says none of it changes a score apart from the existing 24-hour news rule | Not tested | |
+| 52 | **Protection (added 2026-10-15, [01-03-security.md](01-03-security.md)):** after the switch, use the hosted site normally for a few minutes on laptop and phone: open it, zoom and pan downtown, change **When** several times, check a walk | Everything works as before, with no "Too many requests" message. (A burst of over 120 API requests a minute from one address is refused; normal use is far below that) | Not tested | |
 
 **Not possible to test on demand** (recorded so they aren't forgotten):
 - **A real Environment Canada warning:** if one is active for Toronto on demo day, covered areas should show "High risk" with "Environment Canada … warning in effect".

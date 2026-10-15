@@ -64,6 +64,7 @@ app = FastAPI(
 )
 errors.install(app)
 v1 = APIRouter(prefix="/api/v1")
+EDGE_CACHE = "public, max-age=0, s-maxage=300, stale-while-revalidate=300"
 _pool_lock = asyncio.Lock()
 
 
@@ -76,6 +77,11 @@ async def database_and_noindex(request: Request, call_next):
                 app.state.pool = await db.create_pool()
     response = await call_next(request)
     response.headers["X-Robots-Tag"] = "noindex, nofollow"  # keep the demo out of search engines
+    path = request.url.path
+    if (request.method == "GET" and response.status_code == 200 and path.startswith("/api/v1/")
+            and path != "/api/v1/health"):
+        # Vercel's CDN keeps successful API answers for 5 minutes; browsers always ask again (01-03-security.md).
+        response.headers["Cache-Control"] = EDGE_CACHE
     return response
 
 

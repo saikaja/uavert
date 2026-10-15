@@ -14,6 +14,7 @@ class Settings(BaseSettings):
 
     database_url: str
     test_database_url: str | None = None
+    test_web_database_url: str | None = None  # the website's read-only user on the test branch (01-03-security.md)
 
     region_code: str = "CA-ON-TOR"
     csi_edition: str = "2009"
