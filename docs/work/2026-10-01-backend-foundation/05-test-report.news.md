@@ -1,6 +1,6 @@
 # 5. Verify the work: news by type of event, trending stories and police-report patterns
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Verifies:** [01-03-news.md](01-03-news.md), criteria 36–42, built in [04-implementation.news.md](04-implementation.news.md).
 
 ## What this step is
@@ -77,8 +77,8 @@ Once you approve this and the build record:
 4. delete the temporary branch `news-check`
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:12
+- **User's response:** "approve and less just do 1 and 2 forget the rest" (approval of the news deploy; the rest refers to the security suggestions)
 - **Revisions before approval:** none

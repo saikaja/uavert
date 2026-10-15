@@ -1,6 +1,6 @@
 # 4. Do the work: news by type of event, trending stories and police-report patterns
 
-**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Pending approval
+**Task folder:** docs/work/2026-10-01-backend-foundation/  ·  **Date:** 2026-10-15  ·  **Status:** Approved
 **Builds:** [01-03-news.md](01-03-news.md) (approved 2026-10-15 14:49, "approve and yes toronto start and keep the existing news effect").
 
 ## What this step is
@@ -73,8 +73,8 @@ Once you approve this and [05-test-report.news.md](05-test-report.news.md), prod
 5. delete the temporary branch
 
 ## Approval
-- **Status:** Pending approval
-- **Approved by:**
-- **Date:**
-- **User's response:**
+- **Status:** Approved
+- **Approved by:** Sai Kaja
+- **Date:** 2026-10-15 15:12
+- **User's response:** "approve and less just do 1 and 2 forget the rest" (approval of the news deploy; the rest refers to the security suggestions)
 - **Revisions before approval:** none
