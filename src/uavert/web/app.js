@@ -2,10 +2,10 @@
 "use strict";
 
 const BANDS = {
-  lower: { label: "Lower reported risk", colour: "#f7e3a3" },
-  moderate: { label: "Moderate risk", colour: "#f3a65a" },
-  elevated: { label: "Elevated risk", colour: "#d9562f" },
-  high: { label: "High risk", colour: "#9e1b2c" },
+  lower: { label: "Lower reported risk", colour: "#2e9e57" },
+  moderate: { label: "Moderate risk", colour: "#f2c230" },
+  elevated: { label: "Elevated risk", colour: "#e8792b" },
+  high: { label: "High risk", colour: "#c62828" },
 };
 const CATEGORY_NAMES = { crime: "Crime", environment: "Air quality", alert: "Official alerts", news: "News", crowds: "Crowds" };
 const SOURCE_NAMES = {};
@@ -78,15 +78,37 @@ function renderLegend() {
   });
 }
 
+const hoodFill = () => (map.getZoom() >= CELL_ZOOM ? 0.08 : 0.55);
+const hoodTooltip = (p) => {
+  const h = selectedHour();
+  return `${escapeHtml(p.name)}: ${p.score}${h == null ? "" : ` at ${hourLabel(h)}`}`;
+};
+let hoodRequest = 0;
+
+// Neighbourhood colours follow the "When" setting (01-03-time-map.md): the first load draws the layer,
+// later loads re-colour it in place.
 async function loadNeighbourhoods() {
-  const body = await api("/api/v1/neighbourhoods");
-  hoodLayer = L.geoJSON(body.data, {
-    style: (f) => style(f.properties.band),
-    onEachFeature: (f, layer) => {
-      layer.bindTooltip(`${escapeHtml(f.properties.name)}: ${f.properties.score}`, { sticky: true });
-      layer.on("click", () => showNeighbourhood(f.properties.id));
-    },
-  }).addTo(map);
+  const request = ++hoodRequest;
+  const body = await api(`/api/v1/neighbourhoods?${hourParam().slice(1)}`);
+  if (request !== hoodRequest) return; // the time changed while this was loading
+  if (!hoodLayer) {
+    hoodLayer = L.geoJSON(body.data, {
+      style: (f) => style(f.properties.band, hoodFill()),
+      onEachFeature: (f, layer) => {
+        layer.bindTooltip(hoodTooltip(f.properties), { sticky: true });
+        layer.on("click", () => showNeighbourhood(f.properties.id));
+      },
+    }).addTo(map);
+    return;
+  }
+  const byId = new Map(body.data.features.map((f) => [f.properties.id, f.properties]));
+  hoodLayer.eachLayer((layer) => {
+    const p = byId.get(layer.feature.properties.id);
+    if (!p) return;
+    layer.feature.properties = p;
+    layer.setTooltipContent(hoodTooltip(p));
+  });
+  hoodLayer.setStyle((f) => style(f.properties.band, hoodFill()));
 }
 
 let cellTimer, cellRequest = 0;
@@ -96,7 +118,7 @@ async function loadCells() {
   const request = ++cellRequest;
   const show = map.getZoom() >= CELL_ZOOM;
   $("zoom-hint").hidden = show;
-  if (hoodLayer) hoodLayer.setStyle((f) => style(f.properties.band, show ? 0.08 : 0.55));
+  if (hoodLayer) hoodLayer.setStyle((f) => style(f.properties.band, hoodFill()));
   if (!show) { if (cellLayer) { map.removeLayer(cellLayer); cellLayer = null; } return; }
   const b = map.getBounds();
   const bbox = [b.getWest(), b.getSouth(), b.getEast(), b.getNorth()].map((v) => v.toFixed(5)).join(",");
@@ -178,7 +200,7 @@ function oddsNodes(odds, name) {
   const note = el("p", "meta", "One reported incident a year for every N residents (P% of the population). Not a personal prediction: many incidents involve visitors, "
     + "some aren't reported, and property crimes affect cars and homes rather than people. ");
   const how = el("a", null, "How this is worked out"); how.href = "/rules.html#odds"; note.append(how);
-  return [el("h3", null, `Odds in ${name} (${odds.year}), per resident`), table, note];
+  return [el("h3", null, `Odds in ${name} (${odds.year}), per resident (yearly)`), table, note];
 }
 
 // ---- crime trends (01-03-trends.md) ------------------------------------------
@@ -299,7 +321,7 @@ function trendNodes(trend, name) {
     const groupName = TREND_GROUPS.find(([k]) => k === trendView.group)[1];
     const chartLabel = `${groupName} crime per 1,000 residents in ${name}, ${years}: ${trendWords(w.groups[trendView.group])}; `
       + `Toronto ${trendWords(tw.groups[trendView.group])}. The yearly figures are in the table below.`;
-    wrap.replaceChildren(el("h3", null, `Trend in ${name}, per 1,000 residents`), controls,
+    wrap.replaceChildren(el("h3", null, `Trend in ${name}, per 1,000 residents (yearly)`), controls,
       trendChart(here, toronto, chartLabel), legend, summary, byOffence, yearly, note);
     if (focusKey) wrap.querySelector(`[data-key="${focusKey}"]`)?.focus();
   };
@@ -310,27 +332,27 @@ function trendNodes(trend, name) {
 const bandFor = (s) => (s >= 75 ? "high" : s >= 50 ? "elevated" : s >= 25 ? "moderate" : "lower");
 
 async function showNeighbourhood(id) {
-  lastSearch = null; // neighbourhood scores are all-day
+  lastSearch = () => showNeighbourhood(id);
   try {
-    const d = (await api(`/api/v1/neighbourhoods/${id}`)).data;
-    showScore(d.name, `Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d,
+    const d = (await api(`/api/v1/neighbourhoods/${id}?${hourParam().slice(1)}`)).data;
+    showScore(d.name, `Showing: ${timeText()} · Neighbourhood · population ${d.population?.toLocaleString("en-CA") ?? "n/a"} (${d.population_year})`, d,
       [], oddsNodes(d.odds, d.name), trendNodes(d.trend, d.name));
   } catch (e) { setStatus(e.message, true); }
 }
 
 async function checkPoint(lat, lon) {
-  await runDestination(`/api/v1/risk-scores?lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}`, null);
+  await runDestination(`/api/v1/risk-scores?lat=${lat.toFixed(6)}&lon=${lon.toFixed(6)}`);
 }
 
-async function runDestination(path, label) {
-  lastSearch = () => runDestination(path, label);
+// A clicked street cell; "Where I'm going" was removed (01-03-time-map.md).
+async function runDestination(path) {
+  lastSearch = () => runDestination(path);
   setStatus("Checking...");
   try {
     const d = (await api(path + hourParam())).data;
     setStatus("");
     if (marker) map.removeLayer(marker);
     marker = L.marker([d.location.lat, d.location.lon]).addTo(map);
-    if (label) map.setView([d.location.lat, d.location.lon], 15);
     const hood = el("p", "muted",
       `Neighbourhood: ${d.neighbourhood.name} - ${d.neighbourhood.score} (${BANDS[d.neighbourhood.band].label.toLowerCase()})`);
     const s = d.street;
@@ -338,16 +360,10 @@ async function runDestination(path, label) {
       ? `Street level (about one block) · ${s.incident_count} street incidents within ~250 m · ${peoplePerHour(s.foot_traffic_per_hour)}`
         + (s.vs_surroundings != null ? ` · ${timesAround(s.vs_surroundings)} the reported street crime of the surrounding 1 km, per person` : "")
       : "Street level unavailable here; showing the neighbourhood";
-    showScore(label || d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street,
+    showScore(d.location.display_name.split(",").slice(0, 3).join(","), `Showing: ${timeText()} · ${where}`, d.street,
       [hood], oddsNodes(d.neighbourhood.odds, d.neighbourhood.name), trendNodes(d.neighbourhood.trend, d.neighbourhood.name));
   } catch (e) { setStatus(e.message, true); }
 }
-
-$("dest-form").addEventListener("submit", (e) => {
-  e.preventDefault();
-  const q = $("dest").value.trim();
-  runDestination(`/api/v1/risk-scores?address=${encodeURIComponent(q)}`, q);
-});
 
 $("route-form").addEventListener("submit", (e) => {
   e.preventDefault();
@@ -386,6 +402,7 @@ async function runRoute(from, to, btn) {
 }
 
 $("when").addEventListener("change", () => {
+  loadNeighbourhoods().catch((e) => setStatus(e.message, true));
   loadCells();
   if (lastSearch) lastSearch();
 });

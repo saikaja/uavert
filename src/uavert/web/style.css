@@ -5,21 +5,21 @@
   --muted: #646a73;
   --line: #e3e1dc;
   --accent: #1f4e79;
-  --band-lower: #f7e3a3;
-  --band-moderate: #f3a65a;
-  --band-elevated: #d9562f;
-  --band-high: #9e1b2c;
-  --band-lower-text: #4a3b00;
+  --band-lower: #2e9e57;
+  --band-moderate: #f2c230;
+  --band-elevated: #e8792b;
+  --band-high: #c62828;
+  --error: #c62828;
   --shadow: 0 1px 3px rgba(0, 0, 0, .08);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
-    --bg: #15171a; --panel: #1e2125; --text: #eceef1; --muted: #9aa1ab; --line: #30343a; --accent: #8cb8e6;
+    --bg: #15171a; --panel: #1e2125; --text: #eceef1; --muted: #9aa1ab; --line: #30343a; --accent: #8cb8e6; --error: #ff7b72;
     --shadow: 0 1px 3px rgba(0, 0, 0, .4);
   }
 }
 :root[data-theme="dark"] {
-  --bg: #15171a; --panel: #1e2125; --text: #eceef1; --muted: #9aa1ab; --line: #30343a; --accent: #8cb8e6;
+  --bg: #15171a; --panel: #1e2125; --text: #eceef1; --muted: #9aa1ab; --line: #30343a; --accent: #8cb8e6; --error: #ff7b72;
 }
 
 * { box-sizing: border-box; }
@@ -52,7 +52,7 @@ button { padding: 9px 14px; border: 0; border-radius: 8px; background: var(--acc
 button:disabled { opacity: .6; cursor: wait; }
 
 .status { min-height: 1.2em; margin: 0 2px 10px; color: var(--muted); font-size: 14px; }
-.status.error { color: var(--band-elevated); }
+.status.error { color: var(--error); }
 
 .score-head { display: flex; gap: 12px; align-items: center; }
 .score-badge { width: 64px; height: 64px; border-radius: 12px; display: grid; place-items: center; font-size: 26px; font-weight: 800; color: #fff; flex: none; }
@@ -60,9 +60,9 @@ button:disabled { opacity: .6; cursor: wait; }
 .score-band { font-weight: 700; }
 .score-title { font-size: 14px; }
 .score-sub { font-size: 12px; color: var(--muted); }
-.b-lower { background: var(--band-lower); color: var(--band-lower-text); }
-.b-moderate { background: var(--band-moderate); color: #3a1d00; }
-.b-elevated { background: var(--band-elevated); }
+.b-lower { background: var(--band-lower); }
+.b-moderate { background: var(--band-moderate); color: #3a2e00; }
+.b-elevated { background: var(--band-elevated); color: #3a1d00; }
 .b-high { background: var(--band-high); }
 
 .cats { display: grid; gap: 4px; margin-top: 12px; }
@@ -77,7 +77,7 @@ button:disabled { opacity: .6; cursor: wait; }
 .meta { display: block; font-size: 12px; color: var(--muted); }
 .muted { color: var(--muted); }
 .tag { font-size: 11px; text-transform: none; letter-spacing: 0; padding: 1px 6px; border-radius: 999px; background: var(--line); color: var(--muted); }
-.ok { color: #2f7d4f; } .failed { color: var(--band-elevated); }
+.ok { color: #2f7d4f; } .failed { color: var(--error); }
 .segments li { font-size: 14px; }
 #odds h3 { margin-top: 12px; }
 .odds { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 4px; }
